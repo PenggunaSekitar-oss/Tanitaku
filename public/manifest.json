@@ -1,0 +1,36 @@
+{
+  "name": "TANITA - Command Center Pertanian",
+  "short_name": "TANITA",
+  "description": "Aplikasi PWA Manajemen Operasional & Pemantauan Lahan Pertanian Real-Time",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121812",
+  "theme_color": "#1a1f1a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}

@@ -1,0 +1,278 @@
+import React, { useState, useEffect } from 'react';
+
+interface AccessGateProps {
+  children: React.ReactNode;
+}
+
+// Secret valid codes (TNT27AGS is the confidential master key)
+const VALID_CODES = [
+  'TNT27AGS',
+  'TANITA2026',
+  'TANITA-PRO',
+  'TANITA-VIP'
+];
+
+export function AccessGate({ children }: AccessGateProps) {
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
+  const [inputCode, setInputCode] = useState<string>('');
+  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [successMsg, setSuccessMsg] = useState<string>('');
+  const [showHintModal, setShowHintModal] = useState<boolean>(false);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+
+  useEffect(() => {
+    const savedUnlocked = localStorage.getItem('tanita_access_granted');
+    if (savedUnlocked === 'true') {
+      setIsUnlocked(true);
+    }
+  }, []);
+
+  const handleVerifyCode = () => {
+    const code = inputCode.trim().toUpperCase().replace(/\s+/g, '');
+    
+    if (!code) {
+      setErrorMsg('Harap masukkan Kode Akses terlebih dahulu');
+      setSuccessMsg('');
+      return;
+    }
+
+    if (VALID_CODES.includes(code)) {
+      setErrorMsg('');
+      setSuccessMsg('Kode Akses Valid! Membuka sistem TANITA Operations...');
+      
+      setTimeout(() => {
+        localStorage.setItem('tanita_access_granted', 'true');
+        localStorage.setItem('tanita_redeem_code', 'VERIFIED');
+        setIsUnlocked(true);
+        setSuccessMsg('');
+      }, 600);
+    } else {
+      setSuccessMsg('');
+      setErrorMsg('Kode Akses tidak valid. Silakan periksa kembali.');
+    }
+  };
+
+  const handleLock = () => {
+    localStorage.removeItem('tanita_access_granted');
+    localStorage.removeItem('tanita_redeem_code');
+    setIsUnlocked(false);
+    setInputCode('');
+    setErrorMsg('');
+  };
+
+  const getWaLink = () => {
+    const savedNum = localStorage.getItem('tanita_wa_number');
+    let num = savedNum ? savedNum.replace(/\D/g, '') : '';
+    if (num.startsWith('0')) {
+      num = '62' + num.slice(1);
+    }
+    const text = encodeURIComponent('Halo Admin TANITA, saya membutuhkan bantuan akses / kode lisensi aplikasi TANITA.');
+    return num ? `https://wa.me/${num}?text=${text}` : `https://wa.me/?text=${text}`;
+  };
+
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen bg-slate-100 text-slate-900 flex items-center justify-center p-4 sm:p-6 relative font-sans selection:bg-[#154734] selection:text-white">
+        {/* Main Access Gate Card */}
+        <div className="w-full max-w-md bg-[#FEFEFA] border border-slate-200/90 shadow-lg rounded-3xl p-6 sm:p-8 relative z-10 flex flex-col gap-6 my-auto">
+          
+          {/* Header Section */}
+          <div className="flex flex-col items-center text-center gap-3">
+            <img 
+              src="https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png" 
+              alt="TANITA Logo" 
+              className="h-16 sm:h-20 w-auto object-contain p-1" 
+            />
+
+            <div className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-800 border border-slate-200 font-display font-extrabold text-[11px] px-3 py-1 rounded-full uppercase tracking-wider">
+              <span className="material-symbols-outlined text-xs font-extrabold text-[#154734]">verified_user</span>
+              <span>Sistem Akses Terproteksi</span>
+            </div>
+
+            <div className="space-y-1 mt-1">
+              <h1 className="font-display font-black text-2xl text-slate-950 tracking-tight">
+                Redeem Kode Akses
+              </h1>
+              <p className="text-xs sm:text-sm font-display font-semibold text-slate-600 leading-relaxed max-w-xs mx-auto">
+                Masukkan kode lisensi resmi untuk membuka akses penuh operasional TANITA.
+              </p>
+            </div>
+          </div>
+
+          {/* Feedback Messages */}
+          {errorMsg && (
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-900 font-display font-bold text-xs sm:text-sm flex items-center gap-2.5 animate-in fade-in duration-200">
+              <span className="material-symbols-outlined text-xl shrink-0 text-rose-600">error</span>
+              <span className="leading-snug">{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="p-3.5 bg-[#154734]/10 border border-[#154734]/30 text-[#154734] font-display font-bold text-xs sm:text-sm rounded-2xl flex items-center gap-2.5 animate-in fade-in duration-200">
+              <span className="material-symbols-outlined text-xl shrink-0 text-[#154734]">check_circle</span>
+              <span className="leading-snug">{successMsg}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleVerifyCode();
+            }} 
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-display font-extrabold text-slate-900 uppercase tracking-wider">
+                  Kode Akses / Redeem
+                </label>
+                <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
+                  Lisensi Rahasia
+                </span>
+              </div>
+
+              <div className="relative">
+                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xl pointer-events-none">
+                  key
+                </span>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={inputCode}
+                  onChange={(e) => {
+                    setInputCode(e.target.value);
+                    if (errorMsg) setErrorMsg('');
+                  }}
+                  placeholder="Masukkan kode lisensi..."
+                  className="w-full bg-slate-50 border border-slate-300 focus:border-slate-950 focus:bg-white p-3.5 pl-11 pr-11 rounded-2xl text-slate-950 font-display font-bold text-base tracking-widest placeholder:text-slate-400 placeholder:font-sans placeholder:tracking-normal placeholder:text-sm focus:outline-none transition-all shadow-2xs focus:ring-2 focus:ring-slate-950/10"
+                  autoFocus
+                />
+                
+                {inputCode && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-900 p-1 transition-colors cursor-pointer"
+                    title={showPassword ? 'Sembunyikan' : 'Tampilkan'}
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {showPassword ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Primary Action Button */}
+            <button
+              type="submit"
+              className="w-full h-12 bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-display font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-2xs hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 border border-slate-800"
+            >
+              <span>Verifikasi & Buka Akses</span>
+              <span className="material-symbols-outlined text-xl font-bold">arrow_forward</span>
+            </button>
+          </form>
+
+          {/* Secondary Action Link */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowHintModal(true)}
+              className="text-xs font-display font-bold text-slate-600 hover:text-slate-950 transition-colors flex items-center gap-1.5 cursor-pointer py-1"
+            >
+              <span className="material-symbols-outlined text-base text-slate-500">help_outline</span>
+              <span>Bantuan &amp; Permintaan Kode Akses</span>
+            </button>
+          </div>
+
+          {/* Footer Info */}
+          <div className="text-center text-[11px] font-display font-semibold text-slate-400 pt-1 border-t border-slate-100">
+            © 2026 TANITA &middot; Operations Access Control
+          </div>
+
+        </div>
+
+        {/* Info & Assistance Modal */}
+        {showHintModal && (
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-xs animate-in fade-in duration-150 text-slate-900"
+            onClick={() => setShowHintModal(false)}
+          >
+            <div 
+              className="bg-[#FEFEFA] border border-slate-200 shadow-2xl rounded-3xl p-6 w-full max-w-md flex flex-col gap-5 relative animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center border-b border-slate-100 pb-3.5">
+                <div className="flex items-center gap-2">
+                  <img 
+                    src="https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png" 
+                    alt="TANITA Logo" 
+                    className="h-7 w-auto object-contain shrink-0" 
+                  />
+                  <span className="text-xs font-display font-bold text-slate-500">&middot; Akses System</span>
+                </div>
+                <button 
+                  type="button"
+                  onClick={() => setShowHintModal(false)}
+                  className="p-1 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer rounded-lg hover:bg-slate-100"
+                >
+                  <span className="material-symbols-outlined text-2xl">close</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs font-display font-medium text-slate-600 leading-relaxed">
+                  Kode Akses TANITA Operations merupakan kunci aktivasi resmi yang diterbitkan oleh administrator sistem kebun.
+                </p>
+
+                <div className="p-4 bg-[#154734]/10 rounded-2xl border border-[#154734]/30 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-[#154734] font-display font-bold text-xs">
+                    <span className="material-symbols-outlined text-base text-[#154734]">verified</span>
+                    <span>Petunjuk Aktivasi:</span>
+                  </div>
+                  <p className="text-xs font-display font-medium text-slate-700 leading-relaxed">
+                    Silakan masukkan kode lisensi rahasia yang telah Anda terima. Jika Anda belum memiliki atau kehilangan kode, hubungi manajer operasional TANITA.
+                  </p>
+                </div>
+
+                {/* WhatsApp Contact Section */}
+                <div className="p-4 bg-[#154734]/10 border border-[#154734]/30 rounded-2xl flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-display font-bold text-xs text-[#154734] flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-lg text-[#154734]">chat</span>
+                      <span>Butuh Bantuan Akses?</span>
+                    </span>
+                    <span className="text-[10px] bg-[#154734] text-white font-display font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider">WhatsApp</span>
+                  </div>
+                  <p className="text-xs font-display font-medium text-slate-700 leading-relaxed">
+                    Hubungi admin layanan bantuan operasional via WhatsApp untuk konfirmasi atau permintaan Kode Akses TANITA.
+                  </p>
+                  <a
+                    href={getWaLink()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 bg-[#154734] hover:bg-[#154734] text-white font-display font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-2xs hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+                  >
+                    <span className="material-symbols-outlined text-lg">chat</span>
+                    <span>Hubungi via WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowHintModal(false)}
+                className="w-full py-2.5 bg-slate-950 hover:bg-slate-900 text-amber-300 font-display font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition-all cursor-pointer border border-slate-800"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+

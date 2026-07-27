@@ -1,0 +1,30 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  
+  
+  <g transform="translate(18, 12)">
+    <!-- Shadow -->
+    <g transform="translate(2, 4)" fill="#000">
+      <path d="M32 0 L20 12 V38 H0 V68 H64 V38 H44 V12 Z" />
+      <path d="M0 16 L16 0 L20 4 V38 Z" />
+      <path d="M64 16 L48 0 L44 4 V38 Z" />
+    </g>
+
+    <!-- Base Block -->
+    <rect x="0" y="38" width="64" height="28" fill="#00FF66" stroke="#000" stroke-width="4" stroke-linejoin="miter" />
+    
+    <!-- Base Details -->
+    <path d="M0 48 H20 L28 42 M28 42 V38 M28 42 L48 66 M48 66 H64 M48 66 V56 M20 48 V66 M20 66 H0" stroke="#000" stroke-width="4" fill="none" stroke-linejoin="miter" stroke-linecap="square"/>
+    
+    <!-- Left Leaf -->
+    <polygon points="0,26 0,16 16,0 30,14 30,38 0,38" fill="#00FFFF" stroke="#000" stroke-width="4" stroke-linejoin="miter" />
+    <path d="M0 26 L16 10" stroke="#000" stroke-width="4" fill="none" />
+    
+    <!-- Right Leaf -->
+    <polygon points="64,26 64,16 48,0 34,14 34,38 64,38" fill="#00FFFF" stroke="#000" stroke-width="4" stroke-linejoin="miter" />
+    <path d="M64 26 L48 10" stroke="#000" stroke-width="4" fill="none" />
+
+    <!-- Center Leaf -->
+    <polygon points="20,20 32,0 44,20 44,38 20,38" fill="#00FFFF" stroke="#000" stroke-width="4" stroke-linejoin="miter" />
+    <path d="M32 0 V38" stroke="#000" stroke-width="4" fill="none" />
+  </g>
+</svg>

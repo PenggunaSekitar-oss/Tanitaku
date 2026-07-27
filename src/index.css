@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
+@import "tailwindcss";
+
+@theme {
+  --color-background: var(--bg-color);
+  --color-surface: var(--surface-color);
+  --color-surface-high: var(--surface-high-color);
+  --color-on-surface: var(--on-surface-color);
+  --color-on-surface-muted: var(--on-surface-muted-color);
+  --color-primary: var(--primary-color);
+  --color-secondary: var(--secondary-color);
+  --color-action: var(--action-color);
+  --color-on-action: var(--on-action-color);
+  --color-success: var(--success-color);
+  --color-danger: var(--danger-color);
+  --color-outline: var(--outline-color);
+  
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Poppins", "Plus Jakarta Sans", sans-serif;
+}
+
+:root {
+  --bg-color: #F8FAFC;
+  --surface-color: #FEFEFA;
+  --surface-high-color: #F1F5F9;
+  --on-surface-color: #0F172A;
+  --on-surface-muted-color: #64748B;
+  --primary-color: #154734;
+  --secondary-color: #22372B;
+  --action-color: #154734;
+  --on-action-color: #FFFFFF;
+  --success-color: #154734;
+  --danger-color: #EF4444;
+  --outline-color: #E2E8F0;
+  --grid-color: rgba(15, 23, 42, 0.04);
+
+  --color-bg: #F8FAFC;
+  --color-bg-elevated: #FEFEFA;
+  --color-fg: #0F172A;
+  --color-fg-muted: #64748B;
+  --color-border: #E2E8F0;
+  --color-border-subtle: #F1F5F9;
+  --color-action: #154734;
+  --color-secondary: #22372B;
+  --color-action-ink: #FFFFFF;
+  --color-danger: #EF4444;
+  --color-danger-ink: #FFFFFF;
+  --color-warning: #154734;
+  --color-warning-ink: #FFFFFF;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+.font-brutal {
+  font-family: var(--font-display);
+}
+
+.neo-border {
+  border: 1px solid #E2E8F0;
+}
+
+.neo-border-thin {
+  border: 1px solid #F1F5F9;
+}
+
+.neo-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+.neo-shadow-sm {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.neo-shadow-hover:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
+}
+
+.bg-grid,
+.card-grid-bg {
+  background-image: 
+    linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.neo-card {
+  background-color: #FEFEFA;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  border-radius: 0.875rem;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neo-card:hover {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+  border-color: #CBD5E1;
+}
+
+.neo-card-small {
+  background-color: #FEFEFA;
+  background-image: 
+    linear-gradient(to right, rgba(15, 23, 42, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.045) 1px, transparent 1px);
+  background-size: 16px 16px;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.neo-btn {
+  min-height: 44px;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: none;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.neo-btn:active {
+  transform: scale(0.98);
+}
+
+.neo-btn-primary {
+  background-color: #154734;
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+.neo-btn-primary:hover {
+  background-color: #0e3023;
+}
+
+.neo-btn-secondary {
+  background-color: #22372B;
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+.neo-btn-secondary:hover {
+  background-color: #16241c;
+}
+
+.neo-btn-action {
+  background-color: #154734;
+  color: #FFFFFF;
+  border-color: transparent;
+}
+
+.neo-badge {
+  border: 1px solid #E2E8F0;
+  border-radius: 0.5rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+button, input, select, textarea {
+  min-height: 44px;
+  border-radius: 0.75rem;
+}
+
+
