@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Remix: Remix: TaniOps Command",
+  "description": "Industrial agricultural command center for monitoring, recording, and operational management of vegetable cultivation using a clean modular bento dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
