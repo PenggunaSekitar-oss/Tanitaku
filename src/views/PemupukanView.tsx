@@ -8,6 +8,8 @@ import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { formatLocalDate } from '../utils/localDate';
+import { GardenCalendar } from '../components/GardenCalendar';
+import { HelpTip } from '../components/HelpTip';
 
 export function PemupukanView() {
   const { blokLahan, pemupukan, addPemupukan, updatePemupukan, deletePemupukan } = useTaniOps();
@@ -51,6 +53,12 @@ export function PemupukanView() {
   const handleEdit = (p: any) => {
     setForm(p);
     setEditingId(p.id);
+    window.setTimeout(() => {
+      document.getElementById('form-rencana-perawatan')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }, 0);
   };
 
   const handleDelete = (id: string) => {
@@ -130,12 +138,18 @@ export function PemupukanView() {
         </div>
       </div>
 
+      <GardenCalendar
+        schedules={pemupukan}
+        blocks={blokLahan}
+        onEdit={handleEdit}
+      />
+
       {/* Main Content Grid: Form (Left) vs Schedule List (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* FORM PANEL (Left - 5 Cols) */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          <div className="neo-card p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000]">
+          <div id="form-rencana-perawatan" className="neo-card scroll-mt-24 p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-2 border-black pb-3 mb-4">
               <h2 className="font-brutal font-black text-base uppercase tracking-wider text-on-surface flex items-center gap-2">
                 <span className="material-symbols-outlined text-action text-[20px]">
@@ -157,6 +171,7 @@ export function PemupukanView() {
                 <div>
                   <label className="block text-xs font-bold text-on-surface mb-1 uppercase tracking-wider">
                     Pilih Blok Lahan <span className="text-danger">*</span>
+                    <HelpTip label="Blok lahan" text="Blok menentukan luas efektif yang dipakai untuk menghitung kebutuhan produk pada jadwal ini." />
                   </label>
                   <Select 
                     value={form.blokId} 
@@ -258,6 +273,7 @@ export function PemupukanView() {
                   <div>
                     <label className="block text-xs font-bold text-on-surface mb-1 uppercase tracking-wider">
                       Dosis Produk (/Hektar) <span className="text-danger">*</span>
+                      <HelpTip label="Dosis per hektare" text="Masukkan dosis acuan dari label produk. TANITA mengalikannya dengan luas efektif blok, bukan menggantikan petunjuk label." />
                     </label>
                     <div className="flex gap-1.5">
                       <div className="flex-1">
@@ -306,6 +322,7 @@ export function PemupukanView() {
                 <div>
                   <label className="block text-xs font-bold text-on-surface mb-1 uppercase tracking-wider">
                     Interval (Hari)
+                    <HelpTip label="Interval jadwal" text="Nilai lebih dari nol membuat jadwal berulang di kalender. Isi 0 untuk satu kali aplikasi." />
                   </label>
                   <NumberInput 
                     value={form.intervalHari} 

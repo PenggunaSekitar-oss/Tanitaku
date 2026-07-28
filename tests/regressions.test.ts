@@ -27,6 +27,8 @@ import {
   calculateHST,
   calculateLuasLahan,
 } from '../src/utils/calculations';
+import { getScheduleOccurrences } from '../src/utils/schedule';
+import { upsertCatalogHistory } from '../src/utils/catalogHistory';
 
 test('input desimal menerima titik dan koma tanpa mengubah besaran', () => {
   assert.equal(parseLocalizedNumberInput('0.5', true).value, 0.5);
@@ -53,6 +55,52 @@ test('jadwal berulang menghitung occurrence berikutnya', () => {
 
   const oneTime = getNextScheduledDate('2026-07-01', 0, new Date(2026, 6, 16));
   assert.equal(oneTime && formatLocalDate(oneTime), '2026-07-01');
+});
+
+test('kalender membatasi occurrence jadwal ke rentang yang tampil', () => {
+  const occurrences = getScheduleOccurrences(
+    '2026-07-01',
+    7,
+    new Date(2026, 6, 10),
+    new Date(2026, 6, 31),
+  );
+  assert.deepEqual(occurrences.map(formatLocalDate), [
+    '2026-07-15',
+    '2026-07-22',
+    '2026-07-29',
+  ]);
+
+  const oneTimeOutsideRange = getScheduleOccurrences(
+    '2026-07-01',
+    0,
+    new Date(2026, 6, 10),
+    new Date(2026, 6, 31),
+  );
+  assert.deepEqual(oneTimeOutsideRange, []);
+});
+
+test('riwayat katalog mendeduplikasi filter terbaru dan membatasi delapan item', () => {
+  let history: ReturnType<typeof upsertCatalogHistory<{ query: string }>> = [];
+  for (let index = 0; index < 10; index += 1) {
+    history = upsertCatalogHistory(
+      history,
+      { query: `produk-${index}` },
+      `Produk ${index}`,
+      new Date(2026, 6, 28, 10, index),
+    );
+  }
+  assert.equal(history.length, 8);
+  assert.equal(history[0]?.filters.query, 'produk-9');
+
+  history = upsertCatalogHistory(
+    history,
+    { query: 'produk-5' },
+    'Produk 5 terbaru',
+    new Date(2026, 6, 28, 11, 0),
+  );
+  assert.equal(history.length, 8);
+  assert.equal(history[0]?.summary, 'Produk 5 terbaru');
+  assert.equal(history.filter((entry) => entry.filters.query === 'produk-5').length, 1);
 });
 
 test('pencarian pestisida memakai target dan tidak gugur ketika tanaman diisi', () => {
@@ -210,7 +258,7 @@ test('perhitungan budidaya menolak tanggal dan besaran tidak valid', () => {
 });
 
 test('ikon PWA memiliki signature PNG valid', () => {
-  for (const file of ['pwa-192x192.png', 'pwa-512x512.png', 'apple-touch-icon.png']) {
+  for (const file of ['pwa-192x192.png', 'pwa-512x512.png', 'pwa-maskable-512x512.png', 'apple-touch-icon.png']) {
     const bytes = readFileSync(resolve(process.cwd(), 'public', file));
     assert.deepEqual(
       [...bytes.subarray(0, 8)],
@@ -238,4 +286,17 @@ test('UI mempertahankan logo TANITA dan menghapus label promosi berulang', () =>
     banner,
     /Data tersimpan lokal|Sumber cuaca BMKG|Tanpa data contoh/,
   );
+});
+
+test('timeline cuaca ringkas dan PWA memakai background terang', () => {
+  const weatherWidget = readFileSync(resolve('src/components/BmkgWeatherWidget.tsx'), 'utf8');
+  const viteConfig = readFileSync(resolve('vite.config.ts'), 'utf8');
+  const html = readFileSync(resolve('index.html'), 'utf8');
+
+  assert.match(weatherWidget, /hide-scrollbar flex snap-x/);
+  assert.doesNotMatch(weatherWidget, /grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6/);
+  assert.match(viteConfig, /background_color: '#F1F0EB'/);
+  assert.match(viteConfig, /pwa-maskable-512x512\.png/);
+  assert.match(html, /theme-color" content="#F1F0EB"/);
+  assert.doesNotMatch(html, /black-translucent/);
 });

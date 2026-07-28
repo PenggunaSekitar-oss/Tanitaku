@@ -189,6 +189,25 @@ button {
   touch-action: manipulation;
 }
 
+button,
+a,
+[role="button"] {
+  transition-duration: 160ms;
+  transition-timing-function: ease-out;
+}
+
+button:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+@media (hover: hover) {
+  .app-content button:not(:disabled):hover,
+  .app-content a:hover {
+    transition-duration: 140ms;
+  }
+}
+
 input,
 select,
 textarea {
@@ -323,6 +342,16 @@ textarea {
   select,
   textarea {
     font-size: 16px;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    background: #F1F0EB;
+  }
+
+  .app-shell {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 

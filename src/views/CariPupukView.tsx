@@ -3,6 +3,19 @@ import { PageHeader } from '../components/PageHeader';
 import { Select } from '../components/Select';
 import { CatalogMeta } from '../components/CatalogMeta';
 import { PUPUK_DB, Pupuk, getPupukDetails } from '../data/pupukData';
+import { CatalogHistory } from '../components/CatalogHistory';
+import { CatalogComparison, CompareToggle, ComparisonItem } from '../components/CatalogComparison';
+import { EmptyState } from '../components/EmptyState';
+import { HelpTip } from '../components/HelpTip';
+import {
+  CatalogHistoryEntry,
+  readCatalogHistory,
+  upsertCatalogHistory,
+  writeCatalogHistory,
+} from '../utils/catalogHistory';
+
+type PupukFilters = { tanaman: string; hst: string; fungsi: string };
+const HISTORY_KEY = 'tanita_history_pupuk';
 
 export function CariPupukView() {
   const [tanamanInput, setTanamanInput] = useState('');
@@ -10,6 +23,10 @@ export function CariPupukView() {
   const [hstInput, setHstInput] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [searchParams, setSearchParams] = useState({ tanaman: '', hst: -1, fungsi: '' });
+  const [history, setHistory] = useState<CatalogHistoryEntry<PupukFilters>[]>(() =>
+    readCatalogHistory<PupukFilters>(HISTORY_KEY),
+  );
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
   const FUNGSI_OPTIONS = [
     { value: '', label: 'Semua Fungsi' },
@@ -26,6 +43,28 @@ export function CariPupukView() {
     
     setSearchParams({ tanaman: tanamanInput, hst: parseInt(hstInput, 10), fungsi: fungsiInput });
     setHasSearched(true);
+    const filters = { tanaman: tanamanInput, hst: hstInput, fungsi: fungsiInput };
+    setHistory((current) => {
+      const next = upsertCatalogHistory(
+        current,
+        filters,
+        `${tanamanInput} · ${hstInput} HST${fungsiInput ? ` · ${fungsiInput}` : ''}`,
+      );
+      writeCatalogHistory(HISTORY_KEY, next);
+      return next;
+    });
+  };
+
+  const handleHistorySelect = (entry: CatalogHistoryEntry<PupukFilters>) => {
+    setTanamanInput(entry.filters.tanaman);
+    setHstInput(entry.filters.hst);
+    setFungsiInput(entry.filters.fungsi);
+    setSearchParams({
+      tanaman: entry.filters.tanaman,
+      hst: Number.parseInt(entry.filters.hst, 10),
+      fungsi: entry.filters.fungsi,
+    });
+    setHasSearched(true);
   };
 
   const resetSearch = () => {
@@ -34,7 +73,37 @@ export function CariPupukView() {
     setHstInput('');
     setFungsiInput('');
     setSearchParams({ tanaman: '', hst: -1, fungsi: '' });
+    setCompareIds([]);
   };
+
+  const toggleCompare = (id: string) => {
+    setCompareIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : current.length < 3
+          ? [...current, id]
+          : current,
+    );
+  };
+
+  const comparisonItems: ComparisonItem[] = compareIds
+    .map((id) => PUPUK_DB.find((item) => item.id === id))
+    .filter((item): item is Pupuk => Boolean(item))
+    .map((item) => {
+      const details = getPupukDetails(item);
+      return {
+        id: item.id,
+        name: item.nama,
+        subtitle: item.kategori,
+        values: {
+          content: item.kandungan,
+          phase: `${item.fase.join(', ')} · ${item.minHst}–${item.maxHst} HST`,
+          dose: item.dosis,
+          form: item.bentuk,
+          price: details.hargaNonSubsidi,
+        },
+      };
+    });
 
   const filteredPupuk = useMemo(() => {
     if (!hasSearched) return [];
@@ -127,7 +196,10 @@ export function CariPupukView() {
           />
         </div>
         <div className="w-full md:w-32">
-          <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1">Umur HST</label>
+          <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1">
+            Umur HST
+            <HelpTip label="HST" text="Hari Setelah Tanam dihitung sejak tanggal tanam. Filter ini hanya mencocokkan rentang fase yang tercatat di katalog." />
+          </label>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#5C5C5C] text-lg">calendar_today</span>
             <input 
@@ -150,6 +222,15 @@ export function CariPupukView() {
         </button>
       </form>
 
+      <CatalogHistory
+        entries={history}
+        onSelect={handleHistorySelect}
+        onClear={() => {
+          setHistory([]);
+          writeCatalogHistory(HISTORY_KEY, []);
+        }}
+      />
+
       {hasSearched && (
         <div className="flex items-center justify-between border-b-2 border-[#0A0A0A] pb-2">
           <h2 className="font-display font-extrabold text-lg uppercase text-[#0A0A0A]">
@@ -162,18 +243,27 @@ export function CariPupukView() {
         </div>
       )}
 
+      <CatalogComparison
+        items={comparisonItems}
+        fields={[
+          { key: 'content', label: 'Kandungan' },
+          { key: 'phase', label: 'Fase penggunaan' },
+          { key: 'dose', label: 'Dosis katalog' },
+          { key: 'form', label: 'Bentuk' },
+          { key: 'price', label: 'Kisaran harga' },
+        ]}
+        onRemove={toggleCompare}
+        onClear={() => setCompareIds([])}
+      />
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {!hasSearched ? (
-          <div className="col-span-full p-12 text-center flex flex-col items-center gap-4 bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] rounded">
-            <span className="material-symbols-outlined text-5xl text-[#5C5C5C]">compost</span>
-            <p className="text-[#0A0A0A] font-extrabold text-lg uppercase">Mulai Pencarian Pupuk</p>
-            <p className="text-xs text-[#5C5C5C] max-w-md">Masukkan konteks tanaman dan HST untuk memfilter rentang umur pada katalog pupuk.</p>
+          <div className="col-span-full">
+            <EmptyState icon="compost" title="Belum ada pencarian" message="Masukkan tanaman dan HST untuk melihat pupuk yang sesuai dengan fase katalog." />
           </div>
         ) : filteredPupuk.length === 0 ? (
-          <div className="col-span-full p-12 text-center flex flex-col items-center gap-4 bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] rounded">
-            <span className="material-symbols-outlined text-4xl text-[#5C5C5C]">compost</span>
-            <p className="text-[#0A0A0A] font-extrabold text-base">Pupuk tidak ditemukan.</p>
-            <p className="text-xs text-[#5C5C5C]">Coba gunakan kata kunci atau filter HST yang berbeda.</p>
+          <div className="col-span-full">
+            <EmptyState icon="search_off" title="Belum ada hasil yang cocok" message="Ubah umur HST atau fungsi pupuk, lalu jalankan pencarian kembali." />
           </div>
         ) : (
           filteredPupuk.map((pupuk, idx) => (
@@ -193,6 +283,11 @@ export function CariPupukView() {
                   <span className="text-[10px] uppercase font-bold bg-[#E6E6DC] text-[#0A0A0A] px-2 py-1 rounded border border-[#0A0A0A]">
                     {pupuk.minHst} - {pupuk.maxHst} HST
                   </span>
+                  <CompareToggle
+                    selected={compareIds.includes(pupuk.id)}
+                    disabled={compareIds.length >= 3}
+                    onClick={() => toggleCompare(pupuk.id)}
+                  />
                 </div>
               </div>
               {idx === 0 && (pupuk as any).score >= 15 && (

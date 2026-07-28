@@ -18,6 +18,8 @@ import {
   parseBmkgPayload,
   selectNearestForecast,
 } from '../utils/weather';
+import { WeatherSkeleton } from './Skeleton';
+import { HelpTip } from './HelpTip';
 
 const BMKG_REGIONS = INDONESIA_REGIONS;
 const DEFAULT_ADM4 = '73.04.01.1001';
@@ -224,6 +226,20 @@ export function BmkgWeatherWidget() {
   const freshness = getWeatherFreshness(data?.analysisAt ?? null);
   const timeZone = data?.location.timezone ?? 'Asia/Makassar';
   const timeZoneLabel = getTimeZoneLabel(timeZone);
+  const forecastCoverage = useMemo(() => {
+    if (!data?.forecasts.length) return '—';
+    const first = data.forecasts[0];
+    const last = data.forecasts[data.forecasts.length - 1];
+    if (!first || !last) return '—';
+    return `${formatDateTime(first.forecastAt, timeZone)}–${formatDateTime(last.forecastAt, timeZone)} ${timeZoneLabel}`;
+  }, [data, timeZone, timeZoneLabel]);
+  const rainWindow = useMemo(() => {
+    const rainy = timeline.find((forecast) =>
+      /hujan|petir/i.test(forecast.description) ||
+      (forecast.precipitation !== null && forecast.precipitation > 0),
+    );
+    return rainy ? `${formatForecastTime(rainy, timeZone)} ${timeZoneLabel}` : null;
+  }, [timeline, timeZone, timeZoneLabel]);
 
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase('id-ID');
   const filteredRegions = BMKG_REGIONS.filter((region) =>
@@ -256,6 +272,10 @@ export function BmkgWeatherWidget() {
           <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#5A665E]">
             <span className="material-symbols-outlined text-[17px] text-[#24533F]">verified</span>
             Data prakiraan resmi BMKG
+            <HelpTip
+              label="Prakiraan BMKG"
+              text="Ini adalah prakiraan model per tiga jam, bukan pengamatan real-time. Waktu analisis dan waktu pengambilan ditampilkan agar umur data dapat diperiksa."
+            />
           </div>
           <p className="mt-1 text-xs leading-relaxed text-[#69736D]">
             Per 3 jam · horizon 3 hari · bukan pengamatan cuaca real-time
@@ -382,7 +402,9 @@ export function BmkgWeatherWidget() {
         </div>
       </div>
 
-      <div className="grid gap-4 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]">
+      {loading && !data && <WeatherSkeleton />}
+
+      <div className={`${loading && !data ? 'hidden' : 'grid'} gap-4 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]`}>
         <div className="rounded-2xl bg-[#173F35] p-5 text-white sm:p-6">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
             <div className="flex min-w-0 items-center gap-4">
@@ -486,6 +508,12 @@ export function BmkgWeatherWidget() {
                 {data?.fromCache ? 'Salinan tersimpan' : freshness.label}
               </dd>
             </div>
+            <div className="flex justify-between gap-3 border-b border-[#ECEAE3] pb-2">
+              <dt className="text-[#737B76]">Cakupan prakiraan</dt>
+              <dd className="max-w-[190px] text-right font-semibold leading-relaxed text-[#263029]">
+                {forecastCoverage}
+              </dd>
+            </div>
             <div className="flex justify-between gap-3">
               <dt className="text-[#737B76]">Koordinat BMKG</dt>
               <dd className="text-right font-mono text-[10px] font-semibold text-[#263029]">
@@ -509,26 +537,26 @@ export function BmkgWeatherWidget() {
       </div>
 
       {timeline.length > 0 && (
-        <div className="border-t border-[#D8D5CC] px-4 py-5 sm:px-6">
-          <div className="mb-3 flex items-end justify-between gap-3">
+        <div className="border-t border-[#D8D5CC] px-4 py-4 sm:px-6">
+          <div className="mb-2.5 flex items-end justify-between gap-3">
             <div>
               <h3 className="text-sm font-bold text-[#1C211D]">18 jam ke depan</h3>
               <p className="mt-0.5 text-[10px] text-[#737B76]">
-                Enam slot terdekat dari prakiraan BMKG
+                Geser mendatar untuk melihat enam slot · {rainWindow ? `hujan terdekat ${rainWindow}` : 'belum ada sinyal hujan pada slot ini'}
               </p>
             </div>
             <span className="text-[10px] font-semibold text-[#737B76]">{timeZoneLabel}</span>
           </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="hide-scrollbar flex snap-x gap-2 overflow-x-auto pb-1">
             {timeline.map((forecast) => (
               <article
                 key={forecast.forecastAt}
-                className="rounded-xl border border-[#DEDCD4] bg-white p-3"
+                className="min-w-[148px] snap-start rounded-xl border border-[#DEDCD4] bg-white px-3 py-2.5 sm:min-w-[168px] xl:min-w-0 xl:flex-1"
               >
                 <time className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#6F7872]">
                   {formatForecastTime(forecast, timeZone)}
                 </time>
-                <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="mt-1.5 flex items-center justify-between gap-2">
                   <span className="material-symbols-outlined text-[22px] text-[#24533F]">
                     {getWeatherIcon(forecast.description)}
                   </span>
@@ -536,7 +564,7 @@ export function BmkgWeatherWidget() {
                     {forecast.temperature !== null ? `${forecast.temperature}°` : '—'}
                   </strong>
                 </div>
-                <p className="mt-2 min-h-8 text-[10px] font-semibold leading-4 text-[#4F5B54]">
+                <p className="mt-1.5 truncate text-[10px] font-semibold leading-4 text-[#4F5B54]" title={forecast.description}>
                   {forecast.description}
                 </p>
                 <p className="mt-1 text-[9px] text-[#7A817C]">
@@ -553,7 +581,7 @@ export function BmkgWeatherWidget() {
           <div className="mb-3">
             <h3 className="text-sm font-bold text-[#1C211D]">Catatan keputusan lapangan</h3>
             <p className="mt-0.5 text-[10px] leading-relaxed text-[#737B76]">
-              Interpretasi TANITA dari slot 6 jam ke depan; konfirmasi dengan kondisi lahan dan label produk.
+              Interpretasi TANITA dari slot 6 jam ke depan{rainWindow ? `; hujan terdekat ${rainWindow}` : ''}. Konfirmasi dengan kondisi lahan dan label produk.
             </p>
           </div>
           <div className="grid gap-2 md:grid-cols-2">

@@ -4,16 +4,19 @@ import { Select } from '../components/Select';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CatalogMeta } from '../components/CatalogMeta';
 import { BIBIT_CATALOG as CATALOG, ELEVATION_OPTIONS, CUACA_OPTIONS, BibitItem, getBibitDetails } from '../data/bibitData';
+import { CatalogHistory } from '../components/CatalogHistory';
+import { CatalogComparison, CompareToggle, ComparisonItem } from '../components/CatalogComparison';
+import { EmptyState } from '../components/EmptyState';
+import { HelpTip } from '../components/HelpTip';
+import {
+  CatalogHistoryEntry,
+  readCatalogHistory,
+  upsertCatalogHistory,
+  writeCatalogHistory,
+} from '../utils/catalogHistory';
 
-const getIconForKomoditas = (komoditas: string) => {
-  const k = komoditas.toLowerCase();
-  if (k.includes('cabai')) return 'local_fire_department';
-  if (k.includes('tomat') || k.includes('melon') || k.includes('semangka') || k.includes('pepaya')) return 'lens';
-  if (k.includes('bawang') || k.includes('jagung')) return 'grass';
-  if (k.includes('kubis') || k.includes('kol') || k.includes('sawi') || k.includes('pakcoy') || k.includes('selada') || k.includes('kangkung') || k.includes('bayam')) return 'eco';
-  if (k.includes('wortel') || k.includes('kentang')) return 'spa';
-  return 'local_florist';
-};
+type BibitFilters = { komoditas: string; ketinggian: string; cuaca: string };
+const HISTORY_KEY = 'tanita_history_bibit';
 
 export function CariBibitView() {
   const [komoditas, setKomoditas] = useState('');
@@ -22,6 +25,10 @@ export function CariBibitView() {
   const [hasSearched, setHasSearched] = useState(false);
   const [results, setResults] = useState<BibitItem[]>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [history, setHistory] = useState<CatalogHistoryEntry<BibitFilters>[]>(() =>
+    readCatalogHistory<BibitFilters>(HISTORY_KEY),
+  );
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
   const handleReset = () => {
     setKomoditas('');
@@ -30,13 +37,17 @@ export function CariBibitView() {
     setHasSearched(false);
     setResults([]);
     setShowResetConfirm(false);
+    setCompareIds([]);
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performSearch = (
+    komoditasValue: string,
+    ketinggianValue: string,
+    cuacaValue: string,
+  ) => {
     setHasSearched(true);
       
-      const query = komoditas.trim().toLowerCase();
+      const query = komoditasValue.trim().toLowerCase();
       
       const scored = CATALOG.map(item => {
         let score = 0;
@@ -57,19 +68,19 @@ export function CariBibitView() {
         
         // 1. Ketinggian (H)
         const dataranStr = (item.rekomendasiDataran || (item.ketinggian ? item.ketinggian.join(' ') : '')).toLowerCase();
-        if (ketinggian === 'Rendah') {
+        if (ketinggianValue === 'Rendah') {
           if (dataranStr.includes('rendah')) {
             score += 15;
           } else {
             isMatch = false;
           }
-        } else if (ketinggian === 'Menengah') {
+        } else if (ketinggianValue === 'Menengah') {
           if (dataranStr.includes('menengah') || dataranStr.includes('sedang') || (dataranStr.includes('rendah') && dataranStr.includes('tinggi'))) {
             score += 15;
           } else {
             isMatch = false;
           }
-        } else if (ketinggian === 'Tinggi') {
+        } else if (ketinggianValue === 'Tinggi') {
           if (dataranStr.includes('tinggi')) {
             score += 15;
           } else {
@@ -82,12 +93,12 @@ export function CariBibitView() {
         const deskripsiStr = (item.deskripsi || '').toLowerCase();
         const combined = `${keunggulanStr} ${deskripsiStr}`;
 
-        if (cuaca === 'Hujan') {
+        if (cuacaValue === 'Hujan') {
           // Musim Hujan: Tahan genangan, akar kuat, resisten penyakit jamur/bakteri
           if (combined.includes('layu') || combined.includes('patek') || combined.includes('antraknosa') || combined.includes('hujan') || combined.includes('kebasahan') || combined.includes('busuk') || combined.includes('bakteri') || combined.includes('akar')) {
             score += 10;
           }
-        } else if (cuaca === 'Kemarau') {
+        } else if (cuacaValue === 'Kemarau') {
           // Musim Kemarau: Genjah (cepat panen) & efisien penggunaan air
           if (combined.includes('genjah') || combined.includes('cepat') || combined.includes('kering') || combined.includes('panas') || combined.includes('kekeringan') || combined.includes('air')) {
             score += 10;
@@ -102,12 +113,72 @@ export function CariBibitView() {
     setResults(filtered);
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    performSearch(komoditas, ketinggian, cuaca);
+    const filters = { komoditas, ketinggian, cuaca };
+    setHistory((current) => {
+      const next = upsertCatalogHistory(
+        current,
+        filters,
+        `${komoditas || 'Semua komoditas'} · ${ketinggian} · ${cuaca}`,
+      );
+      writeCatalogHistory(HISTORY_KEY, next);
+      return next;
+    });
+  };
+
+  const handleHistorySelect = (entry: CatalogHistoryEntry<BibitFilters>) => {
+    setKomoditas(entry.filters.komoditas);
+    setKetinggian(entry.filters.ketinggian);
+    setCuaca(entry.filters.cuaca);
+    performSearch(entry.filters.komoditas, entry.filters.ketinggian, entry.filters.cuaca);
+  };
+
+  const toggleCompare = (id: string) => {
+    setCompareIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : current.length < 3
+          ? [...current, id]
+          : current,
+    );
+  };
+
+  const comparisonItems: ComparisonItem[] = compareIds
+    .map((id) => CATALOG.find((item) => item.nama === id))
+    .filter((item): item is BibitItem => Boolean(item))
+    .map((item) => {
+      const details = getBibitDetails(item);
+      return {
+        id: item.nama,
+        name: item.nama,
+        subtitle: `${item.komoditas} · ${item.produsen}`,
+        values: {
+          elevation: item.rekomendasiDataran || item.ketinggian?.join(', '),
+          harvest: item.umurPanen,
+          yield: item.potensiHasil,
+          strength: details.keunggulanText,
+          price: details.harga,
+        },
+      };
+    });
+
   return (
     <div className="flex flex-col gap-6 w-full pb-12">
       <PageHeader
         title="Referensi Bibit"
         subtitle="Filter katalog varietas berdasarkan ketinggian dan karakter musim yang tercatat. Verifikasi kembali informasi pada label produsen."
         action={<CatalogMeta count={CATALOG.length} unit="varietas" />}
+      />
+
+      <CatalogHistory
+        entries={history}
+        onSelect={handleHistorySelect}
+        onClear={() => {
+          setHistory([]);
+          writeCatalogHistory(HISTORY_KEY, []);
+        }}
       />
 
       <section className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6">
@@ -125,7 +196,10 @@ export function CariBibitView() {
             />
           </div>
           <div className="flex flex-col">
-            <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Topografi / Ketinggian (H)</label>
+            <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">
+              Topografi / Ketinggian
+              <HelpTip label="Ketinggian lahan" text="Rentang dataran mengikuti keterangan adaptasi varietas di katalog. Kondisi mikroklimat lahan tetap perlu diperiksa." />
+            </label>
             <Select 
               options={ELEVATION_OPTIONS} 
               value={ketinggian} 
@@ -160,6 +234,19 @@ export function CariBibitView() {
             <span className="text-xs font-bold text-[#5C5C5C]">{results.length} Varian Ditemukan</span>
           </div>
 
+          <CatalogComparison
+            items={comparisonItems}
+            fields={[
+              { key: 'elevation', label: 'Adaptasi dataran' },
+              { key: 'harvest', label: 'Umur panen' },
+              { key: 'yield', label: 'Potensi hasil' },
+              { key: 'strength', label: 'Keunggulan' },
+              { key: 'price', label: 'Kisaran harga' },
+            ]}
+            onRemove={toggleCompare}
+            onClear={() => setCompareIds([])}
+          />
+
           {results.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((item, idx) => {
@@ -178,9 +265,11 @@ export function CariBibitView() {
                         <h3 className="font-display font-extrabold text-lg text-white uppercase leading-snug">{item.nama}</h3>
                         <p className="text-xs font-mono text-white/80 mt-0.5">{item.komoditas} &middot; {item.produsen}</p>
                       </div>
-                      <span className="material-symbols-outlined text-white bg-[#0A0A0A] p-2 rounded border border-[#0A0A0A] text-[22px] shrink-0">
-                        {getIconForKomoditas(item.komoditas)}
-                      </span>
+                      <CompareToggle
+                        selected={compareIds.includes(item.nama)}
+                        disabled={compareIds.length >= 3}
+                        onClick={() => toggleCompare(item.nama)}
+                      />
                     </div>
 
                     <div className="p-4 flex flex-col gap-3 flex-1">
@@ -267,13 +356,11 @@ export function CariBibitView() {
               })}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center p-8 text-center bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] rounded">
-              <span className="material-symbols-outlined text-4xl text-[#5C5C5C] mb-3">search_off</span>
-              <h4 className="font-display font-bold text-base mb-1 text-[#0A0A0A]">Tidak Ada Rekomendasi</h4>
-              <p className="text-xs text-[#5C5C5C] max-w-md">
-                Maaf, kami belum menemukan data varietas yang cocok untuk kriteria tersebut. Coba ubah komoditas atau kategori ketinggian lahan.
-              </p>
-            </div>
+            <EmptyState
+              icon="search_off"
+              title="Belum ada varietas yang cocok"
+              message="Ubah komoditas, ketinggian, atau kondisi musim lalu coba kembali."
+            />
           )}
         </div>
       )}

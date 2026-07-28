@@ -10,16 +10,17 @@ interface EmptyStateProps {
 
 export function EmptyState({ icon, title, message, actionLabel, onAction }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center p-12 text-center border border-outline border-dashed bg-surface-high rounded-sm">
-      <span className="material-symbols-outlined text-5xl text-on-surface-muted mb-4">{icon}</span>
-      <h3 className="font-display font-semibold text-lg text-on-surface mb-2">{title}</h3>
-      <p className="text-on-surface-muted max-w-sm mb-6 leading-relaxed">{message}</p>
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#D3D6D1] bg-[#F8F7F2] px-5 py-8 text-center">
+      <span className="material-symbols-outlined mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#E8ECE8] text-[22px] text-[#52665A]">{icon}</span>
+      <h3 className="font-display text-base font-semibold text-[#27352D]">{title}</h3>
+      <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-[#6C7770]">{message}</p>
       {actionLabel && onAction && (
         <button
+          type="button"
           onClick={onAction}
-          className="bg-action text-on-action px-6 h-[48px] rounded-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition"
+          className="mt-4 flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#24533F] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#1B4031]"
         >
-          <span className="material-symbols-outlined">add</span>
+          <span className="material-symbols-outlined text-[17px]">add</span>
           {actionLabel}
         </button>
       )}
