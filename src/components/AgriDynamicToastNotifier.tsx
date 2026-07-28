@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import {
@@ -11,22 +11,39 @@ interface AgriDynamicToastNotifierProps {
   navigate?: (view: string) => void;
 }
 
+const isPreferenceEnabled = (key: string): boolean => {
+  try {
+    return localStorage.getItem(key) !== 'false';
+  } catch {
+    return true;
+  }
+};
+
 export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierProps) {
   const { tanaman, pemupukan, blokLahan } = useTaniOps();
   const { showAgriToast } = useToast();
+  const [preferencesVersion, setPreferencesVersion] = useState(0);
 
   const prevTanamanMapRef = useRef<Record<string, string>>({});
   const isInitialMountRef = useRef(true);
   const notifiedPemupukanKeysRef = useRef<Set<string>>(new Set());
 
-  // 1. Dynamic Notification on Crop Status Change
   useEffect(() => {
+    const handleSettingsUpdate = () => setPreferencesVersion((version) => version + 1);
+    window.addEventListener('tanita-settings-updated', handleSettingsUpdate);
+    return () => window.removeEventListener('tanita-settings-updated', handleSettingsUpdate);
+  }, []);
+
+  // Notification on crop status change
+  useEffect(() => {
+    const notificationsEnabled = isPreferenceEnabled('tanita_notify_crop_status');
+
     tanaman.forEach((t) => {
       const currentStatus = t.status || 'Aktif';
       const prevStatus = prevTanamanMapRef.current[t.id];
 
-      // Skip initial mount notification, just record initial state
-      if (isInitialMountRef.current) {
+      // Always keep the comparison state current, including while notifications are disabled.
+      if (isInitialMountRef.current || !notificationsEnabled) {
         prevTanamanMapRef.current[t.id] = currentStatus;
         return;
       }
@@ -69,10 +86,12 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
     }
-  }, [tanaman, blokLahan, showAgriToast, navigate]);
+  }, [tanaman, blokLahan, showAgriToast, navigate, preferencesVersion]);
 
-  // 2. Dynamic Reminder for Fertilization Schedules Approaching Deadline
+  // Reminder for fertilization schedules approaching their planned date
   useEffect(() => {
+    const notificationsEnabled = isPreferenceEnabled('tanita_notify_fertilizer');
+    if (!notificationsEnabled) return;
     if (!pemupukan || pemupukan.length === 0) return;
 
     const today = new Date();
@@ -136,14 +155,14 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
           type: 'error',
           category: 'pemupukan',
           icon: 'warning',
-          message: `Jadwal ${item.jenisPupuk} di ${namaBlok} terlewat ${Math.abs(diffDays)} hari (${scheduledDate}).\nSegera lakukan pemupukan agar nutrisi tanaman terjaga.`,
+          message: `Jadwal ${item.jenisPupuk} di ${namaBlok} terlewat ${Math.abs(diffDays)} hari (${scheduledDate}).\nPeriksa kondisi tanaman dan catat tindak lanjut sesuai rencana budidaya.`,
           duration: 9000,
           actionLabel: 'Kelola Jadwal',
           onAction: () => navigate && navigate('pemupukan'),
         });
       }
     });
-  }, [pemupukan, blokLahan, showAgriToast, navigate]);
+  }, [pemupukan, blokLahan, showAgriToast, navigate, preferencesVersion]);
 
   return null;
 }

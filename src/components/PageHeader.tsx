@@ -8,23 +8,25 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-1 w-full mb-1 pb-2 border-b border-slate-200/80">
-      <div className="flex items-center justify-between gap-4 w-full flex-wrap">
-        <div className="flex flex-col gap-1">
-          <h1 className="font-display font-black text-2xl tracking-tight text-slate-950 leading-snug flex items-center gap-2">
+    <header className="w-full border-b border-[#D9D8D1] pb-5">
+      <div className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-end">
+        <div className="max-w-3xl">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[#7E8781]">
+            TANITA / Operasional kebun
+          </p>
+          <h1 className="font-display text-2xl font-semibold leading-tight tracking-[-0.035em] text-[#18231D] sm:text-[28px]">
             {title}
           </h1>
-          <p className="text-slate-700 text-sm sm:text-base font-semibold max-w-3xl leading-snug">
+          <p className="mt-2 max-w-2xl text-sm font-medium leading-relaxed text-[#657068]">
             {subtitle}
           </p>
         </div>
         {action && (
-          <div className="shrink-0">
+          <div className="w-full shrink-0 sm:w-auto">
             {action}
           </div>
         )}
       </div>
-    </div>
+    </header>
   );
 }
-

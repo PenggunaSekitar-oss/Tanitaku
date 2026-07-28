@@ -24,13 +24,13 @@ export function Accordion({ title, icon, children, defaultOpen = false, isOpen: 
   };
 
   return (
-    <div className="bg-surface-high neo-border-thin rounded-[16px_8px_16px_8px] flex flex-col transition-all">
+    <div className="flex flex-col rounded-xl border border-[#D8D5CC] bg-[#F8F7F2] transition">
       <button 
         type="button" 
         onClick={handleToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-surface-high transition-colors"
+        className="flex w-full items-center justify-between gap-4 p-4 text-left transition-colors hover:bg-white"
       >
-        <h3 className="text-sm font-brutal uppercase text-white font-extrabold bg-[#154734] px-2.5 py-1 rounded-[6px_2px_6px_2px] neo-border-thin shadow-[2px_2px_0px_0px_#0A0A0A] inline-flex tracking-wider items-center gap-2">
+        <h3 className="inline-flex items-center gap-2 font-display text-sm font-semibold text-[#26352D]">
           {icon && <span className="material-symbols-outlined text-[18px]">{icon}</span>}
           {title}
         </h3>
@@ -39,7 +39,7 @@ export function Accordion({ title, icon, children, defaultOpen = false, isOpen: 
         </span>
       </button>
       <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        <div className="p-4 pt-4 border-t-2 border-black">
+        <div className="border-t border-[#DEDCD4] p-4">
           {children}
         </div>
       </div>

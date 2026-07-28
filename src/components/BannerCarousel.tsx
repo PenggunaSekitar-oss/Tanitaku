@@ -1,68 +1,36 @@
-import React, { useState, useEffect } from "react";
-
-const HERO_IMAGES = [
-  "https://res.cloudinary.com/ddc26noa/image/upload/v1784818378/253483203_1784817786561488_xjv8xj.jpg",
-  "https://res.cloudinary.com/ddc26noa/image/upload/v1784819072/81306860_1784818991831817_ijlkwa.jpg"
-];
+const HERO_IMAGE =
+  'https://res.cloudinary.com/ddc26noa/image/upload/v1784818378/253483203_1784817786561488_xjv8xj.jpg';
 
 export function BannerCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length);
-    }, 4000); // Auto slide every 4 seconds
-    return () => clearInterval(timer);
-  }, []);
-
   return (
-    <div className="w-full h-48 sm:h-64 md:h-72 lg:h-80 rounded-2xl overflow-hidden border border-slate-200/80 shadow-md relative bg-slate-900 group">
-      {HERO_IMAGES.map((src, index) => (
+    <section className="grid min-h-[260px] overflow-hidden rounded-[22px] border border-[#345749] bg-[#173D2F] text-white md:grid-cols-[1.05fr_0.95fr]">
+      <div className="order-2 flex flex-col justify-between p-6 sm:p-8 md:order-1 md:p-10">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C7D8CC]">
+            Ruang kerja kebun
+          </p>
+          <h1 className="mt-4 max-w-xl font-display text-2xl font-semibold leading-[1.16] tracking-[-0.04em] sm:text-3xl">
+            Catatan lapangan yang rapi untuk keputusan yang bisa dipertanggungjawabkan.
+          </h1>
+          <p className="mt-4 max-w-lg text-sm font-medium leading-relaxed text-[#D3DFD7]">
+            Pantau lahan, jadwal, biaya, dan prakiraan cuaca dalam satu alur kerja yang
+            sederhana.
+          </p>
+        </div>
+        <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-[11px] font-semibold text-[#D7E1DA]">
+          <span>Data tersimpan lokal</span>
+          <span>Sumber cuaca BMKG</span>
+          <span>Tanpa data contoh</span>
+        </div>
+      </div>
+      <div className="order-1 min-h-[210px] overflow-hidden md:order-2 md:min-h-full">
         <img
-          key={src}
-          src={src}
-          alt={`TANITA Hero Banner ${index + 1}`}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-            index === currentIndex ? "opacity-100 scale-100" : "opacity-0 scale-105"
-          }`}
+          src={HERO_IMAGE}
+          alt="Area pertanian yang dikelola melalui TANITA"
+          className="h-full w-full object-cover"
           referrerPolicy="no-referrer"
         />
-      ))}
-
-      {/* Slide Navigation Indicators */}
-      <div className="absolute bottom-3 left-0 right-0 flex justify-center items-center gap-2 z-10">
-        {HERO_IMAGES.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentIndex(index)}
-            className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
-              index === currentIndex 
-                ? "w-8 bg-[#154734] shadow-sm" 
-                : "w-2.5 bg-white/60 hover:bg-white"
-            }`}
-            aria-label={`Ke slide ${index + 1}`}
-          />
-        ))}
       </div>
-
-      {/* Prev / Next Buttons on Hover */}
-      <button
-        onClick={() => setCurrentIndex((prev) => (prev === 0 ? HERO_IMAGES.length - 1 : prev - 1))}
-        className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-950/40 hover:bg-slate-950/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer backdrop-blur-xs"
-        aria-label="Banner sebelumnya"
-      >
-        <span className="material-symbols-outlined text-lg">chevron_left</span>
-      </button>
-
-      <button
-        onClick={() => setCurrentIndex((prev) => (prev + 1) % HERO_IMAGES.length)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-950/40 hover:bg-slate-950/80 border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer backdrop-blur-xs"
-        aria-label="Banner berikutnya"
-      >
-        <span className="material-symbols-outlined text-lg">chevron_right</span>
-      </button>
-    </div>
+    </section>
   );
 }
-
-

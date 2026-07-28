@@ -1,79 +1,229 @@
-import { PageHeader } from '../components/PageHeader';
-import React, { useState, useEffect } from 'react';
-import { useToast } from '../context/ToastContext';
-import { useTaniOps } from '../context/TaniOpsContext';
-import { AgriNotificationWidget } from '../components/AgriNotificationWidget';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { PageHeader } from '../components/PageHeader';
+import { useTaniOps } from '../context/TaniOpsContext';
+import { useToast } from '../context/ToastContext';
 
-interface PengaturanViewProps {
-  navigate?: (view: string) => void;
+const PROFILE_KEYS = {
+  farmName: 'tanita_farm_name',
+  managerName: 'tanita_manager_name',
+} as const;
+
+const NOTIFICATION_KEYS = {
+  cropStatus: 'tanita_notify_crop_status',
+  fertilizer: 'tanita_notify_fertilizer',
+} as const;
+
+type ModalConfig = {
+  isOpen: boolean;
+  title: string;
+  message: string;
+  confirmText: string;
+  confirmVariant: 'danger' | 'primary' | 'warning' | 'success';
+  icon: string;
+  onConfirm: () => void;
+};
+
+type SettingsCardProps = {
+  title: string;
+  eyebrow: string;
+  icon: string;
+  children: React.ReactNode;
+  className?: string;
+};
+
+function SettingsCard({
+  title,
+  eyebrow,
+  icon,
+  children,
+  className = '',
+}: SettingsCardProps) {
+  return (
+    <section
+      className={`overflow-hidden rounded-[18px] border border-[#D8D5CC] bg-[#FBFAF6] ${className}`}
+    >
+      <div className="flex items-center gap-3 border-b border-[#E3E0D8] px-5 py-4 sm:px-6">
+        <span className="material-symbols-outlined text-[21px] text-[#24533F]" aria-hidden="true">
+          {icon}
+        </span>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#80877F]">
+            {eyebrow}
+          </p>
+          <h2 className="mt-0.5 font-display text-base font-semibold tracking-[-0.02em] text-[#19231E]">
+            {title}
+          </h2>
+        </div>
+      </div>
+      <div className="p-5 sm:p-6">{children}</div>
+    </section>
+  );
 }
 
-export function PengaturanView({ navigate }: PengaturanViewProps) {
-  const { showToast } = useToast();
-  const { clearAllData } = useTaniOps();
-  const [farmName, setFarmName] = useState<string>('');
-  const [managerName, setManagerName] = useState<string>('');
+function ToggleRow({
+  id,
+  title,
+  description,
+  checked,
+  onChange,
+}: {
+  id: string;
+  title: string;
+  description: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-5 py-4 first:pt-0 last:pb-0">
+      <label htmlFor={id} className="cursor-pointer">
+        <span className="block text-sm font-semibold text-[#223029]">{title}</span>
+        <span className="mt-1 block max-w-sm text-xs font-medium leading-relaxed text-[#6D756F]">
+          {description}
+        </span>
+      </label>
+      <button
+        id={id}
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative mt-0.5 h-7 min-h-7 w-12 shrink-0 rounded-full border p-0.5 transition-colors ${
+          checked
+            ? 'border-[#24533F] bg-[#24533F]'
+            : 'border-[#C9C7BF] bg-[#E5E3DC]'
+        }`}
+      >
+        <span
+          className={`block size-5 rounded-full bg-white shadow-sm transition-transform ${
+            checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+        <span className="sr-only">{checked ? 'Aktif' : 'Nonaktif'}</span>
+      </button>
+    </div>
+  );
+}
 
-  // Modal konfirmasi state
-  const [modalConfig, setModalConfig] = useState<{
-    isOpen: boolean;
-    title: string;
-    message: string;
-    confirmText: string;
-    confirmVariant: 'danger' | 'primary' | 'warning' | 'success';
-    icon: string;
-    onConfirm: () => void;
-  }>({
+export function PengaturanView() {
+  const { showToast } = useToast();
+  const {
+    blokLahan,
+    tanaman,
+    logAktivitas,
+    pemupukan,
+    keuangan,
+    clearAllData,
+  } = useTaniOps();
+
+  const [farmName, setFarmName] = useState('');
+  const [managerName, setManagerName] = useState('');
+  const [notifyCropStatus, setNotifyCropStatus] = useState(true);
+  const [notifyFertilizer, setNotifyFertilizer] = useState(true);
+  const [savedSignature, setSavedSignature] = useState('');
+  const [modalConfig, setModalConfig] = useState<ModalConfig>({
     isOpen: false,
     title: '',
     message: '',
-    confirmText: 'YA',
+    confirmText: 'Lanjutkan',
     confirmVariant: 'primary',
     icon: 'info',
-    onConfirm: () => {},
+    onConfirm: () => undefined,
   });
 
   useEffect(() => {
-    const savedFarm = localStorage.getItem('tanita_farm_name');
-    if (savedFarm) setFarmName(savedFarm);
-    const savedManager = localStorage.getItem('tanita_manager_name');
-    if (savedManager) setManagerName(savedManager);
-    localStorage.removeItem('tanita_autosave_interval');
+    try {
+      const savedFarm = localStorage.getItem(PROFILE_KEYS.farmName) ?? '';
+      const savedManager = localStorage.getItem(PROFILE_KEYS.managerName) ?? '';
+      const savedCropStatus = localStorage.getItem(NOTIFICATION_KEYS.cropStatus) !== 'false';
+      const savedFertilizer = localStorage.getItem(NOTIFICATION_KEYS.fertilizer) !== 'false';
+
+      setFarmName(savedFarm);
+      setManagerName(savedManager);
+      setNotifyCropStatus(savedCropStatus);
+      setNotifyFertilizer(savedFertilizer);
+      setSavedSignature(
+        JSON.stringify([savedFarm, savedManager, savedCropStatus, savedFertilizer]),
+      );
+      localStorage.removeItem('tanita_autosave_interval');
+    } catch {
+      setSavedSignature(JSON.stringify(['', '', true, true]));
+      showToast('Penyimpanan browser tidak tersedia pada perangkat ini.', 'error');
+    }
   }, []);
 
+  const currentSignature = JSON.stringify([
+    farmName,
+    managerName,
+    notifyCropStatus,
+    notifyFertilizer,
+  ]);
+  const hasUnsavedChanges = savedSignature !== '' && savedSignature !== currentSignature;
+
+  const dataSummary = useMemo(
+    () => [
+      { label: 'Blok lahan', value: blokLahan.length },
+      { label: 'Musim tanam', value: tanaman.length },
+      { label: 'Jurnal', value: logAktivitas.length },
+      { label: 'Jadwal pupuk', value: pemupukan.length },
+      { label: 'Catatan biaya', value: keuangan.length },
+    ],
+    [blokLahan.length, tanaman.length, logAktivitas.length, pemupukan.length, keuangan.length],
+  );
+
+  const closeModal = () => {
+    setModalConfig((current) => ({ ...current, isOpen: false }));
+  };
+
   const handleSave = () => {
-    setModalConfig({
-      isOpen: true,
-      title: 'Simpan Pengaturan Profil',
-      message: 'Apakah Anda yakin ingin menyimpan perubahan profil kebun dan nama manajer?',
-      confirmText: 'SIMPAN SEKARANG',
-      confirmVariant: 'primary',
-      icon: 'save',
-      onConfirm: () => {
-        localStorage.setItem('tanita_farm_name', farmName);
-        localStorage.setItem('tanita_manager_name', managerName);
-        showToast('Pengaturan sistem berhasil disimpan', 'success');
-        setModalConfig((prev) => ({ ...prev, isOpen: false }));
-      },
-    });
+    try {
+      const trimmedFarmName = farmName.trim();
+      const trimmedManagerName = managerName.trim();
+      localStorage.setItem(PROFILE_KEYS.farmName, trimmedFarmName);
+      localStorage.setItem(PROFILE_KEYS.managerName, trimmedManagerName);
+      localStorage.setItem(NOTIFICATION_KEYS.cropStatus, String(notifyCropStatus));
+      localStorage.setItem(NOTIFICATION_KEYS.fertilizer, String(notifyFertilizer));
+
+      setFarmName(trimmedFarmName);
+      setManagerName(trimmedManagerName);
+      setSavedSignature(
+        JSON.stringify([
+          trimmedFarmName,
+          trimmedManagerName,
+          notifyCropStatus,
+          notifyFertilizer,
+        ]),
+      );
+      window.dispatchEvent(new Event('tanita-settings-updated'));
+      showToast('Pengaturan tersimpan di perangkat ini.', 'success');
+    } catch (error) {
+      console.error('Gagal menyimpan pengaturan', error);
+      showToast('Pengaturan tidak dapat disimpan. Periksa izin penyimpanan browser.', 'error');
+    }
   };
 
   const handleReset = () => {
     setModalConfig({
       isOpen: true,
-      title: 'Reset Pengaturan Profil',
-      message: 'Apakah Anda yakin ingin mengembalikan profil kebun ke setelan awal default?',
-      confirmText: 'RESET SETELAN',
+      title: 'Pulihkan pengaturan',
+      message:
+        'Nama kebun, penanggung jawab, dan preferensi notifikasi akan dikembalikan ke nilai awal.',
+      confirmText: 'Pulihkan',
       confirmVariant: 'warning',
       icon: 'restart_alt',
       onConfirm: () => {
+        localStorage.removeItem(PROFILE_KEYS.farmName);
+        localStorage.removeItem(PROFILE_KEYS.managerName);
+        localStorage.removeItem(NOTIFICATION_KEYS.cropStatus);
+        localStorage.removeItem(NOTIFICATION_KEYS.fertilizer);
         setFarmName('');
         setManagerName('');
-        localStorage.removeItem('tanita_farm_name');
-        localStorage.removeItem('tanita_manager_name');
-        showToast('Pengaturan dikembalikan ke default', 'info');
-        setModalConfig((prev) => ({ ...prev, isOpen: false }));
+        setNotifyCropStatus(true);
+        setNotifyFertilizer(true);
+        setSavedSignature(JSON.stringify(['', '', true, true]));
+        window.dispatchEvent(new Event('tanita-settings-updated'));
+        showToast('Pengaturan awal telah dipulihkan.', 'info');
+        closeModal();
       },
     });
   };
@@ -81,15 +231,16 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
   const handleClearAllData = () => {
     setModalConfig({
       isOpen: true,
-      title: 'Hapus Data Operasional',
-      message: 'Apakah Anda yakin ingin menghapus SELURUH data operasional (blok lahan, data tanaman, log aktivitas, jadwal pemupukan, dan analisis keuangan)?\n\nData yang dihapus tidak dapat dikembalikan.',
-      confirmText: 'YA, HAPUS SEMUA DATA',
+      title: 'Hapus data operasional',
+      message:
+        'Seluruh blok lahan, musim tanam, jurnal aktivitas, jadwal pemupukan, dan catatan keuangan akan dihapus permanen dari perangkat ini. Tindakan ini tidak dapat dibatalkan.',
+      confirmText: 'Hapus semua data',
       confirmVariant: 'danger',
       icon: 'delete_forever',
       onConfirm: () => {
         clearAllData();
-        showToast('Seluruh data operasional berhasil dihapus', 'info');
-        setModalConfig((prev) => ({ ...prev, isOpen: false }));
+        showToast('Data operasional telah dihapus dari perangkat ini.', 'info');
+        closeModal();
       },
     });
   };
@@ -97,184 +248,190 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
   const handleLockAccess = () => {
     setModalConfig({
       isOpen: true,
-      title: 'Kunci Akses Sistem',
-      message: 'Apakah Anda yakin ingin mengunci kembali akses aplikasi ini?',
-      confirmText: 'KUNCI AKSES',
+      title: 'Kunci perangkat',
+      message:
+        'Sesi pada browser ini akan ditutup. Kode akses perlu dimasukkan kembali untuk membuka TANITA.',
+      confirmText: 'Kunci sekarang',
       confirmVariant: 'danger',
       icon: 'lock',
       onConfirm: () => {
         localStorage.removeItem('tanita_access_code_hash');
-        showToast('Akses dikunci kembali. Halaman akan dimuat ulang...', 'info');
-        setModalConfig((prev) => ({ ...prev, isOpen: false }));
-        setTimeout(() => {
-          window.location.reload();
-        }, 800);
+        closeModal();
+        window.location.reload();
       },
     });
   };
 
   return (
-    <div className="flex flex-col gap-6 w-full pb-12">
+    <div className="flex w-full flex-col gap-6 pb-12">
       <PageHeader
-        title="Pengaturan Sistem"
-        subtitle="Kelola profil kebun, preferensi autosave, notifikasi presisi, dan status lisensi aplikasi."
+        title="Pengaturan"
+        subtitle="Kelola identitas kebun, notifikasi, penyimpanan lokal, dan akses pada perangkat ini."
+        action={
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!hasUnsavedChanges}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#24533F] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1B4031] disabled:cursor-not-allowed disabled:bg-[#C7CAC5] disabled:text-[#727A74] sm:w-auto"
+          >
+            <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+              save
+            </span>
+            {hasUnsavedChanges ? 'Simpan perubahan' : 'Sudah tersimpan'}
+          </button>
+        }
       />
 
-      {/* Bento Grid Container */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        
-        {/* Bento Item 1: Profil Kebun */}
-        <div className="p-6 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col justify-between gap-4 lg:col-span-2">
-          <div>
-            <div className="flex items-center gap-2 mb-4 border-b-2 border-[#0A0A0A] pb-3">
-              <span className="w-8 h-8 rounded bg-[#154734] text-white font-black flex items-center justify-center border-2 border-[#0A0A0A] shrink-0">
-                <span className="material-symbols-outlined text-lg">potted_plant</span>
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-12">
+        <SettingsCard
+          title="Identitas kebun"
+          eyebrow="Profil"
+          icon="potted_plant"
+          className="xl:col-span-7"
+        >
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-xs font-semibold text-[#465149]">Nama kebun</span>
+              <input
+                type="text"
+                value={farmName}
+                onChange={(event) => setFarmName(event.target.value)}
+                className="w-full rounded-xl border border-[#CFCBC1] bg-white px-3.5 py-2.5 text-sm font-medium text-[#1D2822] outline-none transition placeholder:text-[#9A9F9A] focus:border-[#4D725F] focus:ring-2 focus:ring-[#24533F]/10"
+                placeholder="Contoh: Kebun Bawang Merah Jeneponto"
+                autoComplete="organization"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-xs font-semibold text-[#465149]">
+                Penanggung jawab
               </span>
-              <h2 className="font-display font-extrabold uppercase tracking-wider text-base text-[#0A0A0A]">
-                Profil &amp; Identitas Kebun
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#5C5C5C] mb-1.5">
-                  Nama Perusahaan / Kebun
-                </label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#5C5C5C] text-lg">
-                    domain
-                  </span>
-                  <input 
-                    type="text" 
-                    value={farmName}
-                    onChange={(e) => setFarmName(e.target.value)}
-                    className="w-full bg-white border-2 border-[#0A0A0A] pl-9 pr-3 py-2.5 text-xs text-[#0A0A0A] font-medium rounded focus:outline-none" 
-                    placeholder="Contoh: Kebun Bawang Merah Jeneponto" 
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#5C5C5C] mb-1.5">
-                  Penanggung Jawab / Manajer Kebun
-                </label>
-                <div className="relative">
-                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#5C5C5C] text-lg">
-                    person
-                  </span>
-                  <input 
-                    type="text" 
-                    value={managerName}
-                    onChange={(e) => setManagerName(e.target.value)}
-                    className="w-full bg-white border-2 border-[#0A0A0A] pl-9 pr-3 py-2.5 text-xs text-[#0A0A0A] font-medium rounded focus:outline-none" 
-                    placeholder="Nama Manajer Operasional..." 
-                  />
-                </div>
-              </div>
-            </div>
+              <input
+                type="text"
+                value={managerName}
+                onChange={(event) => setManagerName(event.target.value)}
+                className="w-full rounded-xl border border-[#CFCBC1] bg-white px-3.5 py-2.5 text-sm font-medium text-[#1D2822] outline-none transition placeholder:text-[#9A9F9A] focus:border-[#4D725F] focus:ring-2 focus:ring-[#24533F]/10"
+                placeholder="Nama pengelola kebun"
+                autoComplete="name"
+              />
+            </label>
           </div>
-
-          <div className="p-3 bg-[#E6E6DC] rounded border border-[#0A0A0A] text-xs text-[#0A0A0A] flex items-center gap-2">
-            <span className="material-symbols-outlined text-base text-[#154734]">info</span>
-            <span>Identitas kebun digunakan pada cetak laporan PDF dan ringkasan aktivitas harian.</span>
-          </div>
-        </div>
-
-        {/* Bento Item 2: Preferensi Operasional */}
-        <div className="p-6 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-4 border-b-2 border-[#0A0A0A] pb-3">
-              <span className="w-8 h-8 rounded bg-[#154734] text-white font-black flex items-center justify-center border-2 border-[#0A0A0A] shrink-0">
-                <span className="material-symbols-outlined text-lg">tune</span>
-              </span>
-              <h2 className="font-display font-extrabold uppercase tracking-wider text-base text-[#0A0A0A]">
-                Preferensi Sistem
-              </h2>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="pt-2 flex items-center justify-between">
-                <span className="text-xs font-bold text-[#0A0A0A]">Penyimpanan Otomatis</span>
-                <span className="text-[10px] font-mono font-bold bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
-                  LANGSUNG AKTIF
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-[#5C5C5C]">
-            Setiap perubahan jurnal, biaya, dan tanaman langsung disimpan ke penyimpanan lokal browser tanpa menunggu interval.
+          <p className="mt-5 border-t border-[#E3E0D8] pt-4 text-xs font-medium leading-relaxed text-[#707871]">
+            Identitas ini muncul pada laporan yang dibuat dari aplikasi. Data hanya disimpan
+            pada browser yang sedang digunakan.
           </p>
-        </div>
+        </SettingsCard>
 
-        {/* Bento Item 3: Notifikasi Widget Agrikultur */}
-        <div className="lg:col-span-3">
-          <AgriNotificationWidget navigate={navigate} />
-        </div>
-
-        {/* Bento Item 4: Status Lisensi & Kunci Akses */}
-        <div className="lg:col-span-3 p-6 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-[#154734] text-white rounded border-2 border-[#0A0A0A] shrink-0">
-              <span className="material-symbols-outlined text-2xl">verified_user</span>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-display font-extrabold text-base text-[#0A0A0A] uppercase tracking-wider">
-                  Status Lisensi Aplikasi
-                </h3>
-                <span className="text-[10px] font-black bg-[#154734] text-white px-2 py-0.5 rounded uppercase border border-[#0A0A0A]">
-                  AKTIF
-                </span>
-              </div>
-              <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Lisensi TANITA Terverifikasi &middot; Seluruh Modul Budidaya, Panen, dan Keuangan Terbuka Penuh.
-              </p>
-            </div>
+        <SettingsCard
+          title="Notifikasi aplikasi"
+          eyebrow="Preferensi"
+          icon="notifications"
+          className="xl:col-span-5"
+        >
+          <div className="divide-y divide-[#E3E0D8]">
+            <ToggleRow
+              id="notify-crop-status"
+              title="Perubahan status tanaman"
+              description="Tampilkan pemberitahuan saat tanaman beralih ke Aktif atau Panen."
+              checked={notifyCropStatus}
+              onChange={setNotifyCropStatus}
+            />
+            <ToggleRow
+              id="notify-fertilizer"
+              title="Pengingat pemupukan"
+              description="Ingatkan jadwal hari ini, tiga hari ke depan, atau yang baru terlewat."
+              checked={notifyFertilizer}
+              onChange={setNotifyFertilizer}
+            />
           </div>
+        </SettingsCard>
 
+        <SettingsCard
+          title="Data pada perangkat"
+          eyebrow="Penyimpanan"
+          icon="database"
+          className="xl:col-span-7"
+        >
+          <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-5">
+            {dataSummary.map((item) => (
+              <div key={item.label}>
+                <p className="font-display text-2xl font-semibold tracking-[-0.04em] text-[#1E3228]">
+                  {item.value}
+                </p>
+                <p className="mt-1 text-[11px] font-semibold leading-tight text-[#737B75]">
+                  {item.label}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 flex items-start gap-3 border-t border-[#E3E0D8] pt-4">
+            <span className="material-symbols-outlined text-[19px] text-[#6C756F]" aria-hidden="true">
+              sync_saved_locally
+            </span>
+            <p className="text-xs font-medium leading-relaxed text-[#69716B]">
+              Perubahan disimpan langsung di penyimpanan browser. TANITA belum melakukan
+              sinkronisasi akun atau pencadangan cloud.
+            </p>
+          </div>
+        </SettingsCard>
+
+        <SettingsCard
+          title="Akses perangkat"
+          eyebrow="Keamanan"
+          icon="shield_lock"
+          className="xl:col-span-5"
+        >
+          <p className="text-sm font-medium leading-relaxed text-[#5F6962]">
+            Perangkat ini sedang memiliki sesi akses aktif. Mengunci sesi tidak menghapus data
+            operasional.
+          </p>
           <button
             type="button"
             onClick={handleLockAccess}
-            className="px-4 py-2.5 bg-[#C43C2C] text-white font-extrabold text-xs uppercase tracking-wider rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#a83224] active:translate-x-[1px] active:translate-y-[1px] transition cursor-pointer flex items-center justify-center gap-2 shrink-0"
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#BFC4BE] bg-white px-4 py-2.5 text-sm font-semibold text-[#27352D] transition hover:border-[#86928A] hover:bg-[#F4F3EE] sm:w-auto"
           >
-            <span className="material-symbols-outlined text-base">lock</span>
-            <span>KUNCI AKSES KEMBALI</span>
+            <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+              lock
+            </span>
+            Kunci perangkat
           </button>
-        </div>
+        </SettingsCard>
 
-        {/* Bento Item 5: Action Bar */}
-        <div className="lg:col-span-3 p-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-          <div className="flex flex-wrap items-center gap-2">
+        <section className="rounded-[18px] border border-[#D8B8B1] bg-[#FDF8F6] p-5 sm:p-6 xl:col-span-12">
+          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#9A655B]">
+                Zona berisiko
+              </p>
+              <h2 className="mt-1 font-display text-base font-semibold text-[#492A25]">
+                Hapus seluruh data operasional
+              </h2>
+              <p className="mt-1.5 max-w-2xl text-xs font-medium leading-relaxed text-[#80625C]">
+                Profil dan preferensi tetap tersimpan, tetapi semua catatan kebun akan dihapus
+                permanen dari perangkat ini.
+              </p>
+            </div>
             <button
               type="button"
               onClick={handleClearAllData}
-              className="bg-[#C43C2C] text-white border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] px-4 py-2 text-xs font-extrabold rounded uppercase tracking-wider flex items-center gap-1.5 hover:bg-[#a83224] active:translate-x-[1px] active:translate-y-[1px] transition cursor-pointer"
+              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#A34335] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#87362C] sm:w-auto"
             >
-              <span className="material-symbols-outlined text-base">delete_forever</span>
-              <span>HAPUS DATA OPERASIONAL</span>
+              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                delete_forever
+              </span>
+              Hapus data
             </button>
           </div>
+        </section>
+      </div>
 
-          <div className="flex items-center justify-end gap-3 w-full sm:w-auto">
-            <button 
-              type="button"
-              onClick={handleReset} 
-              className="bg-[#E6E6DC] text-[#0A0A0A] border border-[#0A0A0A] px-5 py-2 text-xs font-bold rounded hover:bg-[#d0d0c4] transition cursor-pointer"
-            >
-              RESET PENGATURAN
-            </button>
-            <button 
-              type="button"
-              onClick={handleSave} 
-              className="bg-[#154734] text-white border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] px-6 py-2 text-xs font-extrabold rounded uppercase tracking-wider flex items-center gap-2 hover:bg-[#0e3023] active:translate-x-[1px] active:translate-y-[1px] transition cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-base">save</span>
-              <span>SIMPAN PENGATURAN</span>
-            </button>
-          </div>
-        </div>
-
+      <div className="flex justify-start">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="text-xs font-semibold text-[#657068] underline decoration-[#AEB3AE] underline-offset-4 transition hover:text-[#26362E]"
+        >
+          Pulihkan pengaturan awal
+        </button>
       </div>
 
       <ConfirmModal
@@ -285,7 +442,7 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
         confirmVariant={modalConfig.confirmVariant}
         icon={modalConfig.icon}
         onConfirm={modalConfig.onConfirm}
-        onCancel={() => setModalConfig((prev) => ({ ...prev, isOpen: false }))}
+        onCancel={closeModal}
       />
     </div>
   );

@@ -40,7 +40,7 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
     <div className={`relative ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} ref={ref}>
       <button
         type="button"
-        className={`w-full flex items-center justify-between min-h-[48px] px-4 py-2.5 rounded-[8px_3px_8px_3px] bg-surface-high neo-border-thin ${disabled ? 'pointer-events-none' : 'cursor-pointer hover:bg-surface'}`}
+        className={`flex min-h-[48px] w-full items-center justify-between rounded-xl border border-[#CBC8BF] bg-white px-4 py-2.5 text-left ${disabled ? 'pointer-events-none' : 'cursor-pointer hover:border-[#9AA69E]'}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         aria-haspopup="listbox"
@@ -65,7 +65,7 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
       </button>
 
       {isOpen && !disabled && (
-        <div role="listbox" className="absolute z-50 min-w-[100%] w-max mt-2 bg-surface neo-border  rounded-[8px_3px_8px_3px] max-h-[200px] overflow-y-auto py-1" style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}>
+        <div role="listbox" className="absolute z-50 mt-2 max-h-[200px] min-w-full w-max overflow-y-auto rounded-xl border border-[#D8D5CC] bg-[#FBFAF6] py-1 shadow-[0_12px_30px_rgba(24,35,29,0.12)]" style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}>
           {options.length === 0 ? (
             <div className="p-4 text-on-surface-muted text-[15px] text-center">Tidak ada opsi</div>
           ) : (
@@ -75,7 +75,7 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
                 role="option"
                 aria-selected={value === opt.value}
                 key={`${opt.value}-${index}`}
-                className={`px-4 py-3 cursor-pointer transition-colors flex items-center justify-between gap-4 ${value === opt.value ? 'bg-action text-on-action font-black' : 'text-on-surface hover:bg-surface-high'}`}
+                className={`flex w-full cursor-pointer items-center justify-between gap-4 px-4 py-3 text-left transition-colors ${value === opt.value ? 'bg-[#E4ECE7] font-semibold text-[#214433]' : 'text-on-surface hover:bg-surface-high'}`}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
               >
                 <span className="text-[15px] whitespace-normal break-words">{opt.label}</span>

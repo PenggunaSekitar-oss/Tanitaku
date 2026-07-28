@@ -8,6 +8,7 @@ import { PintasanModal } from './components/PintasanModal';
 import { AccessGate } from './components/AccessGate';
 import { ToastProvider } from './context/ToastContext';
 import { AgriDynamicToastNotifier } from './components/AgriDynamicToastNotifier';
+import { BrandLockup } from './components/BrandLockup';
 
 const DashboardView = lazy(() => import('./views/DashboardView').then((module) => ({ default: module.DashboardView })));
 const PemantauanView = lazy(() => import('./views/PemantauanView').then((module) => ({ default: module.PemantauanView })));
@@ -48,7 +49,11 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.remove('dark');
     document.documentElement.classList.add('light');
-    localStorage.setItem('theme', 'light');
+    try {
+      localStorage.setItem('theme', 'light');
+    } catch {
+      // The interface does not depend on persisting the fixed light theme.
+    }
   }, []);
 
   useEffect(() => {
@@ -81,7 +86,7 @@ export default function App() {
       case 'cari-penyakit': return <CariPenyakitView navigate={navigateTo} />;
       case 'keuangan': return <KeuanganView />;
       case 'log': return <LogAktivitasView />;
-      case 'pengaturan': return <PengaturanView navigate={navigateTo} />;
+      case 'pengaturan': return <PengaturanView />;
       default: return <DashboardView navigate={navigateTo} />;
     }
   };
@@ -91,12 +96,12 @@ export default function App() {
       <TaniOpsProvider>
         <AccessGate>
           <AgriDynamicToastNotifier navigate={navigateTo} />
-          <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans selection:bg-[#154734] selection:text-white">
+          <div className="app-shell flex h-screen overflow-hidden bg-[#F2F1EC] text-[#1C211D] font-sans selection:bg-[#24533F] selection:text-white">
             <Sidebar currentView={currentView} onNavigate={navigateTo} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            <div className="flex-1 flex flex-col min-w-0 bg-slate-50 relative">
-              <Topbar onOpenSidebar={() => setSidebarOpen(true)} />
+            <div className="relative flex min-w-0 flex-1 flex-col bg-[#F2F1EC]">
+              <Topbar currentView={currentView} onOpenSidebar={() => setSidebarOpen(true)} />
               <div className="flex-1 overflow-y-auto flex flex-col justify-between">
-                <main className="p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto flex-1">
+                <main className="app-content mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 lg:p-8 xl:px-10">
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentView}
@@ -118,16 +123,9 @@ export default function App() {
                     </motion.div>
                   </AnimatePresence>
                 </main>
-                <footer className="bg-[#FEFEFA] text-slate-800 font-medium text-center py-4 px-6 border-t border-slate-200/80 text-xs sm:text-sm flex flex-col sm:flex-row justify-between items-center gap-2 mt-8 pb-20 md:pb-4">
-                  <div className="flex items-center gap-2 font-display font-semibold text-slate-900">
-                    <img 
-                      src="https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png" 
-                      alt="TANITA Logo" 
-                      className="h-6 sm:h-7 w-auto object-contain shrink-0" 
-                    />
-                    <span className="text-slate-600 text-xs sm:text-sm font-medium">&mdash; Presisi Pertanian Indonesia</span>
-                  </div>
-                  <span className="text-slate-500 text-xs">©2026 TANITA &middot; Dibangun oleh Muh Amin Arsyad</span>
+                <footer className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-[#D9D8D1] bg-[#F7F6F1] px-6 py-5 pb-20 text-center md:flex-row md:pb-5">
+                  <BrandLockup compact />
+                  <span className="text-[10px] font-medium text-[#747D77]">© 2026 TANITA · Operasional kebun</span>
                 </footer>
               </div>
               <MobileBottomNav

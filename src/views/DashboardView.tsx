@@ -1,10 +1,10 @@
 import { PageHeader } from '../components/PageHeader';
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, type Variants } from "motion/react";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { BmkgWeatherWidget } from "../components/BmkgWeatherWidget";
 import { GrowthChart } from "../components/GrowthChart";
-import { useTaniOps } from "../context/TaniOpsContext";
+import { useTaniOps, type BlokLahan, type Tanaman } from "../context/TaniOpsContext";
 import {
   calculateHST,
   determineFaseTanaman,
@@ -30,45 +30,41 @@ const SectionTitle = ({
   subtitle: string; 
   rightElement?: React.ReactNode; 
 }) => (
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-2">
-    <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#154734]/10 border border-[#154734]/30 text-[#154734] flex items-center justify-center shrink-0 shadow-2xs">
-          <span className="material-symbols-outlined text-[22px]">{icon}</span>
-        </div>
-        <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight font-display">{title}</h2>
+  <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-end">
+    <div className="max-w-3xl">
+      <div className="mb-1.5 flex items-center gap-2 text-[#597064]">
+        <span className="material-symbols-outlined text-[17px]" aria-hidden="true">{icon}</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Ikhtisar</span>
       </div>
-      <p className="text-xs sm:text-sm text-slate-500 font-medium pl-[48px] leading-relaxed">{subtitle}</p>
+      <h2 className="font-display text-lg font-semibold tracking-[-0.025em] text-[#1B2922] sm:text-xl">{title}</h2>
+      <p className="mt-1.5 text-xs font-medium leading-relaxed text-[#6B756E] sm:text-sm">{subtitle}</p>
     </div>
     {rightElement && (
-      <div className="pl-[48px] sm:pl-0 shrink-0 self-start sm:self-center">
+      <div className="shrink-0 self-start sm:self-end">
         {rightElement}
       </div>
     )}
   </div>
 );
 
-// Dropdown item per tanaman dengan gaya electric blue glassmorphism
+// Expandable operational snapshot for each crop record
 function TanamanCardDropdown({
   item,
   blokLahan,
   updateTanaman,
   navigate,
 }: {
-  key?: any;
-  item: any;
-  isFirst: boolean;
-  blokLahan: any[];
-  updateTanaman: (id: string, data: any) => void;
+  item: Tanaman;
+  blokLahan: BlokLahan[];
+  updateTanaman: (id: string, data: Partial<Tanaman>) => void;
   navigate: (v: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const isPanen = item.status === 'Panen';
   const hst = calculateHST(item.tanggalTanam);
   const fase = isPanen ? 'Sudah Dipanen' : determineFaseTanaman(hst);
-  const blok = blokLahan.find((b: any) => b.id === item.blokId);
+  const blok = blokLahan.find((b) => b.id === item.blokId);
   const rec = getRecommendations(hst);
-  const progressPct = isPanen ? 100 : Math.min(100, Math.round((hst / 90) * 100));
 
   return (
     <div className={`rounded-2xl bg-[#FEFEFA] text-slate-950 border transition-all duration-200 shadow-sm overflow-hidden ${
@@ -135,33 +131,24 @@ function TanamanCardDropdown({
             Tanam: <b className="text-slate-950 font-extrabold">{item.tanggalTanam}</b> &middot; Populasi: <b className="text-slate-950 font-extrabold">{item.jumlahTanaman.toLocaleString("id-ID")} batang</b>
           </p>
 
-          {/* Progress Line Bar */}
-          <div className="flex flex-col gap-2 p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
-            <div className="flex justify-between items-center text-xs gap-1">
-              <span className="font-extrabold text-slate-950 flex items-center gap-1.5 truncate">
-                <span className="material-symbols-outlined text-[18px] text-[#154734] shrink-0">
-                  {isPanen ? 'task_alt' : 'show_chart'}
+          <div className="grid grid-cols-2 overflow-hidden rounded-xl border border-[#D8D5CC] bg-[#F8F7F2] sm:grid-cols-3">
+            {[
+              ['Tanggal tanam', item.tanggalTanam || 'Belum dicatat'],
+              ['Umur tercatat', `${hst} HST`],
+              ['Kelompok umur', fase],
+            ].map(([label, value], index) => (
+              <div
+                key={label}
+                className={`p-3.5 ${
+                  index > 0 ? 'border-l border-[#E2DFD7]' : ''
+                } ${index === 2 ? 'col-span-2 border-l-0 border-t sm:col-span-1 sm:border-l sm:border-t-0' : ''}`}
+              >
+                <span className="block text-[9px] font-bold uppercase tracking-[0.1em] text-[#7A837D]">
+                  {label}
                 </span>
-                <span className="truncate">{isPanen ? 'Panen Selesai (100%)' : `Progres Tumbuh (${progressPct}%)`}</span>
-              </span>
-              <span className="font-mono text-[11px] text-slate-700 font-extrabold shrink-0">Target ~90 HST</span>
-            </div>
-            
-            <div className="w-full bg-slate-200/90 h-3 rounded-full overflow-hidden p-0.5 relative border border-slate-300/50">
-              <div 
-                className="h-full rounded-full transition-all duration-500 shadow-2xs bg-[#154734]"
-                style={{ width: `${progressPct}%` }}
-              />
-            </div>
-
-            {/* Milestone indicators */}
-            <div className="grid grid-cols-5 text-[9px] sm:text-[10px] font-bold text-center text-slate-700 pt-1 leading-tight">
-              <span className={`truncate ${!isPanen && hst <= 14 ? 'text-[#154734] font-black underline decoration-[#154734] decoration-2' : ''}`}>Veg Awal</span>
-              <span className={`truncate ${!isPanen && hst > 14 && hst <= 35 ? 'text-[#154734] font-black underline decoration-[#154734] decoration-2' : ''}`}>Veg Aktif</span>
-              <span className={`truncate ${!isPanen && hst > 35 && hst <= 55 ? 'text-[#154734] font-black underline decoration-[#154734] decoration-2' : ''}`}>Bunga</span>
-              <span className={`truncate ${!isPanen && hst > 55 && hst <= 80 ? 'text-[#154734] font-black underline decoration-[#154734] decoration-2' : ''}`}>Buah</span>
-              <span className={`truncate ${isPanen || hst > 80 ? 'bg-[#154734] text-white px-1.5 py-0.5 rounded-full font-black' : ''}`}>Panen</span>
-            </div>
+                <strong className="mt-1 block text-xs font-semibold text-[#26352D]">{value}</strong>
+              </div>
+            ))}
           </div>
 
           {/* Rekomendasi Perawatan */}
@@ -171,7 +158,7 @@ function TanamanCardDropdown({
                 <span className="material-symbols-outlined text-[#154734] text-[22px] shrink-0">check_circle</span>
                 <div>
                   <b className="text-[#154734] block font-extrabold">Lahan Selesai Dipanen</b>
-                  <span className="text-[11px] text-slate-900 font-bold leading-tight block">Data hasil &amp; proyeksi telah tersimpan.</span>
+                  <span className="text-[11px] text-slate-900 font-bold leading-tight block">Status panen tersimpan pada catatan tanaman.</span>
                 </div>
               </div>
               <button
@@ -190,7 +177,7 @@ function TanamanCardDropdown({
               <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
                 <span className="text-xs font-extrabold text-slate-950 uppercase tracking-wider flex items-center gap-2">
                   <span className="material-symbols-outlined text-[#154734] text-[20px]">psychology</span>
-                  Saran &amp; Rekomendasi Perawatan (Fase {fase} &middot; {hst} HST)
+                  Checklist verifikasi lapangan ({hst} HST)
                 </span>
               </div>
 
@@ -208,7 +195,7 @@ function TanamanCardDropdown({
                 <div className="p-3 bg-rose-50/90 border border-rose-200/90 rounded-xl flex flex-col gap-1">
                   <span className="font-extrabold text-rose-950 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
                     <span className="material-symbols-outlined text-[16px] text-rose-800">pest_control</span>
-                    Tindakan Pestisida
+                    Monitoring perlindungan
                   </span>
                   <p className="text-[11px] text-slate-950 leading-snug font-bold">{rec.pestisida}</p>
                 </div>
@@ -236,7 +223,11 @@ function TanamanCardDropdown({
                     onClick={(e) => {
                       e.stopPropagation();
                       const targetHama = rec.hama.split(',')[0]?.trim() || rec.hama;
-                      localStorage.setItem('targetPestisida', targetHama);
+                      try {
+                        localStorage.setItem('targetPestisida', targetHama);
+                      } catch {
+                        // Continue to the catalog when browser storage is unavailable.
+                      }
                       navigate('cari-pestisida');
                     }}
                     className="mt-2 text-[10px] bg-[#154734] hover:bg-[#0e3023] text-white font-extrabold uppercase px-3.5 py-1.5 rounded-full shadow-2xs transition self-start flex items-center gap-1 cursor-pointer"
@@ -299,42 +290,9 @@ function TanamanCardDropdown({
   );
 }
 
-// Skeleton Loading Component
-function DashboardSkeleton() {
-  return (
-    <div className="flex flex-col gap-6 animate-pulse" aria-busy="true" aria-label="Memuat data dashboard">
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className="p-4 bg-[#FEFEFA]/80 rounded-[20px] border border-blue-100 flex flex-col justify-between gap-3 h-32"
-          >
-            <div className="flex justify-between items-start">
-              <div className="h-3.5 bg-slate-200 rounded w-20"></div>
-              <div className="w-8 h-8 bg-slate-200 rounded-xl"></div>
-            </div>
-            <div>
-              <div className="h-7 bg-slate-200 rounded w-28 mb-1"></div>
-              <div className="h-3 bg-slate-100 rounded w-16"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
   const [activeTabBlock, setActiveTabBlock] = useState<string>("semua");
   const [isStatusBlokOpen, setIsStatusBlokOpen] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
 
   const { blokLahan, tanaman, updateTanaman, pemupukan, keuangan, logAktivitas } = useTaniOps();
 
@@ -411,8 +369,9 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
     ).length;
     const cropScore = tanaman.length > 0 ? (validPlants / tanaman.length) * 100 : 0;
 
-    const expectedActivityCount = Math.max(1, blokLahan.length * 2);
-    const maintenanceScore = Math.min(100, ((logAktivitas.length + pemupukan.length) / expectedActivityCount) * 100);
+    const maintenanceScore =
+      (logAktivitas.length > 0 ? 50 : 0) +
+      (pemupukan.length > 0 ? 50 : 0);
 
     const validFinance = keuangan.filter((record) =>
       record.transactionDate &&
@@ -423,12 +382,12 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
     const finalVal = (blockScore + cropScore + maintenanceScore + financialScore) / 4;
     const scoreStr = Math.min(100, Math.max(0, finalVal)).toFixed(1);
     
-    let label = "LENGKAP";
+    let label = "Lengkap";
     const num = parseFloat(scoreStr);
-    if (num >= 85) label = "LENGKAP";
-    else if (num >= 70) label = "BAIK";
-    else if (num >= 50) label = "CUKUP";
-    else label = "PERLU DILENGKAPI";
+    if (num >= 85) label = "Lengkap";
+    else if (num >= 70) label = "Baik";
+    else if (num >= 50) label = "Cukup";
+    else label = "Perlu dilengkapi";
 
     return { score: scoreStr, label };
   };
@@ -484,42 +443,31 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
       <motion.div variants={bentoItem} className="flex flex-col gap-4">
         <SectionTitle 
           icon="analytics" 
-          title="Metrik Utama & Performa Lahan" 
-          subtitle="Ikhtisar kelengkapan data operasional, populasi aktif, proyeksi margin, luas area tanam, dan catatan perawatan."
+          title="Kelengkapan Catatan & Ringkasan Operasional"
+          subtitle="Kelengkapan blok, tanaman, aktivitas, dan keuangan beserta angka utama yang dihitung dari data tersimpan."
         />
         <div 
-          className="p-5 sm:p-7 rounded-2xl shadow-md border border-[#004953] flex flex-col lg:flex-row items-center gap-6 lg:gap-8"
-          style={{ backgroundColor: '#004953', color: '#FFFFFF' }}
+          className="flex flex-col items-center gap-6 rounded-2xl border border-[#345749] p-5 sm:p-7 lg:flex-row lg:gap-8"
+          style={{ backgroundColor: '#173F35', color: '#FFFFFF' }}
         >
 
-          {/* Skor Performa Lahan */}
+          {/* Data completeness, not an agronomic performance score */}
           <div className="flex flex-col items-center justify-center text-center shrink-0 w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-white/15 pb-6 lg:pb-0 lg:pr-8">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-white/80 mb-2">
-              Kelengkapan Data Operasional
+            <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
+              Kelengkapan catatan
             </span>
-            <div className="relative w-40 h-40 flex items-center justify-center my-1">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
-                <circle cx="100" cy="100" r="82" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="16" fill="transparent" />
-                <circle
-                  cx="100" cy="100" r="82" stroke="#FFFFFF" strokeWidth="16" fill="transparent"
-                  strokeDasharray="515"
-                  strokeDashoffset={515 * (1 - parseFloat(healthScore) / 100)}
-                  strokeLinecap="round"
-                  className="transition-all duration-1000 ease-out"
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-3xl font-extrabold text-white font-display">{healthScore}%</span>
-                <span className="text-[10px] font-bold text-white bg-white/15 px-2.5 py-0.5 rounded-full mt-1 border border-white/30 backdrop-blur-xs">
-                  {healthScoreLabel}
-                </span>
-              </div>
-            </div>
+            <strong className="mt-3 font-display text-5xl font-semibold tracking-[-0.06em] text-white">
+              {Math.round(Number(healthScore))}%
+            </strong>
+            <span className="mt-2 text-xs font-semibold text-[#DDE9E2]">{healthScoreLabel}</span>
+            <p className="mt-3 max-w-[210px] text-[10px] font-medium leading-relaxed text-white/60">
+              Empat bagian dinilai setara: blok, tanaman, aktivitas, dan catatan keuangan.
+            </p>
           </div>
 
           {/* 4 Key Metrics */}
           <div className="flex-1 w-full grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 backdrop-blur-xs flex flex-col justify-between min-h-[116px]">
+            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
               <div className="flex items-center gap-2 text-white">
                 <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">grass</span>
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Populasi Aktif</span>
@@ -530,7 +478,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">{tanamanAktif.length} Varietas di Lahan</span>
             </div>
 
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 backdrop-blur-xs flex flex-col justify-between min-h-[116px]">
+            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
               <div className="flex items-center gap-2 text-white">
                 <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">payments</span>
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Estimasi Laba</span>
@@ -541,7 +489,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">ROI Proyeksi {roi}%</span>
             </div>
 
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 backdrop-blur-xs flex flex-col justify-between min-h-[116px]">
+            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
               <div className="flex items-center gap-2 text-white">
                 <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">landscape</span>
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Luas Bedengan</span>
@@ -557,7 +505,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">Kepadatan {kepadatan} tnm/m²</span>
             </div>
 
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 backdrop-blur-xs flex flex-col justify-between min-h-[116px]">
+            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
               <div className="flex items-center gap-2 text-white">
                 <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">event_repeat</span>
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Agenda Rawat</span>
@@ -571,32 +519,24 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
         </div>
       </motion.div>
 
-      {/* Section 2: BMKG Real-Time Weather Widget */}
+      {/* Section 2: BMKG forecast */}
       <motion.div variants={bentoItem} className="flex flex-col gap-4">
         <SectionTitle 
           icon="partly_cloudy_day" 
-          title="Prakiraan Cuaca BMKG & Mikroklimat" 
-          subtitle="Pemantauan kondisi curah hujan, suhu udara, dan kelembapan lingkungan real-time untuk menentukan efisiensi waktu pemupukan dan penyiraman."
+          title="Prakiraan Cuaca BMKG"
+          subtitle="Prakiraan resmi per tiga jam sebagai bahan pertimbangan kerja lapangan. Kondisi mikroklimat kebun tetap perlu diperiksa langsung."
         />
-        <motion.div 
-          whileHover={{ y: -2 }}
-          transition={{ type: "spring", stiffness: 350, damping: 25 }}
-          className="rounded-2xl border border-slate-200/80 bg-[#FEFEFA] p-1.5 shadow-sm"
-        >
+        <div>
           <BmkgWeatherWidget />
-        </motion.div>
+        </div>
       </motion.div>
 
-      {isLoading ? (
-        <DashboardSkeleton />
-      ) : (
-        <>
           {/* Section 3: Pintasan Akses Cepat Fitur */}
           <motion.div variants={bentoItem} className="flex flex-col gap-4">
             <SectionTitle 
               icon="grid_view" 
               title="Pintasan Fitur Operasional" 
-              subtitle="Pintasan cepat untuk mengakses katalog varietas benih unggul, rekomendasi pupuk, obat pestisida, diagnosa hama, dan kalkulasi kocor."
+              subtitle="Buka katalog bibit, pupuk, pestisida, referensi penyakit, atau kalkulator larutan."
             />
 
             <div className="p-5 sm:p-6 bg-[#FEFEFA] rounded-2xl border border-slate-200/80 shadow-sm">
@@ -606,41 +546,31 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                     id: 'cari-bibit', 
                     title: 'Cari Bibit', 
                     icon: 'grass', 
-                    desc: 'Varietas & Kualitas',
-                    bgClass: 'bg-[#96D8D0]/20 hover:bg-[#96D8D0]/35 border-[#96D8D0]/80 text-[#060606]',
-                    iconBg: 'bg-[#96D8D0] text-[#060606]'
+                    desc: 'Varietas & kualitas',
                   },
                   { 
                     id: 'cari-pupuk', 
                     title: 'Cari Pupuk', 
                     icon: 'compost', 
-                    desc: 'Formulasi & Dosis',
-                    bgClass: 'bg-[#DAF4AA]/25 hover:bg-[#DAF4AA]/45 border-[#DAF4AA]/80 text-[#060606]',
-                    iconBg: 'bg-[#DAF4AA] text-[#060606]'
+                    desc: 'Formulasi & dosis',
                   },
                   { 
                     id: 'cari-pestisida', 
                     title: 'Cari Pestisida', 
                     icon: 'shield', 
-                    desc: 'Obat & Proteksi',
-                    bgClass: 'bg-[#BEB9CC]/25 hover:bg-[#BEB9CC]/45 border-[#BEB9CC]/80 text-[#060606]',
-                    iconBg: 'bg-[#BEB9CC] text-[#060606]'
+                    desc: 'Produk & proteksi',
                   },
                   { 
                     id: 'cari-penyakit', 
                     title: 'Cari Penyakit', 
                     icon: 'bug_report', 
-                    desc: 'Diagnosa Hama',
-                    bgClass: 'bg-[#F1B4B9]/25 hover:bg-[#F1B4B9]/45 border-[#F1B4B9]/80 text-[#060606]',
-                    iconBg: 'bg-[#F1B4B9] text-[#060606]'
+                    desc: 'Identifikasi gejala',
                   },
                   { 
                     id: 'kocor', 
                     title: 'Kocor Pupuk', 
                     icon: 'science', 
-                    desc: 'Hitung Dosis Air & Nutrisi',
-                    bgClass: 'bg-[#74D1FF]/20 hover:bg-[#74D1FF]/35 border-[#74D1FF]/80 text-[#060606]',
-                    iconBg: 'bg-[#74D1FF] text-[#060606]'
+                    desc: 'Hitung air & nutrisi',
                   },
                 ].map((item) => {
                   const isKocor = item.id === 'kocor';
@@ -648,18 +578,18 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                     <button 
                       key={item.id}
                       onClick={() => navigate(item.id)}
-                      className={`p-3.5 rounded-xl border active:scale-[0.98] transition-all duration-150 flex items-center text-center group cursor-pointer min-h-[104px] justify-center shadow-2xs hover:shadow-md ${item.bgClass} ${
+                      className={`group flex min-h-[104px] cursor-pointer items-center justify-center rounded-xl border border-[#D8D5CC] bg-[#F8F7F2] p-3.5 text-center transition hover:border-[#8EA397] hover:bg-white active:scale-[0.99] ${
                         isKocor 
                           ? 'col-span-2 sm:col-span-2 lg:col-span-1 flex-col sm:flex-row lg:flex-col sm:text-left lg:text-center gap-2.5 sm:gap-3.5 lg:gap-2' 
                           : 'flex-col text-center gap-2'
                       }`}
                     >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-extrabold transition shadow-2xs border border-[#060606]/10 ${item.iconBg}`}>
-                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#C9D4CD] bg-[#E9EFEB] text-[#24533F] transition group-hover:bg-[#DCE8E0]">
+                        <span className="material-symbols-outlined text-[20px]" aria-hidden="true">{item.icon}</span>
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-extrabold text-xs sm:text-sm text-[#060606]">{item.title}</span>
-                        <span className="text-[10px] sm:text-[11px] text-[#060606]/70 leading-tight font-medium">{item.desc}</span>
+                        <span className="text-xs font-semibold text-[#202B25] sm:text-sm">{item.title}</span>
+                        <span className="text-[10px] font-medium leading-tight text-[#737B75] sm:text-[11px]">{item.desc}</span>
                       </div>
                     </button>
                   );
@@ -672,24 +602,20 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
           <motion.div variants={bentoItem} className="flex flex-col gap-4">
             <SectionTitle 
               icon="show_chart" 
-              title="Grafik Progres Pertumbuhan Tanaman" 
-              subtitle="Visualisasi estimasi HST, fase pertumbuhan vegetatif-generatif, dan proyeksi waktu panen."
+              title="Sebaran Umur Tanaman Aktif"
+              subtitle="Perbandingan HST berdasarkan tanggal tanam yang tercatat, tanpa asumsi fase atau target panen generik."
             />
-            <motion.div 
-              whileHover={{ y: -2 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="rounded-2xl border border-slate-200/80 overflow-hidden bg-[#FEFEFA] p-1.5 shadow-sm"
-            >
+            <div>
               <GrowthChart tanamanList={tanaman} />
-            </motion.div>
+            </div>
           </motion.div>
 
           {/* Section 5: Status Blok Lahan & Progress Fase */}
           <motion.div variants={bentoItem} className="flex flex-col gap-4">
             <SectionTitle 
               icon="forest" 
-              title="Pemantauan Blok Lahan & Fase Tanaman" 
-              subtitle="Rincian kondisi tiap blok lahan serta perkembangan fase tanaman secara terpadu."
+              title="Pemantauan Blok & Umur Tanaman"
+              subtitle="Rincian tanaman pada tiap blok berdasarkan catatan tanggal tanam dan status operasional."
             />
             <motion.div 
               whileHover={{ y: -2 }}
@@ -759,7 +685,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                       <span className="material-symbols-outlined text-4xl text-slate-400">park</span>
                       <p className="text-sm font-bold text-slate-950 font-display">Belum ada tanaman di blok ini</p>
                       <p className="text-xs text-slate-600 max-w-sm font-medium">
-                        Tambahkan data tanaman di menu Data Lahan untuk mulai memantau HST dan fase pertumbuhannya.
+                        Tambahkan data tanaman di menu Data Lahan untuk mulai memantau umur dan statusnya.
                       </p>
                       <button
                         onClick={() => navigate('pemantauan')}
@@ -774,7 +700,6 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                         <TanamanCardDropdown
                           key={item.id || idx}
                           item={item}
-                          isFirst={idx === 0}
                           blokLahan={blokLahan}
                           updateTanaman={updateTanaman}
                           navigate={navigate}
@@ -968,122 +893,69 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                 </button>
               }
             />
-            <motion.div 
-              whileHover={{ y: -2 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="p-5 sm:p-6 bg-[#FEFEFA] rounded-2xl border border-slate-200/80 shadow-sm"
-            >
+            <div className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-5 sm:p-6">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className="p-3.5 bg-[#96D8D0]/20 rounded-xl border border-[#96D8D0]/80 shadow-2xs hover:shadow-md transition-all"
-                >
-                  <span className="text-[10px] font-extrabold text-[#060606]/70 uppercase block mb-1">
-                    Benih &amp; Bibit
-                  </span>
-                  <span className="text-base font-extrabold text-[#060606] block">
-                    {formatRp(totalBiayaBenih)}
-                  </span>
-                  <span className="text-[10px] text-[#060606]/70 font-semibold mt-1 block">
-                    {totalBiaya > 0 ? ((totalBiayaBenih / totalBiaya) * 100).toFixed(1) : 0}% dari total
-                  </span>
-                </motion.div>
-
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className="p-3.5 bg-[#DAF4AA]/25 rounded-xl border border-[#DAF4AA]/80 shadow-2xs hover:shadow-md transition-all"
-                >
-                  <span className="text-[10px] font-extrabold text-[#060606]/70 uppercase block mb-1">
-                    Pupuk &amp; Nutrisi
-                  </span>
-                  <span className="text-base font-extrabold text-[#060606] block">
-                    {formatRp(totalBiayaPupuk)}
-                  </span>
-                  <span className="text-[10px] text-[#060606]/70 font-semibold mt-1 block">
-                    {totalBiaya > 0 ? ((totalBiayaPupuk / totalBiaya) * 100).toFixed(1) : 0}% dari total
-                  </span>
-                </motion.div>
-
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className="p-3.5 bg-[#BEB9CC]/25 rounded-xl border border-[#BEB9CC]/80 shadow-2xs hover:shadow-md transition-all"
-                >
-                  <span className="text-[10px] font-extrabold text-[#060606]/70 uppercase block mb-1">
-                    Pestisida &amp; Obat
-                  </span>
-                  <span className="text-base font-extrabold text-[#060606] block">
-                    {formatRp(totalBiayaPestisida)}
-                  </span>
-                  <span className="text-[10px] text-[#060606]/70 font-semibold mt-1 block">
-                    {totalBiaya > 0 ? ((totalBiayaPestisida / totalBiaya) * 100).toFixed(1) : 0}% dari total
-                  </span>
-                </motion.div>
-
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className="p-3.5 bg-[#F1B4B9]/25 rounded-xl border border-[#F1B4B9]/80 shadow-2xs hover:shadow-md transition-all"
-                >
-                  <span className="text-[10px] font-extrabold text-[#060606]/70 uppercase block mb-1">
-                    Biaya Tetap / Tenaga
-                  </span>
-                  <span className="text-base font-extrabold text-[#060606] block">
-                    {formatRp(totalBiayaTetap)}
-                  </span>
-                  <span className="text-[10px] text-[#060606]/70 font-semibold mt-1 block">
-                    {totalBiaya > 0 ? ((totalBiayaTetap / totalBiaya) * 100).toFixed(1) : 0}% dari total
-                  </span>
-                </motion.div>
-
-                <motion.div 
-                  whileHover={{ y: -2, scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                  className="p-3.5 bg-[#74D1FF]/20 rounded-xl border border-[#74D1FF]/80 shadow-2xs hover:shadow-md transition-all col-span-2 sm:col-span-1"
-                >
-                  <span className="text-[10px] font-extrabold text-[#060606]/70 uppercase block mb-1">
-                    Biaya Operasional Lain
-                  </span>
-                  <span className="text-base font-extrabold text-[#060606] block">
-                    {formatRp(totalBiayaLain)}
-                  </span>
-                  <span className="text-[10px] text-[#060606]/70 font-semibold mt-1 block">
-                    {totalBiaya > 0 ? ((totalBiayaLain / totalBiaya) * 100).toFixed(1) : 0}% dari total
-                  </span>
-                </motion.div>
+                {[
+                  ['Benih & bibit', totalBiayaBenih],
+                  ['Pupuk & nutrisi', totalBiayaPupuk],
+                  ['Proteksi tanaman', totalBiayaPestisida],
+                  ['Biaya tetap / tenaga', totalBiayaTetap],
+                  ['Operasional lain', totalBiayaLain],
+                ].map(([label, value], index) => {
+                  const numericValue = Number(value);
+                  const percentage = totalBiaya > 0
+                    ? ((numericValue / totalBiaya) * 100).toFixed(1)
+                    : '0';
+                  return (
+                    <div
+                      key={label}
+                      className={`rounded-xl border border-[#D8D5CC] bg-[#F8F7F2] p-3.5 ${
+                        index === 4 ? 'col-span-2 sm:col-span-1' : ''
+                      }`}
+                    >
+                      <span className="mb-1 block text-[9px] font-bold uppercase tracking-[0.1em] text-[#747D77]">
+                        {label}
+                      </span>
+                      <span className="block text-sm font-semibold text-[#243129] sm:text-base">
+                        {formatRp(numericValue)}
+                      </span>
+                      <span className="mt-1 block text-[10px] font-medium text-[#747D77]">
+                        {percentage}% dari total
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
-            </motion.div>
+            </div>
           </motion.div>
-        </>
-      )}
-
       {/* Section 8: Banner Kontak & Support WhatsApp */}
       <motion.div variants={bentoItem} className="flex flex-col gap-3">
         <SectionTitle 
           icon="support_agent" 
-          title="Layanan Dukungan & Konsultasi Agronomi" 
-          subtitle="Hubungi tim pakar pertanian untuk konsultasi kendala hama, nutrisi, dan teknik perawatan lahan."
+          title="Bantuan Penggunaan TANITA"
+          subtitle="Hubungi pengelola aplikasi untuk pertanyaan akses, pencatatan data, atau penggunaan fitur."
         />
-        <div className="flex flex-col gap-4">
-          <img 
-            src="https://res.cloudinary.com/ddc26noa/image/upload/v1784590990/1784563793022_mnva4t.png" 
-            alt="Banner" 
-            className="w-full rounded-2xl border border-slate-200/80 shadow-sm object-cover"
-          />
-          <motion.a 
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 400, damping: 20 }}
+        <div className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-5 sm:p-6">
+          <div className="flex flex-col items-start justify-between gap-5 sm:flex-row sm:items-center">
+            <div className="flex items-start gap-3">
+              <span className="material-symbols-outlined mt-0.5 text-[22px] text-[#24533F]" aria-hidden="true">support_agent</span>
+              <div>
+                <h3 className="font-display text-sm font-semibold text-[#243129]">Bantuan melalui WhatsApp</h3>
+                <p className="mt-1 max-w-2xl text-xs font-medium leading-relaxed text-[#6F7872]">
+                  Untuk keputusan agronomi, tetap konsultasikan kondisi lapangan dengan penyuluh atau tenaga yang kompeten.
+                </p>
+              </div>
+            </div>
+          <a
             href="https://wa.me/qr/MVZDFB2EXFC4K1" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="w-full text-center bg-[#154734] hover:bg-[#154734] text-white font-bold py-3.5 px-6 rounded-2xl border border-transparent shadow-sm hover:shadow-md transition-all text-base sm:text-lg tracking-wide flex items-center justify-center gap-2.5 cursor-pointer min-h-[50px]"
+            className="flex min-h-[44px] w-full shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#24533F] px-5 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-[#1B4031] sm:w-auto"
           >
-            <span className="material-symbols-outlined text-2xl">chat</span>
-            Konsultasi Lahan Via WhatsApp
-          </motion.a>
+            <span className="material-symbols-outlined text-[19px]">chat</span>
+            Hubungi pengelola
+          </a>
+          </div>
         </div>
       </motion.div>
     </motion.div>

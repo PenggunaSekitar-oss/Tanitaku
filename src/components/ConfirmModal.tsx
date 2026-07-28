@@ -45,48 +45,48 @@ export function ConfirmModal({
     switch (confirmVariant) {
       case 'primary':
       case 'success':
-        return 'bg-[#154734] hover:bg-[#0d3124] text-white';
+        return 'bg-[#24533F] hover:bg-[#1B4031] text-white';
       case 'warning':
-        return 'bg-amber-500 hover:bg-amber-600 text-black font-black';
+        return 'bg-[#A56E24] hover:bg-[#87591D] text-white';
       case 'danger':
       default:
-        return 'bg-danger hover:bg-danger/90 text-white';
+        return 'bg-[#A34335] hover:bg-[#87362C] text-white';
     }
   };
 
   return (
     <div 
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-[#17211C]/55 p-4 animate-in fade-in duration-150"
       onClick={(e) => {
         if (e.target === e.currentTarget) onCancel();
       }}
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-surface neo-border shadow-[6px_6px_0px_0px_#000] rounded-2xl p-6 w-full max-w-sm relative animate-in zoom-in-95 duration-150">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="relative w-full max-w-sm rounded-[18px] border border-[#D8D5CC] bg-[#FBFAF6] p-6 shadow-[0_20px_60px_rgba(15,25,20,0.18)] animate-in zoom-in-95 duration-150">
+        <div className="mb-4 flex items-center gap-3">
           {icon && (
-            <span className="material-symbols-outlined text-lg text-white bg-[#154734] p-1 rounded neo-border-thin">
+            <span className="material-symbols-outlined flex size-9 items-center justify-center rounded-xl bg-[#E7EDE9] text-[19px] text-[#24533F]">
               {icon}
             </span>
           )}
-          <h3 className="text-sm font-display font-black text-white bg-[#154734] px-3 py-1 rounded-md neo-border-thin shadow-[2px_2px_0px_0px_#0A0A0A] inline-block uppercase tracking-wider">
+          <h3 className="font-display text-base font-semibold tracking-[-0.02em] text-[#1B2721]">
             {title}
           </h3>
         </div>
-        <p className="text-on-surface text-xs sm:text-sm mb-6 leading-relaxed font-semibold whitespace-pre-line">{message}</p>
-        <div className="flex justify-end gap-3">
+        <p className="mb-6 whitespace-pre-line text-xs font-medium leading-relaxed text-[#626D66] sm:text-sm">{message}</p>
+        <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">
           <button 
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-xs sm:text-sm font-bold text-on-surface-muted hover:text-on-surface transition rounded-xl border-2 border-black hover:bg-surface-high cursor-pointer"
+            className="cursor-pointer rounded-xl border border-[#CBC9C1] bg-white px-4 py-2.5 text-xs font-semibold text-[#4F5B54] transition hover:bg-[#F1F0EB] sm:text-sm"
           >
             {cancelText}
           </button>
           <button 
             type="button"
             onClick={onConfirm}
-            className={`px-4 py-2 text-xs sm:text-sm font-black rounded-xl transition shadow-[2px_2px_0px_0px_#000] border-2 border-black cursor-pointer active:translate-x-[1px] active:translate-y-[1px] ${getConfirmBtnClass()}`}
+            className={`cursor-pointer rounded-xl px-4 py-2.5 text-xs font-semibold transition sm:text-sm ${getConfirmBtnClass()}`}
           >
             {confirmText}
           </button>

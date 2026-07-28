@@ -15,7 +15,18 @@ import {
   matchesReportPeriod,
 } from '../src/utils/reportPeriod';
 import { createCsv } from '../src/utils/csv';
-import { selectNearestForecast } from '../src/components/BmkgWeatherWidget';
+import {
+  getWeatherAdvisories,
+  getWeatherFreshness,
+  parseBmkgPayload,
+  selectNearestForecast,
+} from '../src/utils/weather';
+import {
+  calculateActualFertilizerDose,
+  calculateEffectiveLuasLahan,
+  calculateHST,
+  calculateLuasLahan,
+} from '../src/utils/calculations';
 
 test('input desimal menerima titik dan koma tanpa mengubah besaran', () => {
   assert.equal(parseLocalizedNumberInput('0.5', true).value, 0.5);
@@ -70,18 +81,124 @@ test('CSV meng-escape quote, newline, dan formula spreadsheet', () => {
   assert.match(csv, /"baris\nbaru"/);
 });
 
-test('BMKG memilih slot prakiraan terdekat yang belum lewat', () => {
+test('BMKG memvalidasi, mengurutkan, dan mendeduplikasi slot prakiraan', () => {
+  const parsed = parseBmkgPayload({
+    lokasi: {
+      adm4: '73.04.01.1001',
+      provinsi: 'Sulawesi Selatan',
+      kotkab: 'Jeneponto',
+      kecamatan: 'Bangkala',
+      desa: 'Benteng',
+      lat: -5.57,
+      lon: 119.55,
+      timezone: 'Asia/Makassar',
+    },
+    data: [{
+      cuaca: [[
+        {
+          utc_datetime: '2026-07-28 06:00:00',
+          local_datetime: '2026-07-28 14:00:00',
+          analysis_date: '2026-07-27T12:00:00',
+          weather_desc: 'Hujan Ringan',
+          t: 29,
+          hu: 82,
+          ws: 8,
+          tp: 0.7,
+          tcc: 90,
+        },
+        {
+          utc_datetime: '2026-07-28 03:00:00',
+          local_datetime: '2026-07-28 11:00:00',
+          analysis_date: '2026-07-27T12:00:00',
+          weather_desc: 'Cerah',
+          t: 31,
+          hu: 60,
+          ws: 5,
+          tp: 0,
+          tcc: 10,
+        },
+        {
+          utc_datetime: '2026-07-28 03:00:00',
+          weather_desc: 'Duplikat',
+          hu: 999,
+        },
+      ]],
+    }],
+  });
+
+  assert.ok(parsed);
+  assert.equal(parsed.location.desa, 'Benteng');
+  assert.equal(parsed.forecasts.length, 2);
+  assert.equal(parsed.forecasts[0]?.description, 'Cerah');
+  assert.equal(parsed.forecasts[0]?.humidity, 60);
+  assert.equal(parsed.forecasts[1]?.precipitation, 0.7);
+});
+
+test('BMKG memilih slot yang paling dekat dengan waktu saat ini', () => {
   const now = new Date('2026-07-28T00:00:00Z');
   const selected = selectNearestForecast(
-    [[
-      { weather_desc: 'Lewat', utc_datetime: '2026-07-27 21:00:00' },
-      { weather_desc: 'Nanti', utc_datetime: '2026-07-28 06:00:00' },
-    ], [
-      { weather_desc: 'Terdekat', utc_datetime: '2026-07-28 03:00:00' },
-    ]],
+    [
+      { forecastAt: '2026-07-27T21:00:00.000Z', description: 'Lewat' },
+      { forecastAt: '2026-07-28T06:00:00.000Z', description: 'Nanti' },
+      { forecastAt: '2026-07-28T03:00:00.000Z', description: 'Terdekat' },
+    ].map((forecast) => ({
+      ...forecast,
+      localDatetime: '',
+      analysisAt: null,
+      temperature: null,
+      humidity: null,
+      windSpeed: null,
+      windDirection: '—',
+      windDirectionDegrees: null,
+      cloudCover: null,
+      precipitation: null,
+      visibilityText: '—',
+    })),
     now,
   );
-  assert.equal(selected?.weather_desc, 'Terdekat');
+  assert.equal(selected?.description, 'Terdekat');
+});
+
+test('BMKG menandai data lama dan advisori memakai beberapa slot', () => {
+  const now = new Date('2026-07-28T12:00:00Z');
+  const freshness = getWeatherFreshness('2026-07-27T12:00:00.000Z', now);
+  assert.equal(freshness.isStale, true);
+
+  const advisories = getWeatherAdvisories([
+    {
+      forecastAt: '2026-07-28T13:00:00.000Z',
+      localDatetime: '',
+      analysisAt: null,
+      description: 'Hujan Ringan',
+      temperature: 29,
+      humidity: 88,
+      windSpeed: 9,
+      windDirection: 'E',
+      windDirectionDegrees: 90,
+      cloudCover: 90,
+      precipitation: 0.8,
+      visibilityText: '< 10 km',
+    },
+  ], now);
+  assert.equal(advisories[0]?.level, 'high');
+  assert.match(advisories[0]?.message ?? '', /Tunda aplikasi daun/);
+});
+
+test('BMKG tidak memberi sinyal cuaca aman ketika data kosong', () => {
+  const advisories = getWeatherAdvisories([]);
+  assert.equal(advisories[0]?.title, 'Prakiraan belum tersedia');
+  assert.match(advisories[0]?.message ?? '', /Jangan gunakan/);
+});
+
+test('perhitungan budidaya menolak tanggal dan besaran tidak valid', () => {
+  assert.equal(calculateHST('2026-02-30', new Date(2026, 2, 2)), 0);
+  assert.equal(calculateHST('2026-02-28', new Date(2026, 2, 2)), 2);
+  assert.equal(calculateActualFertilizerDose(-20, 1_000), 0);
+  assert.equal(calculateActualFertilizerDose(100, 1_000), 10);
+  assert.equal(calculateLuasLahan(10, 20, 1, -0.5), 200);
+  assert.equal(calculateLuasLahan(10, 20, 1, 0.5, 125), 125);
+  assert.equal(calculateEffectiveLuasLahan(10, 20, 1, 0.5, 1_000, 80), 800);
+  assert.equal(calculateEffectiveLuasLahan(10, 20, 1, 0.5, 1_000, 120), 1_000);
 });
 
 test('ikon PWA memiliki signature PNG valid', () => {

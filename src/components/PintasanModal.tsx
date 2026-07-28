@@ -13,46 +13,36 @@ export const PINTASAN_FITUR_ALL = [
     id: 'cari-bibit', 
     title: 'Cari Bibit', 
     icon: 'grass', 
-    desc: 'Rekomendasi Varietas & Benih', 
+    desc: 'Katalog varietas & benih',
     category: 'Katalog',
-    bgClass: 'bg-[#96D8D0]/20 hover:bg-[#96D8D0]/35 border-[#96D8D0]/80',
-    iconBg: 'bg-[#96D8D0] text-[#060606]'
   },
   { 
     id: 'cari-pupuk', 
     title: 'Cari Pupuk', 
     icon: 'compost', 
-    desc: 'Formulasi & Dosis Nutrisi', 
+    desc: 'Katalog formulasi & dosis',
     category: 'Katalog',
-    bgClass: 'bg-[#DAF4AA]/25 hover:bg-[#DAF4AA]/45 border-[#DAF4AA]/80',
-    iconBg: 'bg-[#DAF4AA] text-[#060606]'
   },
   { 
     id: 'cari-pestisida', 
     title: 'Cari Pestisida', 
     icon: 'shield', 
-    desc: 'Obat & Proteksi Tanaman', 
+    desc: 'Katalog proteksi tanaman',
     category: 'Katalog',
-    bgClass: 'bg-[#BEB9CC]/25 hover:bg-[#BEB9CC]/45 border-[#BEB9CC]/80',
-    iconBg: 'bg-[#BEB9CC] text-[#060606]'
   },
   { 
     id: 'cari-penyakit', 
     title: 'Cari Penyakit', 
     icon: 'bug_report', 
-    desc: 'Diagnosa Hama & Penyakit', 
+    desc: 'Referensi hama & penyakit',
     category: 'Katalog',
-    bgClass: 'bg-[#F1B4B9]/25 hover:bg-[#F1B4B9]/45 border-[#F1B4B9]/80',
-    iconBg: 'bg-[#F1B4B9] text-[#060606]'
   },
   { 
     id: 'kocor', 
     title: 'Kocor Pupuk', 
     icon: 'science', 
-    desc: 'Kalkulator Dosis Air & Nutrisi', 
+    desc: 'Kalkulator air & nutrisi',
     category: 'Perawatan',
-    bgClass: 'bg-[#74D1FF]/20 hover:bg-[#74D1FF]/35 border-[#74D1FF]/80',
-    iconBg: 'bg-[#74D1FF] text-[#060606]'
   },
 ];
 
@@ -68,7 +58,7 @@ export function PintasanModal({ isOpen, onClose, onNavigate, currentView }: Pint
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          className="fixed inset-0 bg-[#17211C]/55"
         />
 
         {/* Modal / Bottom Sheet Content */}
@@ -77,7 +67,7 @@ export function PintasanModal({ isOpen, onClose, onNavigate, currentView }: Pint
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 20, opacity: 0 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
-          className="relative w-full max-w-2xl bg-[#FEFEFA] rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200/80 max-h-[88vh] flex flex-col z-10 overflow-hidden"
+          className="relative z-10 flex max-h-[88vh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[22px] border border-[#D8D5CC] bg-[#FBFAF6] shadow-[0_20px_60px_rgba(15,25,20,0.18)] sm:rounded-[22px]"
         >
           {/* Handlebar for mobile dragging hint */}
           <div className="w-12 h-1 bg-slate-300 rounded-full mx-auto mt-2.5 mb-1 sm:hidden shrink-0" />
@@ -85,7 +75,7 @@ export function PintasanModal({ isOpen, onClose, onNavigate, currentView }: Pint
           {/* Header */}
           <div className="p-4 sm:p-5 border-b border-slate-200/80 bg-[#FEFEFA] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#154734] text-white flex items-center justify-center shrink-0 shadow-sm shadow-[#154734]/20">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7EDE9] text-[#24533F]">
                 <span className="material-symbols-outlined text-[22px]">grid_view</span>
               </div>
               <div>
@@ -93,7 +83,7 @@ export function PintasanModal({ isOpen, onClose, onNavigate, currentView }: Pint
                   Pintasan Fitur Operasional
                 </h2>
                 <p className="text-xs text-slate-500 font-medium">
-                  Akses cepat seluruh modul budidaya, nutrisi, hama &amp; keuangan TANITA
+                  Buka alat referensi dan perhitungan tanpa kembali ke dashboard
                 </p>
               </div>
             </div>
@@ -116,36 +106,35 @@ export function PintasanModal({ isOpen, onClose, onNavigate, currentView }: Pint
                 return (
                   <motion.button
                     key={item.id}
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.96 }}
+                    whileTap={{ scale: 0.99 }}
                     onClick={() => {
                       onNavigate(item.id);
                       onClose();
                     }}
-                    className={`p-3.5 rounded-xl border transition-all flex flex-col items-start text-left gap-2 group cursor-pointer relative ${
+                    className={`group relative flex cursor-pointer flex-col items-start gap-2 rounded-xl border p-3.5 text-left transition ${
                       isKocor ? 'col-span-2 sm:col-span-2' : ''
                     } ${
                       isActive
-                        ? `${item.bgClass} ring-2 ring-[#060606]`
-                        : `${item.bgClass} shadow-2xs hover:shadow-md`
+                        ? 'border-[#557362] bg-[#E7EEE9] ring-1 ring-[#557362]'
+                        : 'border-[#D8D5CC] bg-[#F8F7F2] hover:border-[#9EAAA2] hover:bg-white'
                     }`}
                   >
                     <div className="flex items-center justify-between w-full">
-                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-extrabold transition border border-[#060606]/10 shadow-2xs ${item.iconBg}`}>
-                        <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#C9D4CD] bg-[#E9EFEB] text-[#24533F] transition">
+                        <span className="material-symbols-outlined text-[20px]" aria-hidden="true">{item.icon}</span>
                       </div>
                       {isActive && (
-                        <span className="text-[9px] font-extrabold uppercase tracking-wider text-[#060606] bg-[#060606]/10 px-2 py-0.5 rounded-md border border-[#060606]/20">
+                        <span className="rounded-md bg-[#24533F] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
                           Aktif
                         </span>
                       )}
                     </div>
 
                     <div>
-                      <span className="font-extrabold text-xs sm:text-sm block font-display leading-tight text-[#060606]">
+                      <span className="block font-display text-xs font-semibold leading-tight text-[#233129] sm:text-sm">
                         {item.title}
                       </span>
-                      <span className="text-[10px] leading-tight block mt-1 font-medium text-[#060606]/75">
+                      <span className="mt-1 block text-[10px] font-medium leading-tight text-[#707A73]">
                         {item.desc}
                       </span>
                     </div>
