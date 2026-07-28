@@ -11,7 +11,6 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['apple-touch-icon.png', 'tanita-icon.svg'],
         devOptions: {
           enabled: false
         },
@@ -28,19 +27,19 @@ export default defineConfig(() => {
           display: 'standalone',
           icons: [
             {
-              src: 'pwa-192x192.png',
+              src: 'https://res.cloudinary.com/ddc26noa/image/upload/c_pad,w_192,h_192,b_transparent/v1784860433/5199_1_j0xnzq.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any'
             },
             {
-              src: 'pwa-512x512.png',
+              src: 'https://res.cloudinary.com/ddc26noa/image/upload/c_pad,w_512,h_512,b_transparent/v1784860433/5199_1_j0xnzq.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any'
             },
             {
-              src: 'pwa-512x512.png',
+              src: 'https://res.cloudinary.com/ddc26noa/image/upload/c_pad,w_512,h_512,b_transparent/v1784860433/5199_1_j0xnzq.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'maskable'

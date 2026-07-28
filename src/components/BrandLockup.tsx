@@ -1,30 +1,17 @@
 interface BrandLockupProps {
   compact?: boolean;
-  inverse?: boolean;
 }
 
-export function BrandLockup({ compact = false, inverse = false }: BrandLockupProps) {
-  const primaryText = inverse ? 'text-white' : 'text-[#183127]';
-  const secondaryText = inverse ? 'text-white/60' : 'text-[#69736D]';
-
+export function BrandLockup({ compact = false }: BrandLockupProps) {
   return (
-    <div className="flex min-w-0 items-center gap-2.5" aria-label="TANITA">
+    <div className="flex min-w-0 items-center" aria-label="TANITA">
       <img
-        src="/tanita-icon.svg"
-        alt=""
-        aria-hidden="true"
-        className={`${compact ? 'h-8 w-8 rounded-[10px]' : 'h-9 w-9 rounded-xl'} shrink-0`}
+        src="https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png"
+        alt="Logo TANITA"
+        className={`w-auto shrink-0 object-contain ${
+          compact ? 'h-8 max-w-[128px] sm:h-9' : 'h-10 max-w-[164px]'
+        }`}
       />
-      <div className="min-w-0">
-        <span className={`block font-display text-sm font-bold tracking-[-0.02em] ${primaryText}`}>
-          TANITA
-        </span>
-        {!compact && (
-          <span className={`block truncate text-[9px] font-semibold uppercase tracking-[0.16em] ${secondaryText}`}>
-            Operasional Kebun
-          </span>
-        )}
-      </div>
     </div>
   );
 }

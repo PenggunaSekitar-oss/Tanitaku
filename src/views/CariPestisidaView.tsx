@@ -65,6 +65,17 @@ export function CariPestisidaView() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!hamaInput.trim()) {
+      setHasSearched(false);
+      setResults([]);
+      setFeedbackToast({
+        message: 'Pilih hama atau penyakit target terlebih dahulu. Nama tanaman saja belum cukup untuk menentukan pestisida.',
+        type: 'info',
+      });
+      return;
+    }
+
     setHasSearched(true);
     const resultCount = performSearch(hamaInput, tanamanInput);
 
@@ -76,11 +87,9 @@ export function CariPestisidaView() {
       });
       return;
     } else if (hamaInput && tanamanInput) {
-      msg = `Ditemukan ${resultCount} produk yang cocok untuk target ${hamaInput} pada ${tanamanInput}.`;
+      msg = `Ditemukan ${resultCount} produk dengan sasaran ${hamaInput}. ${tanamanInput} dipakai sebagai konteks; pastikan tanaman tersebut tercantum pada label produk.`;
     } else if (hamaInput) {
       msg = `Ditemukan ${resultCount} produk yang cocok untuk target ${hamaInput}.`;
-    } else if (tanamanInput) {
-      msg = `Ditemukan ${resultCount} produk yang secara eksplisit mencantumkan ${tanamanInput}.`;
     }
     setFeedbackToast({ message: msg, type: 'success' });
   };
@@ -150,7 +159,7 @@ export function CariPestisidaView() {
     <div className="flex flex-col gap-6 w-full pb-12">
       <PageHeader
         title="Cari Pestisida & Perlindungan"
-        subtitle="Rekomendasi obat pertanian tepat sasaran berdasarkan Hama Target & Jenis Tanaman dengan Prinsip 5 Tepat."
+        subtitle="Penyaringan katalog berdasarkan hama atau penyakit target. Tanaman dipakai sebagai konteks dan tetap harus dicocokkan dengan label produk."
       />
 
       <div className="w-full flex flex-col gap-6">
@@ -278,15 +287,18 @@ export function CariPestisidaView() {
             {/* Field 2: Jenis Tanaman */}
             <div className="flex flex-col w-full">
               <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5 flex items-center justify-between">
-                <span>2. Jenis Tanaman (100 Tanaman / Input Manual)</span>
+                <span>2. Jenis Tanaman — Opsional (Konteks Label)</span>
                 {tanamanInput && <span className="text-xs text-[#154734] font-extrabold">✔ Terpilih</span>}
               </label>
               <TanamanSelect 
                 value={tanamanInput}
                 onChange={(val) => setTanamanInput(val)}
-                placeholder="-- Pilih dari 100 Tanaman / Ketik Manual --"
+                placeholder="-- Pilih tanaman untuk konteks penggunaan --"
                 className="w-full"
               />
+              <p className="mt-1.5 text-[11px] font-medium text-[#68716C]">
+                Katalog belum menyimpan daftar izin tanaman per produk; periksa kembali tanaman sasaran pada label kemasan.
+              </p>
             </div>
           </div>
 
@@ -306,7 +318,7 @@ export function CariPestisidaView() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between flex-wrap gap-2 border-b-2 border-[#0A0A0A] pb-2">
             <div>
-              <h3 className="font-display font-extrabold uppercase text-lg text-[#0A0A0A]">Hasil Rekomendasi Pestisida</h3>
+              <h3 className="font-display font-extrabold uppercase text-lg text-[#0A0A0A]">Hasil Referensi Pestisida</h3>
               <div className="flex items-center gap-2 flex-wrap mt-1">
                 {hamaInput && (
                   <span className="text-xs font-bold bg-[#154734] text-white px-2.5 py-1 rounded border border-[#0A0A0A] flex items-center gap-1.5">
@@ -425,7 +437,9 @@ export function CariPestisidaView() {
               <span className="material-symbols-outlined text-5xl text-[#5C5C5C]">search_off</span>
               <div>
                 <p className="text-base font-bold text-[#0A0A0A]">Tidak ada pestisida ditemukan</p>
-                <p className="text-xs text-[#5C5C5C] mt-1">Belum ada data pestisida yang cocok untuk kombinasi kriteria tersebut.</p>
+                <p className="text-xs text-[#5C5C5C] mt-1">
+                  Belum ada produk dengan sasaran yang cocok untuk hama atau penyakit tersebut.
+                </p>
               </div>
             </div>
           )}

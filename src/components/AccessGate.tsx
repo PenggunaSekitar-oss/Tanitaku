@@ -140,13 +140,10 @@ export function AccessGate({ children }: AccessGateProps) {
             className="flex flex-col gap-4"
           >
             <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
+              <div>
                 <label className="text-xs font-display font-extrabold text-slate-900 uppercase tracking-wider">
                   Kode akses
                 </label>
-                <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
-                  Tersimpan lokal
-                </span>
               </div>
 
               <div className="relative">

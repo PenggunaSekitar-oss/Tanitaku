@@ -113,12 +113,6 @@ export function Sidebar({
             </div>
           ))}
         </nav>
-
-        <div className="shrink-0 border-t border-[#DFDED7] px-5 py-4">
-          <p className="text-[10px] font-semibold leading-relaxed text-[#737B76]">
-            Data tersimpan lokal di perangkat ini.
-          </p>
-        </div>
       </aside>
     </>
   );
