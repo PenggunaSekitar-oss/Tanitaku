@@ -307,7 +307,8 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
         blok.jumlahBedengan,
         blok.panjangBedengan,
         blok.lebarBedengan,
-        blok.jarakAntarBedengan
+        blok.jarakAntarBedengan,
+        blok.luasManualM2,
       ),
     0
   );
