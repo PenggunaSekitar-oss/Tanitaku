@@ -74,7 +74,7 @@ export function Sidebar({
         <nav className="flex-1 overflow-y-auto px-3 py-4" aria-label="Navigasi utama">
           {MENU_GROUPS.map((group) => (
             <div key={group.label} className="mb-5 last:mb-0">
-              <p className="mb-1.5 px-3 text-[9px] font-bold uppercase tracking-[0.18em] text-[#89908C]">
+              <p className="mb-1.5 px-3 text-[11px] font-semibold text-[#7D8680]">
                 {group.label}
               </p>
               <div className="space-y-0.5">

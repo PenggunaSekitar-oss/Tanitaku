@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { Select } from '../components/Select';
+import { CatalogMeta } from '../components/CatalogMeta';
 import { PUPUK_DB, Pupuk, getPupukDetails } from '../data/pupukData';
 
 export function CariPupukView() {
@@ -8,7 +9,6 @@ export function CariPupukView() {
   const [fungsiInput, setFungsiInput] = useState('');
   const [hstInput, setHstInput] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
-  const [showRumusGuide, setShowRumusGuide] = useState(false);
   const [searchParams, setSearchParams] = useState({ tanaman: '', hst: -1, fungsi: '' });
 
   const FUNGSI_OPTIONS = [
@@ -98,81 +98,10 @@ export function CariPupukView() {
       <PageHeader
         title="Cari Pupuk & Nutrisi"
         subtitle="Penyaringan pupuk berdasarkan organ sasaran dan umur HST; nama tanaman digunakan sebagai konteks, bukan filter kompatibilitas."
+        action={<CatalogMeta count={PUPUK_DB.length} unit="produk" />}
       />
 
-      {/* DATABASE READY COUNTER BADGE */}
-
-        <div className="neo-card p-4 bg-[#FEFEFA] border-2 border-[#0A0A0A] rounded flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-xl text-white bg-[#154734] p-2 rounded border-2 border-[#0A0A0A]">
-              eco
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display font-extrabold text-sm uppercase text-[#0A0A0A]">
-                  KATALOG LOKAL
-                </span>
-                <span className="text-[10px] font-bold uppercase bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
-                  {PUPUK_DB.length}+ Data Ready
-                </span>
-              </div>
-              <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Formulasi nutrisi lengkap untuk seluruh fase pertumbuhan tanaman
-              </p>
-            </div>
-          </div>
-        </div>
-
-
-      {/* RUMUS REKOMENDASI PEMUPUKAN GUIDANCE BANNER */}
-      <div className="p-4 sm:p-5 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer" onClick={() => setShowRumusGuide(!showRumusGuide)}>
-          <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-            <span className="material-symbols-outlined text-2xl text-white bg-[#154734] p-2 rounded border-2 border-[#0A0A0A] shrink-0">
-              compost
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-display font-extrabold text-sm sm:text-base uppercase text-[#0A0A0A] leading-snug">
-                Checklist penggunaan pupuk (prinsip 5 tepat)
-              </h3>
-              <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Panduan umum untuk memeriksa sasaran, jenis, dosis, waktu, dan cara aplikasi.
-              </p>
-            </div>
-          </div>
-          <button type="button" className="self-end sm:self-auto text-xs font-bold bg-[#E6E6DC] text-[#0A0A0A] border-2 border-[#0A0A0A] px-3 py-1.5 rounded shrink-0 flex items-center gap-1">
-            {showRumusGuide ? "Sembunyikan" : "Lihat Rumus"}
-            <span className="material-symbols-outlined text-sm">{showRumusGuide ? "expand_less" : "expand_more"}</span>
-          </button>
-        </div>
-
-        {showRumusGuide && (
-          <div className="mt-4 pt-4 border-t-2 border-[#0A0A0A] text-xs text-[#0A0A0A] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">1. Tepat Sasaran</span>
-              <span className="text-[#5C5C5C]">Sesuaikan organ target (Akar, Daun, Batang, Bunga, atau Buah).</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">2. Tepat Jenis</span>
-              <span className="text-[#5C5C5C]">Gunakan jenis pupuk (Tinggi N untuk Vegetatif, Tinggi P &amp; K untuk Generatif).</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">3. Tepat Dosis</span>
-              <span className="text-[#5C5C5C]">Gunakan dosis takaran gram/batang atau gr/L air secara terukur.</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">4. Tepat Waktu</span>
-              <span className="text-[#5C5C5C]">Sesuaikan dengan rentang HST (Hari Setelah Tanam) spesifik.</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">5. Tepat Cara</span>
-              <span className="text-[#5C5C5C]">Metode pengaplikasian (Kocor air, Tabur sekeliling tajuk, atau Semprot foliar).</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <form onSubmit={handleSearch} className="p-6 flex flex-col md:flex-row gap-4 items-end bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
+      <form onSubmit={handleSearch} className="flex flex-col items-end gap-4 rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6 md:flex-row">
         <div className="w-full md:flex-1">
           <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1">Nama Tanaman (Konteks)</label>
           <div className="relative">

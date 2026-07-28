@@ -219,3 +219,23 @@ test('ikon PWA memiliki signature PNG valid', () => {
     );
   }
 });
+
+test('UI mempertahankan logo TANITA dan menghapus label promosi berulang', () => {
+  const brand = readFileSync(
+    resolve(process.cwd(), 'src/components/BrandLockup.tsx'),
+    'utf8',
+  );
+  const banner = readFileSync(
+    resolve(process.cwd(), 'src/components/BannerCarousel.tsx'),
+    'utf8',
+  );
+  const originalLogo =
+    'https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png';
+
+  assert.ok(brand.includes(originalLogo));
+  assert.doesNotMatch(brand, /tanita-icon/);
+  assert.doesNotMatch(
+    banner,
+    /Data tersimpan lokal|Sumber cuaca BMKG|Tanpa data contoh/,
+  );
+});

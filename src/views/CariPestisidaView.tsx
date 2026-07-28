@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Select } from '../components/Select';
 import { TanamanSelect } from '../components/TanamanSelect';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { CatalogMeta } from '../components/CatalogMeta';
+import { InlineNotice } from '../components/InlineNotice';
 import { PESTISIDA_CATALOG, HAMA_OPTIONS, PestisidaItem } from '../data/pestisidaData';
 import { searchPesticides } from '../utils/pesticideSearch';
 
@@ -12,7 +14,6 @@ export function CariPestisidaView() {
   const [hasSearched, setHasSearched] = useState(false);
   const [results, setResults] = useState<typeof PESTISIDA_CATALOG>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [showRumusGuide, setShowRumusGuide] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   useEffect(() => {
@@ -160,120 +161,30 @@ export function CariPestisidaView() {
       <PageHeader
         title="Cari Pestisida & Perlindungan"
         subtitle="Penyaringan katalog berdasarkan hama atau penyakit target. Tanaman dipakai sebagai konteks dan tetap harus dicocokkan dengan label produk."
+        action={<CatalogMeta count={PESTISIDA_CATALOG.length} unit="produk" />}
       />
 
-      <div className="w-full flex flex-col gap-6">
-        {/* FEEDBACK TOAST NOTIFICATION FOR USER ACTIONS */}
+      <div className="flex w-full flex-col gap-5">
         {feedbackToast && (
-          <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] max-w-lg w-[calc(100vw-2rem)] mx-auto pointer-events-auto animate-in slide-in-from-top-3 duration-200">
-            <div className={`p-3.5 rounded-xl border-2 border-[#0A0A0A] shadow-[4px_4px_0px_0px_#0A0A0A] flex items-center justify-between gap-3 ${
-              feedbackToast.type === 'success'
-                ? 'bg-[#154734] text-white font-bold'
-                : feedbackToast.type === 'error'
-                  ? 'bg-[#C43C2C] text-white font-bold'
-                  : 'bg-[#FFFFFF] text-[#0A0A0A] font-bold'
-            }`}>
-              <div className="flex items-center justify-center gap-2 min-w-0 flex-1 text-center">
-                <span className="material-symbols-outlined text-xl shrink-0">
-                  {feedbackToast.type === 'success' ? 'check_circle' : feedbackToast.type === 'error' ? 'error' : 'info'}
-                </span>
-                <span className="text-xs sm:text-sm font-semibold text-center">{feedbackToast.message}</span>
-              </div>
-              <button 
-                type="button" 
-                onClick={() => setFeedbackToast(null)}
-                className="p-1 rounded hover:bg-black/10 shrink-0 cursor-pointer flex items-center justify-center"
-                title="Tutup Notifikasi"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-          </div>
+          <InlineNotice
+            message={feedbackToast.message}
+            type={feedbackToast.type}
+            onClose={() => setFeedbackToast(null)}
+          />
         )}
 
-
-      {/* DATABASE READY COUNTER BADGE */}
-      <div className="p-4 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-xl text-white bg-[#154734] p-2 rounded border-2 border-[#0A0A0A]">
-            database
-          </span>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-extrabold text-sm uppercase text-[#0A0A0A]">
-                DATABASE ACTIVE
-              </span>
-              <span className="text-[10px] font-bold uppercase bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
-                {PESTISIDA_CATALOG.length}+ Data Ready
-              </span>
-            </div>
-            <p className="text-xs text-[#5C5C5C] mt-0.5">
-              {PESTISIDA_CATALOG.length} jenis obat pertanian (Insektisida, Fungisida, Herbisida, Nematisida, ZPT) aktif di database.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* RUMUS REKOMENDASI GUIDANCE BANNER */}
-      <div className="p-4 sm:p-5 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer" onClick={() => setShowRumusGuide(!showRumusGuide)}>
-          <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-            <span className="material-symbols-outlined text-2xl text-white bg-[#154734] p-2 rounded border-2 border-[#0A0A0A] shrink-0">
-              calculate
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-display font-extrabold text-sm sm:text-base uppercase text-[#0A0A0A] leading-snug">
-                Rumus Mencari Pestisida "REKOMENDASI" (Prinsip 5 Tepat)
-              </h3>
-              <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Aturan standar PHT (Pengendalian Hama Terpadu) untuk hasil pembasmian optimal.
-              </p>
-            </div>
-          </div>
-          <button type="button" className="self-end sm:self-auto text-xs font-bold bg-[#E6E6DC] text-[#0A0A0A] border-2 border-[#0A0A0A] px-3 py-1.5 rounded shrink-0 flex items-center gap-1">
-            {showRumusGuide ? "Sembunyikan" : "Lihat Rumus"}
-            <span className="material-symbols-outlined text-sm">{showRumusGuide ? "expand_less" : "expand_more"}</span>
-          </button>
-        </div>
-
-        {showRumusGuide && (
-          <div className="mt-4 pt-4 border-t-2 border-[#0A0A0A] text-xs text-[#0A0A0A] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">1. Tepat Sasaran</span>
-              <span className="text-[#5C5C5C]">Identifikasi jenis OPT &amp; Tanaman Budidaya secara akurat.</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">2. Tepat Jenis</span>
-              <span className="text-[#5C5C5C]">Gunakan Bahan Aktif spesifik yang terbukti ampuh melumpuhkan target.</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">3. Tepat Dosis</span>
-              <span className="text-[#5C5C5C]">Gunakan konsentrasi larutan pas (ml/L) sesuai anjuran label.</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">4. Tepat Waktu</span>
-              <span className="text-[#5C5C5C]">Aplikasi saat stadia hama paling rentan (pagi/sore jam aktif).</span>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3 rounded border-2 border-[#0A0A0A]">
-              <span className="font-extrabold text-[#154734] block uppercase mb-1">5. Tepat Cara</span>
-              <span className="text-[#5C5C5C]">Teknik semprot merata (permukaan bawah daun / kocor tanah).</span>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <div className="p-4 sm:p-6 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-        <h2 className="font-display font-extrabold uppercase tracking-wider mb-4 text-white bg-[#154734] px-3 py-1 rounded border-2 border-[#0A0A0A] inline-block text-xs">
-          Filter Target Hama &amp; Jenis Tanaman
+      <section className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6">
+        <h2 className="mb-4 font-display text-base font-semibold text-[#26352D]">
+          Filter pencarian
         </h2>
         
         <form onSubmit={handleSearch} className="flex flex-col gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Field 1: Hama / Penyakit Target */}
             <div className="flex flex-col w-full">
-              <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5 flex items-center justify-between">
-                <span>1. Pilih Hama / Penyakit Target</span>
-                {hamaInput && <span className="text-xs text-[#154734] font-extrabold">✔ Terpilih</span>}
+              <label className="mb-1.5 flex items-center justify-between text-xs font-semibold text-[#59645D]">
+                <span>Hama atau penyakit target</span>
+                {hamaInput && <span className="text-[11px] text-[#24533F]">Terpilih</span>}
               </label>
               <Select 
                 options={HAMA_OPTIONS} 
@@ -286,9 +197,9 @@ export function CariPestisidaView() {
 
             {/* Field 2: Jenis Tanaman */}
             <div className="flex flex-col w-full">
-              <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5 flex items-center justify-between">
-                <span>2. Jenis Tanaman — Opsional (Konteks Label)</span>
-                {tanamanInput && <span className="text-xs text-[#154734] font-extrabold">✔ Terpilih</span>}
+              <label className="mb-1.5 flex items-center justify-between text-xs font-semibold text-[#59645D]">
+                <span>Jenis tanaman <span className="font-normal text-[#7A837D]">(opsional)</span></span>
+                {tanamanInput && <span className="text-[11px] text-[#24533F]">Terpilih</span>}
               </label>
               <TanamanSelect 
                 value={tanamanInput}
@@ -302,23 +213,22 @@ export function CariPestisidaView() {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2 border-t-2 border-[#0A0A0A]">
-            <button type="submit" className="w-full sm:w-64 bg-[#154734] text-white font-extrabold min-h-[48px] px-6 rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-lg">search</span>
+          <div className="flex flex-col justify-end gap-3 border-t border-[#E1DED6] pt-4 sm:flex-row">
+            <button type="submit" className="flex min-h-11 w-full items-center justify-center rounded-xl bg-[#24533F] px-6 text-sm font-semibold text-white transition hover:bg-[#1B4031] sm:w-52">
               Cari pestisida
             </button>
-            <button type="button" onClick={() => setShowResetConfirm(true)} className="w-full sm:w-32 bg-[#E6E6DC] border-2 border-[#0A0A0A] text-[#0A0A0A] font-extrabold min-h-[48px] px-4 rounded hover:bg-[#d0d0c4] transition">
-              RESET
+            <button type="button" onClick={() => setShowResetConfirm(true)} className="min-h-11 w-full rounded-xl border border-[#D8D5CC] bg-white px-4 text-sm font-semibold text-[#46524B] transition hover:bg-[#F0EEE8] sm:w-28">
+              Reset
             </button>
           </div>
         </form>
-      </div>
+      </section>
 
       {hasSearched && (
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between flex-wrap gap-2 border-b-2 border-[#0A0A0A] pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D8D5CC] pb-3">
             <div>
-              <h3 className="font-display font-extrabold uppercase text-lg text-[#0A0A0A]">Hasil Referensi Pestisida</h3>
+              <h3 className="font-display text-lg font-semibold text-[#26352D]">Hasil referensi pestisida</h3>
               <div className="flex items-center gap-2 flex-wrap mt-1">
                 {hamaInput && (
                   <span className="text-xs font-bold bg-[#154734] text-white px-2.5 py-1 rounded border border-[#0A0A0A] flex items-center gap-1.5">
@@ -337,7 +247,7 @@ export function CariPestisidaView() {
                 )}
               </div>
             </div>
-            <span className="text-xs font-bold bg-white text-[#0A0A0A] px-3 py-1.5 rounded border-2 border-[#0A0A0A]">
+            <span className="rounded-lg border border-[#D8D5CC] bg-white px-3 py-1.5 text-xs font-semibold text-[#46524B]">
               {results.length} Pestisida Ditemukan
             </span>
           </div>

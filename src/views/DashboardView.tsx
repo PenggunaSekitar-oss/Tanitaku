@@ -20,22 +20,17 @@ const formatRp = (num: number) => {
 
 // Section Title Component
 const SectionTitle = ({ 
-  icon, 
   title, 
   subtitle, 
   rightElement 
 }: { 
-  icon: string; 
+  icon?: string;
   title: string; 
   subtitle: string; 
   rightElement?: React.ReactNode; 
 }) => (
   <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-end">
     <div className="max-w-3xl">
-      <div className="mb-1.5 flex items-center gap-2 text-[#597064]">
-        <span className="material-symbols-outlined text-[17px]" aria-hidden="true">{icon}</span>
-        <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Ikhtisar</span>
-      </div>
       <h2 className="font-display text-lg font-semibold tracking-[-0.025em] text-[#1B2922] sm:text-xl">{title}</h2>
       <p className="mt-1.5 text-xs font-medium leading-relaxed text-[#6B756E] sm:text-sm">{subtitle}</p>
     </div>
@@ -469,10 +464,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
           {/* 4 Key Metrics */}
           <div className="flex-1 w-full grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">grass</span>
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Populasi Aktif</span>
-              </div>
+              <span className="text-xs font-semibold text-white/75">Populasi aktif</span>
               <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white my-1 font-display">
                 {totalPopulasiAktif.toLocaleString("id-ID")}
               </span>
@@ -480,10 +472,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             </div>
 
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">payments</span>
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Estimasi Laba</span>
-              </div>
+              <span className="text-xs font-semibold text-white/75">Estimasi laba</span>
               <span className="text-lg sm:text-xl lg:text-2xl font-extrabold text-white my-1 font-display">
                 {formatRp(laba)}
               </span>
@@ -491,10 +480,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             </div>
 
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">landscape</span>
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Luas Bedengan</span>
-              </div>
+              <span className="text-xs font-semibold text-white/75">Luas bedengan</span>
               <div className="flex flex-col my-1">
                 <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-display">
                   {totalLuasLahan.toLocaleString("id-ID")} <span className="text-xs font-semibold text-white/80">m²</span>
@@ -507,10 +493,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             </div>
 
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-[18px] sm:text-[20px] text-white">event_repeat</span>
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white/80">Agenda Rawat</span>
-              </div>
+              <span className="text-xs font-semibold text-white/75">Agenda perawatan</span>
               <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white my-1 font-display">
                 {pemupukan.length} <span className="text-xs font-semibold text-white/80">Jadwal</span>
               </span>

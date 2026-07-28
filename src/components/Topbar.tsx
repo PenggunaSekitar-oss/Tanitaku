@@ -65,7 +65,7 @@ export function Topbar({ onOpenSidebar, currentView }: TopbarProps) {
           <BrandLockup compact />
         </div>
         <div className="hidden min-w-0 md:block">
-          <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#8A918D]">
+          <p className="text-[11px] font-semibold text-[#7A837D]">
             Ruang kerja
           </p>
           <p className="truncate text-sm font-bold text-[#243029]">

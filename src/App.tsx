@@ -4,7 +4,6 @@ import { TaniOpsProvider } from './context/TaniOpsContext';
 import { Sidebar } from './components/Sidebar';
 import { Topbar } from './components/Topbar';
 import { MobileBottomNav } from './components/MobileBottomNav';
-import { PintasanModal } from './components/PintasanModal';
 import { AccessGate } from './components/AccessGate';
 import { ToastProvider } from './context/ToastContext';
 import { AgriDynamicToastNotifier } from './components/AgriDynamicToastNotifier';
@@ -44,7 +43,6 @@ export default function App() {
     return VALID_VIEWS.has(hashView) ? hashView : 'dashboard';
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [pintasanOpen, setPintasanOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.classList.remove('dark');
@@ -131,18 +129,9 @@ export default function App() {
               <MobileBottomNav
                 currentView={currentView}
                 onNavigate={navigateTo}
-                onOpenSidebar={() => setSidebarOpen(true)}
-                onOpenPintasan={() => setPintasanOpen(true)}
               />
             </div>
 
-            {/* Modal Pintasan Fitur Operasional */}
-            <PintasanModal
-              isOpen={pintasanOpen}
-              onClose={() => setPintasanOpen(false)}
-              onNavigate={navigateTo}
-              currentView={currentView}
-            />
           </div>
         </AccessGate>
       </TaniOpsProvider>
