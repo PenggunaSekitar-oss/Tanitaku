@@ -343,3 +343,41 @@ test('timeline cuaca ringkas dan PWA memakai background terang', () => {
   assert.match(html, /theme-color" content="#F1F0EB"/);
   assert.doesNotMatch(html, /black-translucent/);
 });
+
+test('ikon konteks pupuk tetap terikat pada bidang input di desktop', () => {
+  const view = readFileSync(resolve('src/views/CariPupukView.tsx'), 'utf8');
+  assert.match(
+    view,
+    /placeholder="Contoh: Sawi, Cabai, Tomat\.\.\."\s*\/>\s*<\/div>\s*<span[^>]*>Hasil utama difilter/,
+  );
+});
+
+test('interaksi tombol memiliki hover, tekan, fokus, dan status nonaktif global', () => {
+  const styles = readFileSync(resolve('src/index.css'), 'utf8');
+  assert.match(styles, /button:not\(:disabled\).*:hover/);
+  assert.match(styles, /button:not\(:disabled\).*:active/);
+  assert.match(styles, /scale: 0\.98/);
+  assert.match(styles, /button:focus-visible/);
+  assert.match(styles, /button:disabled,[\s\S]*opacity: 0\.55/);
+});
+
+test('katalog hama tidak memakai lagi foto spesies yang salah dan menampilkan audit gambar', () => {
+  const view = readFileSync(resolve('src/views/JenisHamaView.tsx'), 'utf8');
+  for (const wrongImage of [
+    'Spodoptera_mauritia_mauritia',
+    'Sitophilus.granarius',
+    'Brown_rat_%28Rattus_norvegicus',
+    'Giant_tiger_land_snail',
+    'Setora_cupreiplaga',
+    'Epilachna_tredecimnotata',
+    'Nacoleia_semicostalis',
+  ]) {
+    assert.doesNotMatch(view, new RegExp(wrongImage));
+  }
+  assert.match(view, /Spodoptera frugiperda caterpillar01\.jpg/);
+  assert.match(view, /Spodoptera exigua\.png/);
+  assert.match(view, /Maize Weevil - Sitophilus zeamais\.jpg/);
+  assert.match(view, /Foto tervalidasi belum tersedia/);
+  assert.match(view, /Sumber gambar/);
+  assert.match(view, /aria-label=\{`Memuat gambar \$\{alt\}`\}/);
+});

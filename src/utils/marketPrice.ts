@@ -40,8 +40,8 @@ export function saveMarketPrice(
   catalog: MarketCatalog,
   itemId: string,
   value: MarketPriceOverride,
-): void {
-  if (typeof localStorage === 'undefined') return;
+): boolean {
+  if (typeof localStorage === 'undefined') return false;
   try {
     const next = readAll();
     next[createKey(catalog, itemId)] = {
@@ -50,18 +50,20 @@ export function saveMarketPrice(
       observedAt: value.observedAt,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    return true;
   } catch {
-    // Storage may be unavailable in private browsing; the UI still keeps session state.
+    return false;
   }
 }
 
-export function removeMarketPrice(catalog: MarketCatalog, itemId: string): void {
-  if (typeof localStorage === 'undefined') return;
+export function removeMarketPrice(catalog: MarketCatalog, itemId: string): boolean {
+  if (typeof localStorage === 'undefined') return false;
   try {
     const next = readAll();
     delete next[createKey(catalog, itemId)];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    return true;
   } catch {
-    // Resetting the in-memory UI remains safe if persistent storage is unavailable.
+    return false;
   }
 }

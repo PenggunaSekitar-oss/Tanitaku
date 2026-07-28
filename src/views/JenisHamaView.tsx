@@ -1,8 +1,22 @@
 import { PageHeader } from '../components/PageHeader';
 import { CatalogMeta } from '../components/CatalogMeta';
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-const dataHama = [
+interface Hama {
+  id: number;
+  nama: string;
+  latin: string;
+  gambar: string;
+  deskripsi: string;
+  tanaman: string[];
+  pembasmian: string;
+  saranPestisida: string;
+}
+
+const commonsFile = (fileName: string) =>
+  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=960`;
+
+const dataHama: Hama[] = [
   {
     id: 1,
     nama: "Ulat Grayak",
@@ -46,8 +60,8 @@ const dataHama = [
   {
     id: 5,
     nama: "Thrips",
-    latin: "Thrips spp.",
-    gambar: "",
+    latin: "Thrips spp. (contoh: Thrips tabaci)",
+    gambar: commonsFile("Thrips tabaci.jpg"),
     deskripsi: "Serangga berukuran sangat kecil. Menyerang dengan cara menggaruk dan mengisap cairan daun, menyebabkan daun mengeriting ke atas, berwarna keperakan, dan bunga rontok.",
     tanaman: ["Cabai", "Tomat", "Bawang Merah", "Semangka", "Melon"],
     pembasmian: "Pasang perangkap lekat kuning atau biru. Jaga kelembapan tanah dan sanitasi kebun secara rutin.",
@@ -66,8 +80,8 @@ const dataHama = [
   {
     id: 7,
     nama: "Walang Sangit",
-    latin: "Leptocorisa oratoria",
-    gambar: "",
+    latin: "Leptocorisa oratorius",
+    gambar: commonsFile("Leptocorisa oratorius-Kadavoor-2016-02-07-001.jpg"),
     deskripsi: "Hama yang mengeluarkan bau menyengat khas saat diganggu. Menyerang bulir padi muda yang sedang masak susu sehingga gabah menjadi hampa atau berwarna coklat.",
     tanaman: ["Padi"],
     pembasmian: "Kumpulkan walang sangit secara manual pada pagi hari. Gunakan umpan bau-bauan seperti daging busuk atau bangkai keong mas.",
@@ -126,9 +140,9 @@ const dataHama = [
   {
     id: 13,
     nama: "Oteng-Oteng",
-    latin: "Epilachna sp.",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Epilachna_tredecimnotata_-_inat_304489659.jpg/500px-Epilachna_tredecimnotata_-_inat_304489659.jpg",
-    deskripsi: "Kumbang daun (kepik kepik) berwarna oranye berbintik hitam. Memakan daun secara tidak beraturan menyisakan tulang daun.",
+    latin: "Aulacophora indica",
+    gambar: commonsFile("\"+arya+\" Aulacophora indica - kumbang daun kurkubis - oteng - Pilangsari 2020 - 04.jpg"),
+    deskripsi: "Kumbang daun berwarna jingga yang membuat lubang pada daun tanaman labu-labuan. Jangan tertukar dengan Epilachna, kumbang koksi pemakan daun.",
     tanaman: ["Mentimun", "Kacang", "Terong"],
     pembasmian: "Pungut hama secara manual pagi/sore hari.",
     saranPestisida: "Insektisida kontak (Sipermetrin)."
@@ -137,7 +151,7 @@ const dataHama = [
     id: 14,
     nama: "Siput Babi / Bekicot",
     latin: "Achatina fulica",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/Giant_tiger_land_snail_%28Achatina_achatina%29_Ghana.jpg/500px-Giant_tiger_land_snail_%28Achatina_achatina%29_Ghana.jpg",
+    gambar: commonsFile("Achatina fulica (Giant African land snail).jpg"),
     deskripsi: "Makan daun dan batang muda, meninggalkan bekas lendir mengkilap di pagi hari.",
     tanaman: ["Bibit Sayuran", "Kubis", "Sawi"],
     pembasmian: "Tabur abu kayu atau garam di sekeliling bedengan.",
@@ -146,8 +160,8 @@ const dataHama = [
   {
     id: 15,
     nama: "Rayap",
-    latin: "Isoptera",
-    gambar: "",
+    latin: "Termitoidae (contoh: Cryptotermes domesticus)",
+    gambar: commonsFile("CSIRO ScienceImage 3745 Workers of the drywood termite Cryptotermes domesticus.jpg"),
     deskripsi: "Hama tanah yang memakan material kayu, juga bisa menyerang perakaran tanaman kayu-kayuan dan stek.",
     tanaman: ["Singkong", "Karet", "Kopi", "Cengkeh"],
     pembasmian: "Menghancurkan sarang, memastikan tidak ada sisa kayu mati di lahan.",
@@ -156,8 +170,8 @@ const dataHama = [
   {
     id: 16,
     nama: "Nematoda Bintil Akar",
-    latin: "Meloidogyne spp.",
-    gambar: "",
+    latin: "Meloidogyne spp. (contoh gejala M. incognita)",
+    gambar: commonsFile("Tomato (Solanum lycopersicum)- Root knot nematodes - 27421750599.jpg"),
     deskripsi: "Cacing mikroskopis di dalam tanah yang menyerang akar sehingga membengkak/bintil-bintil. Tanaman kerdil dan layu siang hari.",
     tanaman: ["Tomat", "Cabai", "Mentimun", "Seledri"],
     pembasmian: "Rotasi tanaman dengan Tagetes (Bunga Kenikir/Marigold).",
@@ -186,8 +200,8 @@ const dataHama = [
   {
     id: 19,
     nama: "Ulat Penggulung Daun",
-    latin: "Lamprosema indicate",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/e/e6/22-Nacoleia_semicostalis%3DLamprosema_semicostalis_%28Hampson%2C_1898%29.JPG",
+    latin: "Omiodes indicata (sin. Lamprosema indicata)",
+    gambar: "",
     deskripsi: "Ulat yang merekatkan daun menggunakan benang sutra untuk bersembunyi di dalamnya sambil memakan daun.",
     tanaman: ["Kacang Hijau", "Kedelai"],
     pembasmian: "Pijit daun yang menggulung untuk mematikan ulat di dalamnya.",
@@ -196,8 +210,8 @@ const dataHama = [
   {
     id: 20,
     nama: "Kutu Putih (Mealybug)",
-    latin: "Pseudococcidae",
-    gambar: "",
+    latin: "Pseudococcidae (contoh: Planococcus citri)",
+    gambar: commonsFile("Planococcus citri from CSIRO.jpg"),
     deskripsi: "Serangga penghisap cairan berselimut lilin putih bertepung. Menyebabkan pertumbuhan kerdil dan muncul jamur jelaga hitam.",
     tanaman: ["Pepaya", "Singkong", "Jambu", "Mangga"],
     pembasmian: "Semprot dengan campuran air sabun pencuci piring dan sedikit minyak nabati untuk merontokkan lilin pelindungnya.",
@@ -227,7 +241,7 @@ const dataHama = [
     id: 23,
     nama: "Ulat Bawang",
     latin: "Spodoptera exigua",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/e/e8/Spodoptera_mauritia_mauritia.jpg",
+    gambar: commonsFile("Spodoptera exigua.png"),
     deskripsi: "Ulat memakan daun bawang dari dalam tabung daun, sehingga daun terlihat putih transparan dan kempes.",
     tanaman: ["Bawang Merah", "Bawang Putih", "Bawang Daun"],
     pembasmian: "Membuang kelompok telur yang biasanya ada di ujung daun.",
@@ -236,8 +250,8 @@ const dataHama = [
   {
     id: 24,
     nama: "Semut Api",
-    latin: "Solenopsis invicta",
-    gambar: "",
+    latin: "Solenopsis spp. (contoh: S. invicta)",
+    gambar: commonsFile("Solenopsis invicta - fire ant worker.jpg"),
     deskripsi: "Bersimbiosis dengan kutu daun, melindungi kutu dari predator dan memakan ekskresinya (embun madu). Gigitannya perih.",
     tanaman: ["Cabai", "Tomat", "Tanaman Buah"],
     pembasmian: "Gunakan umpan gula dicampur boraks.",
@@ -257,7 +271,7 @@ const dataHama = [
     id: 26,
     nama: "Ulat Api",
     latin: "Setora nitens",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Setora_cupreiplaga_%28Limacodidae-_Limacodinae%29_%2822836802962%29.jpg/500px-Setora_cupreiplaga_%28Limacodidae-_Limacodinae%29_%2822836802962%29.jpg",
+    gambar: commonsFile("Setora nitens.jpg"),
     deskripsi: "Ulat berbulu menyengat yang menyerang kelapa sawit dan tanaman perkebunan lain, menghabiskan daun kelapa dari bawah ke atas.",
     tanaman: ["Kelapa Sawit", "Kelapa"],
     pembasmian: "Penggunaan jamur Cordyceps atau virus ulat api.",
@@ -276,8 +290,8 @@ const dataHama = [
   {
     id: 28,
     nama: "Ulat Grayak Jagung",
-    latin: "Spodoptera frugiperda (FAW)",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/e/e8/Spodoptera_mauritia_mauritia.jpg",
+    latin: "Spodoptera frugiperda",
+    gambar: commonsFile("Spodoptera frugiperda caterpillar01.jpg"),
     deskripsi: "Fall Armyworm, ulat invansif baru yang sangat merusak tanaman jagung, bersembunyi di pucuk daun (titik tumbuh).",
     tanaman: ["Jagung"],
     pembasmian: "Tanam serempak. Tumpangsari dengan legum.",
@@ -297,7 +311,7 @@ const dataHama = [
     id: 30,
     nama: "Tikus Sawah",
     latin: "Rattus argentiventer",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Brown_rat_%28Rattus_norvegicus%29_Drenthe_2.jpg/500px-Brown_rat_%28Rattus_norvegicus%29_Drenthe_2.jpg",
+    gambar: "",
     deskripsi: "Hama pengerat yang memotong batang padi, menyebabkan kerusakan masif dan gagal panen secara cepat.",
     tanaman: ["Padi"],
     pembasmian: "Gropyokan, penggunaan burung hantu (Tyto alba), pemasangan TBS (Trap Barrier System).",
@@ -317,7 +331,7 @@ const dataHama = [
     id: 32,
     nama: "Gusung / Bubuk Jagung",
     latin: "Sitophilus zeamais",
-    gambar: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Sitophilus.granarius.jpg/500px-Sitophilus.granarius.jpg",
+    gambar: commonsFile("Maize Weevil - Sitophilus zeamais.jpg"),
     deskripsi: "Kumbang kecil bermoncong panjang yang melubangi biji jagung dan beras di tempat penyimpanan (gudang).",
     tanaman: ["Jagung (Gudang)", "Beras"],
     pembasmian: "Jemur biji sampai kadar air rendah (<12%), simpan di wadah kedap udara.",
@@ -386,8 +400,8 @@ const dataHama = [
   {
     id: 39,
     nama: "Kutu Perisai",
-    latin: "Diaspididae",
-    gambar: "",
+    latin: "Diaspididae (contoh: Lepidosaphes beckii)",
+    gambar: "https://upload.wikimedia.org/wikipedia/commons/6/65/Lepidosaphes_beckii_%28purple_scale%29.jpg",
     deskripsi: "Hama yang dilindungi perisai tipis, menghisap cairan batang dan daun jeruk. Sering bersimbiosis dengan semut.",
     tanaman: ["Jeruk", "Apel", "Kopi"],
     pembasmian: "Gosok batang dengan sikat.",
@@ -396,8 +410,8 @@ const dataHama = [
   {
     id: 40,
     nama: "Burung Pipit",
-    latin: "Lonchura sp.",
-    gambar: "",
+    latin: "Lonchura spp. (contoh: L. punctulata)",
+    gambar: commonsFile("The Scaly-breasted Munia knows exactly where the best seeds are.jpg"),
     deskripsi: "Memakan bulir padi menjelang masa panen dalam jumlah koloni besar.",
     tanaman: ["Padi", "Sorgum"],
     pembasmian: "Gunakan orang-orangan sawah, jaring penutup, atau pita mengkilap.",
@@ -467,7 +481,7 @@ const dataHama = [
     id: 47,
     nama: "Ulat Penggerek Batang Jagung",
     latin: "Ostrinia furnacalis",
-    gambar: "",
+    gambar: commonsFile("O furnacalis 2.JPG"),
     deskripsi: "Masuk memakan batang dan tongkol jagung. Batang mudah patah dan tongkol tidak terisi sempurna.",
     tanaman: ["Jagung"],
     pembasmian: "Musnahkan sisa panen jagung.",
@@ -487,7 +501,7 @@ const dataHama = [
     id: 49,
     nama: "Babi Hutan",
     latin: "Sus scrofa",
-    gambar: "",
+    gambar: commonsFile("Wild boar (Sus scrofa).jpg"),
     deskripsi: "Hama mamalia yang memakan dan membongkar perakaran umbi-umbian (singkong), jagung, kacang.",
     tanaman: ["Singkong", "Kacang Tanah", "Padi"],
     pembasmian: "Pemagaran dengan seng atau kawat. Perburuan masal.",
@@ -496,8 +510,8 @@ const dataHama = [
   {
     id: 50,
     nama: "Kera / Monyet",
-    latin: "Macaca sp.",
-    gambar: "",
+    latin: "Macaca spp. (contoh: M. fascicularis)",
+    gambar: commonsFile("Macaca fascicularis, Ubud Monkey Forest, Bali, 20220822 1053 0059.jpg"),
     deskripsi: "Merusak dan memakan buah, tongkol jagung, padi di ladang yang berbatasan dengan hutan.",
     tanaman: ["Jagung", "Pisang", "Kakao"],
     pembasmian: "Penjagaan, pemasangan jaring, penggunaan petasan/suara.",
@@ -505,25 +519,79 @@ const dataHama = [
   }
 ];
 
-const ImageWithFallback = ({ src, alt, className, fallbackText = "Gambar Tidak Tersedia", fallbackClassName = "w-full h-full" }: { src: string, alt: string, className: string, fallbackText?: string, fallbackClassName?: string }) => {
+const groupExampleIds = new Set([2, 4, 5, 9, 12, 15, 17, 20, 24, 33, 39, 40, 50]);
+
+function getImageStatus(hama: Hama) {
+  if (!hama.gambar) return 'Foto tervalidasi belum tersedia';
+  if (hama.id === 16 || hama.id === 47) return 'Gejala serangan terverifikasi';
+  if (groupExampleIds.has(hama.id)) return 'Contoh genus atau famili';
+  return 'Spesies terverifikasi';
+}
+
+function getCommonsSource(src: string) {
+  if (!src) return '';
+  try {
+    const url = new URL(src);
+    const parts = url.pathname.split('/').filter(Boolean);
+    const specialFileIndex = parts.findIndex((part) => part === 'Special:FilePath');
+    const rawName = specialFileIndex >= 0
+      ? parts.slice(specialFileIndex + 1).join('/')
+      : parts.includes('thumb')
+        ? parts.at(-2) ?? ''
+        : parts.at(-1) ?? '';
+    return rawName
+      ? `https://commons.wikimedia.org/wiki/File:${rawName}`
+      : 'https://commons.wikimedia.org/';
+  } catch {
+    return '';
+  }
+}
+
+const ImageWithFallback = ({ src, alt, className, fallbackClassName = "w-full h-full" }: { src: string, alt: string, className: string, fallbackClassName?: string }) => {
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(Boolean(src));
+
+  useEffect(() => {
+    setError(false);
+    setLoading(Boolean(src));
+  }, [src]);
   
   if (!src || error) {
     return (
-      <div className={`flex items-center justify-center bg-surface-high text-on-surface-muted text-center p-2 font-bold leading-tight ${fallbackClassName}`}>
-        <span dangerouslySetInnerHTML={{ __html: fallbackText }} />
+      <div className={`flex flex-col items-center justify-center gap-1 bg-surface-high p-2 text-center font-bold leading-tight text-on-surface-muted ${fallbackClassName}`}>
+        <span className="material-symbols-outlined text-[20px]" aria-hidden="true">image_not_supported</span>
+        <span>Belum terverifikasi</span>
       </div>
     );
   }
   
   return (
-    <img 
-      src={src} 
-      alt={alt} 
-      className={className}
-      referrerPolicy="no-referrer"
-      onError={() => setError(true)}
-    />
+    <>
+      <img
+        src={src}
+        alt={alt}
+        className={className}
+        loading="lazy"
+        decoding="async"
+        referrerPolicy="no-referrer"
+        onLoad={() => setLoading(false)}
+        onError={() => {
+          setLoading(false);
+          setError(true);
+        }}
+      />
+      {loading && (
+        <div
+          role="status"
+          aria-label={`Memuat gambar ${alt}`}
+          className="absolute inset-0 flex items-center justify-center bg-[#EAE9E3]"
+        >
+          <span className="material-symbols-outlined animate-spin text-[22px] text-[#24533F]" aria-hidden="true">
+            progress_activity
+          </span>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -579,7 +647,11 @@ export function JenisHamaView() {
             )}
           </div>
 
-          <div className="text-xs font-mono font-bold text-[#0A0A0A] flex items-center gap-1.5 self-end sm:self-center shrink-0 bg-[#E6E6DC] px-2.5 py-1.5 rounded border border-[#0A0A0A]">
+          <div
+            role="status"
+            aria-live="polite"
+            className="text-xs font-mono font-bold text-[#0A0A0A] flex items-center gap-1.5 self-end sm:self-center shrink-0 bg-[#E6E6DC] px-2.5 py-1.5 rounded border border-[#0A0A0A]"
+          >
             <span className="material-symbols-outlined text-[15px] text-[#154734]">bug_report</span>
             <span>{filteredHama.length} Hama Terdata</span>
           </div>
@@ -621,16 +693,18 @@ export function JenisHamaView() {
                   }`}
                 >
                   {/* Card Main Header (Click to Expand) */}
-                  <div 
-                    className="flex items-center gap-3 p-3.5 sm:p-4 cursor-pointer hover:bg-[#E6E6DC]/40 transition-colors select-none group"
+                  <button
+                    type="button"
+                    className="group flex w-full items-center gap-3 p-3.5 text-left transition-colors hover:bg-[#E6E6DC]/40 sm:p-4"
                     onClick={() => setExpandedId(isExpanded ? null : hama.id)}
+                    aria-expanded={isExpanded}
+                    aria-controls={`hama-detail-${hama.id}`}
                   >
                     <div className="w-13 h-13 sm:w-14 sm:h-14 rounded overflow-hidden border-2 border-[#0A0A0A] shrink-0 bg-[#E6E6DC] relative">
                       <ImageWithFallback 
                         src={hama.gambar} 
                         alt={hama.nama} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                        fallbackText="No<br/>Img"
                         fallbackClassName="w-full h-full text-[9px]"
                       />
                     </div>
@@ -660,21 +734,21 @@ export function JenisHamaView() {
                       </div>
                     </div>
 
-                    <button 
-                      type="button"
+                    <span
+                      aria-hidden="true"
                       className={`w-8 h-8 rounded bg-[#E6E6DC] border border-[#0A0A0A] flex items-center justify-center shrink-0 transition-transform duration-300 ${
                         isExpanded ? "rotate-180 bg-[#154734] text-white" : "text-[#0A0A0A]"
                       }`}
-                      aria-label="Toggle Detail Hama"
                     >
                       <span className="material-symbols-outlined text-[20px]">
                         expand_more
                       </span>
-                    </button>
-                  </div>
+                    </span>
+                  </button>
 
                   {/* Card Accordion Body */}
                   <div 
+                    id={`hama-detail-${hama.id}`}
                     className={`grid transition-all duration-300 ease-in-out ${
                       isExpanded ? "grid-rows-[1fr] opacity-100 border-t-2 border-[#0A0A0A]" : "grid-rows-[0fr] opacity-0"
                     }`}
@@ -682,16 +756,37 @@ export function JenisHamaView() {
                     <div className="overflow-hidden bg-[#E6E6DC]/20">
                       <div className="p-3.5 sm:p-4 flex flex-col gap-3.5">
                         {/* Detail Image */}
-                        {hama.gambar && (
-                          <div className="w-full h-36 sm:h-44 overflow-hidden rounded border-2 border-[#0A0A0A] bg-[#E6E6DC] relative">
+                        <div>
+                          <div className="relative h-36 w-full overflow-hidden rounded border-2 border-[#0A0A0A] bg-[#E6E6DC] sm:h-44">
                             <ImageWithFallback 
                               src={hama.gambar} 
                               alt={hama.nama} 
                               className="w-full h-full object-cover" 
-                              fallbackText="Gambar Tidak Tersedia"
+                              fallbackClassName="h-full w-full text-xs"
                             />
                           </div>
-                        )}
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                            <span className={`inline-flex items-center gap-1 font-bold ${
+                              hama.gambar ? 'text-[#24533F]' : 'text-[#6A645C]'
+                            }`}>
+                              <span className="material-symbols-outlined text-[15px]" aria-hidden="true">
+                                {hama.gambar ? 'verified' : 'image_not_supported'}
+                              </span>
+                              {getImageStatus(hama)}
+                            </span>
+                            {hama.gambar && (
+                              <a
+                                href={getCommonsSource(hama.gambar)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="font-bold text-[#24533F] underline decoration-[#9FA9A2] underline-offset-2 hover:text-[#183D2D]"
+                              >
+                                Sumber gambar
+                                <span className="sr-only"> {hama.nama} di Wikimedia Commons</span>
+                              </a>
+                            )}
+                          </div>
+                        </div>
 
                         {/* Deskripsi Gejala */}
                         <div className="bg-[#FEFEFA] p-3 rounded border border-[#0A0A0A] flex flex-col gap-1">

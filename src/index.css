@@ -192,6 +192,7 @@ button {
 button,
 a,
 [role="button"] {
+  transition-property: color, background-color, border-color, box-shadow, opacity, scale;
   transition-duration: 160ms;
   transition-timing-function: ease-out;
 }
@@ -199,13 +200,32 @@ a,
 button:disabled,
 [aria-disabled="true"] {
   cursor: not-allowed;
+  opacity: 0.55;
 }
 
 @media (hover: hover) {
-  .app-content button:not(:disabled):hover,
-  .app-content a:hover {
+  button:not(:disabled):not([aria-disabled="true"]):hover,
+  [role="button"]:not([aria-disabled="true"]):hover {
+    box-shadow: 0 3px 9px rgba(24, 35, 29, 0.14);
+  }
+
+  a:hover {
     transition-duration: 140ms;
   }
+}
+
+button:not(:disabled):not([aria-disabled="true"]):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  scale: 0.98;
+  box-shadow: none;
+  transition-duration: 70ms;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(36, 83, 63, 0.32);
+  outline-offset: 2px;
 }
 
 input,

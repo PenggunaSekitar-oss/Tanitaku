@@ -192,8 +192,8 @@ export function CariPupukView() {
               className="w-full bg-white border-2 border-[#0A0A0A] pl-12 pr-4 py-3 text-sm text-[#0A0A0A] rounded focus:outline-none"
               placeholder="Contoh: Sawi, Cabai, Tomat..."
             />
-            <span className="text-[10px] text-[#5C5C5C] mt-1 block">Hasil utama difilter oleh HST dan fungsi pupuk.</span>
           </div>
+          <span className="mt-1 block text-[10px] text-[#5C5C5C]">Hasil utama difilter oleh HST dan fungsi pupuk.</span>
         </div>
         <div className="w-full md:w-48">
           <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1">Fungsi Pupuk</label>

@@ -26,6 +26,7 @@ export function MarketPriceCard({
   const [editing, setEditing] = useState(false);
   const [draftPrice, setDraftPrice] = useState(current.price);
   const [draftRegion, setDraftRegion] = useState(current.region);
+  const [feedback, setFeedback] = useState<{ tone: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     const next = readMarketPrice(catalog, itemId, metadata);
@@ -33,6 +34,7 @@ export function MarketPriceCard({
     setDraftPrice(next.price);
     setDraftRegion(next.region);
     setEditing(false);
+    setFeedback(null);
   }, [catalog, itemId]);
 
   const handleSave = () => {
@@ -42,17 +44,31 @@ export function MarketPriceCard({
       region: draftRegion,
       observedAt: today(),
     };
-    saveMarketPrice(catalog, itemId, override);
-    setCurrent({ ...metadata, ...override, source: 'Catatan pengguna' });
-    setEditing(false);
+    if (saveMarketPrice(catalog, itemId, override)) {
+      setCurrent({ ...metadata, ...override, source: 'Catatan pengguna' });
+      setEditing(false);
+      setFeedback({ tone: 'success', message: 'Harga lokal berhasil disimpan di perangkat ini.' });
+      return;
+    }
+    setFeedback({
+      tone: 'error',
+      message: 'Harga belum tersimpan. Periksa izin penyimpanan browser lalu coba lagi.',
+    });
   };
 
   const handleReset = () => {
-    removeMarketPrice(catalog, itemId);
+    if (!removeMarketPrice(catalog, itemId)) {
+      setFeedback({
+        tone: 'error',
+        message: 'Catatan belum dapat dihapus. Periksa izin penyimpanan browser.',
+      });
+      return;
+    }
     setCurrent(metadata);
     setDraftPrice(metadata.price);
     setDraftRegion(metadata.region);
     setEditing(false);
+    setFeedback({ tone: 'success', message: 'Catatan harga lokal telah dihapus.' });
   };
 
   return (
@@ -132,11 +148,28 @@ export function MarketPriceCard({
       ) : (
         <button
           type="button"
-          onClick={() => setEditing(true)}
+          onClick={() => {
+            setFeedback(null);
+            setEditing(true);
+          }}
           className="mt-3 min-h-9 rounded-lg border border-[#9FA9A2] bg-white px-3 text-xs font-bold text-[#24533F] hover:bg-[#EEF1ED]"
         >
           Perbarui harga lokal
         </button>
+      )}
+      {feedback && (
+        <p
+          role="status"
+          aria-live="polite"
+          className={`mt-2 flex items-start gap-1.5 text-[11px] font-semibold ${
+            feedback.tone === 'success' ? 'text-[#24533F]' : 'text-[#9A382F]'
+          }`}
+        >
+          <span className="material-symbols-outlined mt-px text-[15px]" aria-hidden="true">
+            {feedback.tone === 'success' ? 'check_circle' : 'error'}
+          </span>
+          {feedback.message}
+        </p>
       )}
     </div>
   );
