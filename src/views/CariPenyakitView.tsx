@@ -2,6 +2,7 @@ import { PageHeader } from '../components/PageHeader';
 import React, { useState } from 'react';
 import { Select } from '../components/Select';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { CatalogMeta } from '../components/CatalogMeta';
 import { PENYAKIT_DB as PENYAKIT_CATALOG, TANAMAN_OPTIONS, PENYAKIT_OPTIONS, Penyakit } from '../data/penyakitData';
 
 export function CariPenyakitView({ navigate }: { navigate?: (view: string) => void }) {
@@ -97,35 +98,13 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
       <PageHeader
         title="Referensi Penyakit Tanaman"
         subtitle="Cari kecocokan nama dan gejala pada katalog hama, jamur, bakteri, atau virus. Hasil bukan diagnosis lapangan."
+        action={<CatalogMeta count={PENYAKIT_CATALOG.length} unit="referensi" />}
       />
 
-      <div className="w-full flex flex-col gap-6">
-        {/* DATABASE READY COUNTER BADGE */}
-        <div className="neo-card p-4 bg-[#FEFEFA] border-2 border-[#0A0A0A] rounded flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-xl text-white bg-[#154734] p-2 rounded border-2 border-[#0A0A0A]">
-              coronavirus
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display font-extrabold text-sm uppercase text-[#0A0A0A]">
-                  KATALOG LOKAL
-                </span>
-                <span className="text-[10px] font-bold uppercase bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
-                  {PENYAKIT_CATALOG.length}+ Data Ready
-                </span>
-              </div>
-              <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Referensi penyebab, gejala, dan opsi penanganan untuk verifikasi lebih lanjut
-              </p>
-            </div>
-          </div>
-        </div>
-
-      
-      <div className="p-4 sm:p-6 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-        <h2 className="font-display font-extrabold uppercase tracking-wider mb-4 text-white bg-[#154734] px-3 py-1 rounded border-2 border-[#0A0A0A] inline-block text-xs">
-          Filter &amp; Identifikasi Hama / Penyakit
+      <div className="flex w-full flex-col gap-5">
+      <section className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6">
+        <h2 className="mb-4 font-display text-base font-semibold text-[#26352D]">
+          Filter hama dan penyakit
         </h2>
         
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
@@ -166,7 +145,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             </button>
           </div>
         </form>
-      </div>
+      </section>
 
       {hasSearched && (
         <div className="flex flex-col gap-4">

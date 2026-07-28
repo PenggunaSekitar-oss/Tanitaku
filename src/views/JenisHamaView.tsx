@@ -1,4 +1,5 @@
 import { PageHeader } from '../components/PageHeader';
+import { CatalogMeta } from '../components/CatalogMeta';
 import React, { useState } from "react";
 
 const dataHama = [
@@ -548,10 +549,11 @@ export function JenisHamaView() {
     <div className="flex flex-col gap-6 w-full pb-12">
       <PageHeader
         title="Jenis & Hama Tanaman"
-        subtitle="Ensiklopedia lengkap hama pertanian Indonesia, gejala serangan, serta teknik pembasmian organik & kimiawi."
+        subtitle="Referensi hama, gejala serangan, tanaman inang, dan opsi pengendalian untuk pemeriksaan awal."
+        action={<CatalogMeta count={dataHama.length} unit="jenis hama" />}
       />
 
-      <div className="p-3.5 sm:p-5 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-5">
 
         {/* Search & Filter Header */}
         <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">

@@ -48,6 +48,9 @@
   --color-danger-ink: #FFFFFF;
   --color-warning: #A56E24;
   --color-warning-ink: #FFFFFF;
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --shadow-card: 0 2px 8px rgba(24, 35, 29, 0.055);
 }
 
 * {
@@ -190,7 +193,7 @@ input,
 select,
 textarea {
   min-height: 44px;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-control);
 }
 
 /* Normalize legacy brutalist utilities while individual screens are migrated. */
@@ -207,7 +210,7 @@ textarea {
 
 .app-content .rounded,
 .app-content .rounded-sm {
-  border-radius: 0.75rem !important;
+  border-radius: var(--radius-control) !important;
 }
 
 .app-content .shadow-xs,
@@ -220,7 +223,7 @@ textarea {
 }
 
 .app-content [class*="shadow-["] {
-  box-shadow: 0 2px 8px rgba(24, 35, 29, 0.055) !important;
+  box-shadow: var(--shadow-card) !important;
 }
 
 .app-content [class*="backdrop-blur"] {
@@ -247,6 +250,22 @@ textarea {
   letter-spacing: -0.02em;
 }
 
+.app-content .uppercase {
+  text-transform: none !important;
+  letter-spacing: 0.01em !important;
+}
+
+.app-content .font-black,
+.app-content .font-extrabold {
+  font-weight: 700 !important;
+}
+
+.app-content [class*="text-[9px]"],
+.app-content [class*="text-[10px]"] {
+  font-size: 0.75rem !important;
+  line-height: 1.35 !important;
+}
+
 .app-content h2[class~="bg-[#154734]"],
 .app-content h3[class~="bg-[#154734]"] {
   border: 0 !important;
@@ -258,7 +277,21 @@ textarea {
 
 .app-content [class*="rounded-[8px_3px"],
 .app-content [class*="rounded-[16px_8px"] {
-  border-radius: 0.75rem !important;
+  border-radius: var(--radius-control) !important;
+}
+
+.app-content button[class*="shadow-["] {
+  box-shadow: none !important;
+}
+
+.app-content button,
+.app-content [role="button"] {
+  font-family: var(--font-sans);
+}
+
+.app-content section,
+.app-content article {
+  scroll-margin-top: 5rem;
 }
 
 ::-webkit-scrollbar {

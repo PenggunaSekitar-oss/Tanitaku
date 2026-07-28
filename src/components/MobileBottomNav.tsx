@@ -4,8 +4,6 @@ import { motion } from 'motion/react';
 interface MobileBottomNavProps {
   currentView: string;
   onNavigate: (view: string) => void;
-  onOpenSidebar: () => void;
-  onOpenPintasan?: () => void;
 }
 
 const NAV_ITEMS = [
@@ -15,9 +13,7 @@ const NAV_ITEMS = [
   { id: 'keuangan', label: 'Keuangan', icon: 'payments' },
 ];
 
-export function MobileBottomNav({ currentView, onNavigate, onOpenSidebar, onOpenPintasan }: MobileBottomNavProps) {
-  const handlePintasanClick = onOpenPintasan || onOpenSidebar;
-
+export function MobileBottomNav({ currentView, onNavigate }: MobileBottomNavProps) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around gap-1 border-t border-[#D9D8D1] bg-[#FBFAF6] px-2 py-1.5 md:hidden">
       {NAV_ITEMS.map((item) => {
@@ -36,27 +32,12 @@ export function MobileBottomNav({ currentView, onNavigate, onOpenSidebar, onOpen
             <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-[#24533F]' : 'text-[#69736D]'}`}>
               {item.icon}
             </span>
-            <span className="mt-0.5 text-[9px] font-semibold leading-none">
+            <span className="mt-0.5 text-[11px] font-semibold leading-none">
               {item.label}
             </span>
           </motion.button>
         );
       })}
-
-      {/* Button Pintasan Fitur Operasional */}
-      <motion.button
-        whileTap={{ scale: 0.94 }}
-        onClick={handlePintasanClick}
-        className="flex min-h-[48px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-1 py-1.5 text-[#69736D] transition hover:bg-[#F0EEE8] hover:text-[#27332C]"
-        title="Pintasan Fitur Operasional"
-      >
-        <span className="material-symbols-outlined text-[20px]">
-          grid_view
-        </span>
-        <span className="mt-0.5 text-[9px] font-semibold leading-none">
-          Pintasan
-        </span>
-      </motion.button>
     </nav>
   );
 }

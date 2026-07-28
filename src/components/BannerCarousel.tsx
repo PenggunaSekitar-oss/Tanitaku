@@ -3,22 +3,18 @@ const HERO_IMAGE =
 
 export function BannerCarousel() {
   return (
-    <section className="grid min-h-[260px] overflow-hidden rounded-[22px] border border-[#345749] bg-[#173D2F] text-white md:grid-cols-[1.05fr_0.95fr]">
-      <div className="order-2 flex flex-col justify-between p-6 sm:p-8 md:order-1 md:p-10">
+    <section className="grid overflow-hidden rounded-2xl border border-[#345749] bg-[#173D2F] text-white md:min-h-[178px] md:grid-cols-[1fr_320px]">
+      <div className="order-2 flex flex-col justify-center p-5 sm:p-6 md:order-1 md:px-8 md:py-6">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#C7D8CC]">
-            Ruang kerja kebun
-          </p>
-          <h1 className="mt-4 max-w-xl font-display text-2xl font-semibold leading-[1.16] tracking-[-0.04em] sm:text-3xl">
-            Catatan lapangan yang rapi untuk keputusan yang bisa dipertanggungjawabkan.
+          <h1 className="max-w-xl font-display text-xl font-semibold leading-[1.25] tracking-[-0.035em] sm:text-2xl">
+            Ringkasan operasional kebun
           </h1>
-          <p className="mt-4 max-w-lg text-sm font-medium leading-relaxed text-[#D3DFD7]">
-            Pantau lahan, jadwal, biaya, dan prakiraan cuaca dalam satu alur kerja yang
-            sederhana.
+          <p className="mt-2.5 max-w-lg text-[13px] font-medium leading-relaxed text-[#D3DFD7] sm:text-sm">
+            Lihat kondisi lahan, pekerjaan terdekat, biaya, dan prakiraan cuaca tanpa berpindah halaman.
           </p>
         </div>
       </div>
-      <div className="order-1 min-h-[210px] overflow-hidden md:order-2 md:min-h-full">
+      <div className="order-1 h-[124px] overflow-hidden sm:h-[150px] md:order-2 md:h-full">
         <img
           src={HERO_IMAGE}
           alt="Area pertanian yang dikelola melalui TANITA"

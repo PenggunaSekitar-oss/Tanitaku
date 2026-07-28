@@ -2,6 +2,7 @@ import { PageHeader } from '../components/PageHeader';
 import React, { useState } from 'react';
 import { Select } from '../components/Select';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { CatalogMeta } from '../components/CatalogMeta';
 import { BIBIT_CATALOG as CATALOG, ELEVATION_OPTIONS, CUACA_OPTIONS, BibitItem, getBibitDetails } from '../data/bibitData';
 
 const getIconForKomoditas = (komoditas: string) => {
@@ -19,7 +20,6 @@ export function CariBibitView() {
   const [ketinggian, setKetinggian] = useState('Rendah');
   const [cuaca, setCuaca] = useState('Semua');
   const [hasSearched, setHasSearched] = useState(false);
-  const [showRumusGuide, setShowRumusGuide] = useState(false);
   const [results, setResults] = useState<BibitItem[]>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -107,81 +107,11 @@ export function CariBibitView() {
       <PageHeader
         title="Referensi Bibit"
         subtitle="Filter katalog varietas berdasarkan ketinggian dan karakter musim yang tercatat. Verifikasi kembali informasi pada label produsen."
+        action={<CatalogMeta count={CATALOG.length} unit="varietas" />}
       />
 
-      {/* DATABASE READY COUNTER BADGE */}
-
-        <div className="neo-card p-4 bg-[#FEFEFA] border-2 border-[#0A0A0A] rounded flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-xl text-white bg-[#154734] p-2 rounded border-2 border-[#0A0A0A]">
-              travel_explore
-            </span>
-            <div>
-              <span className="font-display font-extrabold text-sm text-[#0A0A0A] block">
-                Database Varietas Siap
-              </span>
-              <span className="text-xs text-[#5C5C5C] font-medium">
-                {CATALOG.length} varietas tersedia pada katalog lokal
-              </span>
-            </div>
-          </div>
-          <span className="px-3 py-1 bg-[#154734] text-white text-xs font-bold rounded border-2 border-[#0A0A0A] font-mono">
-            {CATALOG.length} VARIETAS
-          </span>
-        </div>
-
-
-      {/* RUMUS REKOMENDASI BIBIT GUIDANCE BANNER */}
-      <div className="p-4 sm:p-5 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer" onClick={() => setShowRumusGuide(!showRumusGuide)}>
-          <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-            <span className="material-symbols-outlined text-2xl text-white bg-[#154734] p-2 rounded border-2 border-[#0A0A0A] shrink-0">
-              nature_people
-            </span>
-            <div className="min-w-0 flex-1">
-              <h3 className="font-display font-extrabold text-sm sm:text-base uppercase text-[#0A0A0A] leading-snug">
-                Cara kerja filter ketinggian &amp; musim
-              </h3>
-              <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Kecocokan dihitung dari teks adaptasi ketinggian dan karakter musim pada katalog.
-              </p>
-            </div>
-          </div>
-          <button type="button" className="self-end sm:self-auto text-xs font-bold bg-[#E6E6DC] text-[#0A0A0A] border-2 border-[#0A0A0A] px-3 py-1.5 rounded shrink-0 flex items-center gap-1">
-            {showRumusGuide ? "Sembunyikan" : "Lihat Rumus"}
-            <span className="material-symbols-outlined text-sm">{showRumusGuide ? "expand_less" : "expand_more"}</span>
-          </button>
-        </div>
-
-        {showRumusGuide && (
-          <div className="mt-4 pt-4 border-t-2 border-[#0A0A0A] text-xs text-[#0A0A0A] grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="bg-[#E6E6DC]/40 p-3.5 rounded border-2 border-[#0A0A0A] space-y-1.5">
-              <span className="font-extrabold text-[#154734] block uppercase text-xs flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">landscape</span>
-                1. Klasifikasi Ketinggian (H)
-              </span>
-              <ul className="space-y-1 text-[#5C5C5C]">
-                <li>• <b className="text-[#0A0A0A]">Dataran Rendah (H &lt; 400 mdpl):</b> Toleran suhu panas &amp; kelembaban tinggi.</li>
-                <li>• <b className="text-[#0A0A0A]">Dataran Sedang (400 ≤ H ≤ 700 mdpl):</b> Varietas adaptif intermediate.</li>
-                <li>• <b className="text-[#0A0A0A]">Dataran Tinggi (H &gt; 700 mdpl):</b> Toleran suhu dingin &amp; curah hujan tinggi.</li>
-              </ul>
-            </div>
-            <div className="bg-[#E6E6DC]/40 p-3.5 rounded border-2 border-[#0A0A0A] space-y-1.5">
-              <span className="font-extrabold text-[#154734] block uppercase text-xs flex items-center gap-1">
-                <span className="material-symbols-outlined text-sm">thermostat</span>
-                2. Penyesuaian Musim (M)
-              </span>
-              <ul className="space-y-1 text-[#5C5C5C]">
-                <li>• <b className="text-[#0A0A0A]">Musim Hujan:</b> Varietas tahan genangan, akar kuat, &amp; resisten penyakit jamur/bakteri (layu/patek).</li>
-                <li>• <b className="text-[#0A0A0A]">Musim Kemarau:</b> Varietas berumur genjah (cepat panen) &amp; efisien penggunaan air.</li>
-              </ul>
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <div className="p-4 sm:p-6 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-        <h2 className="font-display font-extrabold uppercase tracking-wider mb-4 text-white bg-[#154734] px-3 py-1 rounded border-2 border-[#0A0A0A] inline-block text-xs">Filter Komoditas &amp; Kondisi Lahan</h2>
+      <section className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6">
+        <h2 className="mb-4 font-display text-base font-semibold text-[#26352D]">Filter komoditas dan kondisi lahan</h2>
         
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           <div className="flex flex-col">
@@ -221,7 +151,7 @@ export function CariBibitView() {
             </button>
           </div>
         </form>
-      </div>
+      </section>
 
       {hasSearched && (
         <div className="flex flex-col gap-4">

@@ -141,10 +141,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       type,
       category: 'umum',
       icon: type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info',
-      duration: 6000
+      duration: 4000
     };
     
-    setToasts(prev => [...prev.slice(-3), newToast]);
+    setToasts(prev => [...prev.slice(-1), newToast]);
 
     // Also push to notification drawer history
     const notifItem: AgriNotificationItem = {
@@ -165,7 +165,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
     setTimeout(() => {
       removeToast(id);
-    }, 6000);
+    }, 4000);
   };
 
   const showAgriToast = (options: AgriToastOptions) => {
@@ -174,7 +174,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     // Prevent duplicate toasts with identical id
     setToasts(prev => {
       if (prev.some(t => t.id === id)) return prev;
-      return [...prev.slice(-3), { ...options, id }];
+      return [...prev.slice(-1), { ...options, id }];
     });
 
     // Push to notification drawer history
@@ -200,7 +200,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     if (options.duration !== 0) {
       setTimeout(() => {
         removeToast(id);
-      }, options.duration || 6000);
+      }, options.duration || 5000);
     }
   };
 
@@ -218,93 +218,56 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }}>
       {children}
       
-      {/* Container for Floating Toast Notifications */}
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] flex flex-col items-center gap-3 max-w-lg w-[calc(100vw-2rem)] pointer-events-none">
+      <div className="pointer-events-none fixed bottom-20 right-4 z-[9999] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2 md:bottom-5">
         {toasts.map((toast) => {
-          const isPenyiraman = toast.category === 'penyiraman';
-          const isPemupukan = toast.category === 'pemupukan';
-          
-          let headerBg = 'bg-[#E8EEE9] text-[#24533F]';
-          let borderAccent = 'border-[#D8D5CC]';
-          let badgeBg = 'bg-[#E4ECE7] text-[#24533F]';
-
-          if (isPenyiraman) {
-            headerBg = 'bg-[#E6F0EA] text-[#24533F]';
-            borderAccent = 'border-[#B9CBBF]';
-            badgeBg = 'bg-[#DDEAE2] text-[#24533F]';
-          } else if (isPemupukan) {
-            headerBg = 'bg-[#E6F0EA] text-[#24533F]';
-            borderAccent = 'border-[#B9CBBF]';
-            badgeBg = 'bg-[#DDEAE2] text-[#24533F]';
-          } else if (toast.type === 'error') {
-            headerBg = 'bg-[#F7E8E4] text-[#A34335]';
-            borderAccent = 'border-[#DAB8B0]';
-          } else if (toast.type === 'warning') {
-            headerBg = 'bg-[#F6EDD9] text-[#885B21]';
-            borderAccent = 'border-[#D9C397]';
-          }
+          const accent =
+            toast.type === 'error'
+              ? 'bg-[#A34335]'
+              : toast.type === 'warning'
+                ? 'bg-[#A56E24]'
+                : toast.type === 'success'
+                  ? 'bg-[#2D684E]'
+                  : 'bg-[#718078]';
 
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto relative flex w-full flex-col gap-2.5 rounded-xl border bg-[#FBFAF6] p-3.5 shadow-[0_14px_36px_rgba(20,31,25,0.14)] animate-in slide-in-from-top-3 duration-200 ${borderAccent}`}
+              className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-[#D8D5CC] bg-[#FBFAF6] p-3.5 shadow-[0_12px_28px_rgba(20,31,25,0.12)] animate-in slide-in-from-bottom-2 duration-200"
             >
-              <div className="flex items-start justify-between gap-2 border-b border-outline/40 pb-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${headerBg}`}>
-                    <span className="material-symbols-outlined text-[18px]">
-                      {toast.icon || (isPenyiraman ? 'water_drop' : isPemupukan ? 'compost' : 'notifications')}
+              <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${accent}`} aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-xs font-semibold text-[#26352D]">{toast.title}</p>
+                  {toast.badgeText && (
+                    <span className="rounded-md bg-[#ECEDE8] px-1.5 py-0.5 text-[10px] font-semibold text-[#68736C]">
+                      {toast.badgeText}
                     </span>
-                  </span>
-                  <div className="flex flex-col min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="truncate font-display text-xs font-semibold text-on-surface">
-                        {toast.title}
-                      </span>
-                      {toast.badgeText && (
-                        <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${badgeBg}`}>
-                          {toast.badgeText}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                  )}
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => removeToast(toast.id!)}
-                  className="p-1 rounded text-on-surface-muted hover:text-on-surface hover:bg-surface-high transition shrink-0 cursor-pointer"
-                  title="Tutup Notifikasi"
-                >
-                  <span className="material-symbols-outlined text-base">close</span>
-                </button>
-              </div>
-
-              <p className="text-xs text-on-surface leading-relaxed font-medium whitespace-pre-line">
-                {toast.message}
-              </p>
-
-              {toast.actionLabel && toast.onAction && (
-                <div className="flex items-center justify-end gap-2 pt-1">
+                <p className="mt-1 text-xs font-medium leading-relaxed text-[#5F6963] whitespace-pre-line">
+                  {toast.message}
+                </p>
+                {toast.actionLabel && toast.onAction && (
                   <button
                     type="button"
                     onClick={() => {
                       toast.onAction!();
                       removeToast(toast.id!);
                     }}
-                    className={`flex cursor-pointer items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-                      isPenyiraman 
-                        ? 'bg-[#154734] text-white hover:bg-[#0e3023]' 
-                        : isPemupukan 
-                        ? 'bg-[#154734] text-white hover:bg-[#0e3023]' 
-                        : 'bg-[#154734] text-white hover:bg-[#0e3023]'
-                    }`}
+                    className="mt-2 rounded-lg bg-[#24533F] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1B4031]"
                   >
-                    <span className="material-symbols-outlined text-[16px]">check_circle</span>
                     {toast.actionLabel}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => removeToast(toast.id!)}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#7A837D] transition hover:bg-[#EEECE6] hover:text-[#26352D]"
+                aria-label="Tutup notifikasi"
+              >
+                <span className="material-symbols-outlined text-[17px]">close</span>
+              </button>
             </div>
           );
         })}
