@@ -380,4 +380,35 @@ test('katalog hama tidak memakai lagi foto spesies yang salah dan menampilkan au
   assert.match(view, /Foto tervalidasi belum tersedia/);
   assert.match(view, /Sumber gambar/);
   assert.match(view, /aria-label=\{`Memuat gambar \$\{alt\}`\}/);
+  assert.doesNotMatch(view, /Special:FilePath/);
+});
+
+test('gambar hama hasil audit tersedia lokal dengan format valid', () => {
+  const assets = [
+    'thrips-tabaci.jpg',
+    'walang-sangit.jpg',
+    'oteng-oteng.jpg',
+    'bekicot.jpg',
+    'rayap.jpg',
+    'nematoda-bintil-akar.jpg',
+    'kutu-putih.jpg',
+    'ulat-bawang.png',
+    'semut-api.jpg',
+    'ulat-api.jpg',
+    'ulat-grayak-jagung.jpg',
+    'bubuk-jagung.jpg',
+    'burung-pipit.jpg',
+    'penggerek-batang-jagung.jpg',
+    'babi-hutan.jpg',
+    'monyet-ekor-panjang.jpg',
+  ];
+
+  for (const asset of assets) {
+    const bytes = readFileSync(resolve('public/hama-audit', asset));
+    const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const isPng = bytes.subarray(0, 8).equals(
+      Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    );
+    assert.ok(isJpeg || isPng, `${asset} bukan gambar JPEG/PNG valid`);
+  }
 });

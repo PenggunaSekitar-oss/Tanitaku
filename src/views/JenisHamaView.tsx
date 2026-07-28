@@ -13,8 +13,26 @@ interface Hama {
   saranPestisida: string;
 }
 
-const commonsFile = (fileName: string) =>
-  `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(fileName)}?width=960`;
+const auditedImages: Record<number, { src: string; sourceFile: string }> = {
+  5: { src: '/hama-audit/thrips-tabaci.jpg', sourceFile: 'Thrips tabaci.jpg' },
+  7: { src: '/hama-audit/walang-sangit.jpg', sourceFile: 'Leptocorisa oratorius-Kadavoor-2016-02-07-001.jpg' },
+  13: { src: '/hama-audit/oteng-oteng.jpg', sourceFile: '"+arya+" Aulacophora indica - kumbang daun kurkubis - oteng - Pilangsari 2020 - 04.jpg' },
+  14: { src: '/hama-audit/bekicot.jpg', sourceFile: 'Achatina fulica (Giant African land snail).jpg' },
+  15: { src: '/hama-audit/rayap.jpg', sourceFile: 'CSIRO ScienceImage 3745 Workers of the drywood termite Cryptotermes domesticus.jpg' },
+  16: { src: '/hama-audit/nematoda-bintil-akar.jpg', sourceFile: 'Tomato (Solanum lycopersicum)- Root knot nematodes - 27421750599.jpg' },
+  20: { src: '/hama-audit/kutu-putih.jpg', sourceFile: 'Planococcus citri from CSIRO.jpg' },
+  23: { src: '/hama-audit/ulat-bawang.png', sourceFile: 'Spodoptera exigua.png' },
+  24: { src: '/hama-audit/semut-api.jpg', sourceFile: 'Solenopsis invicta - fire ant worker.jpg' },
+  26: { src: '/hama-audit/ulat-api.jpg', sourceFile: 'Setora nitens.jpg' },
+  28: { src: '/hama-audit/ulat-grayak-jagung.jpg', sourceFile: 'Spodoptera frugiperda caterpillar01.jpg' },
+  32: { src: '/hama-audit/bubuk-jagung.jpg', sourceFile: 'Maize Weevil - Sitophilus zeamais.jpg' },
+  40: { src: '/hama-audit/burung-pipit.jpg', sourceFile: 'The Scaly-breasted Munia knows exactly where the best seeds are.jpg' },
+  47: { src: '/hama-audit/penggerek-batang-jagung.jpg', sourceFile: 'O furnacalis 2.JPG' },
+  49: { src: '/hama-audit/babi-hutan.jpg', sourceFile: 'Wild boar (Sus scrofa).jpg' },
+  50: { src: '/hama-audit/monyet-ekor-panjang.jpg', sourceFile: 'Macaca fascicularis, Ubud Monkey Forest, Bali, 20220822 1053 0059.jpg' },
+};
+
+const auditedImage = (id: number) => auditedImages[id]?.src ?? '';
 
 const dataHama: Hama[] = [
   {
@@ -61,7 +79,7 @@ const dataHama: Hama[] = [
     id: 5,
     nama: "Thrips",
     latin: "Thrips spp. (contoh: Thrips tabaci)",
-    gambar: commonsFile("Thrips tabaci.jpg"),
+    gambar: auditedImage(5),
     deskripsi: "Serangga berukuran sangat kecil. Menyerang dengan cara menggaruk dan mengisap cairan daun, menyebabkan daun mengeriting ke atas, berwarna keperakan, dan bunga rontok.",
     tanaman: ["Cabai", "Tomat", "Bawang Merah", "Semangka", "Melon"],
     pembasmian: "Pasang perangkap lekat kuning atau biru. Jaga kelembapan tanah dan sanitasi kebun secara rutin.",
@@ -81,7 +99,7 @@ const dataHama: Hama[] = [
     id: 7,
     nama: "Walang Sangit",
     latin: "Leptocorisa oratorius",
-    gambar: commonsFile("Leptocorisa oratorius-Kadavoor-2016-02-07-001.jpg"),
+    gambar: auditedImage(7),
     deskripsi: "Hama yang mengeluarkan bau menyengat khas saat diganggu. Menyerang bulir padi muda yang sedang masak susu sehingga gabah menjadi hampa atau berwarna coklat.",
     tanaman: ["Padi"],
     pembasmian: "Kumpulkan walang sangit secara manual pada pagi hari. Gunakan umpan bau-bauan seperti daging busuk atau bangkai keong mas.",
@@ -141,7 +159,7 @@ const dataHama: Hama[] = [
     id: 13,
     nama: "Oteng-Oteng",
     latin: "Aulacophora indica",
-    gambar: commonsFile("\"+arya+\" Aulacophora indica - kumbang daun kurkubis - oteng - Pilangsari 2020 - 04.jpg"),
+    gambar: auditedImage(13),
     deskripsi: "Kumbang daun berwarna jingga yang membuat lubang pada daun tanaman labu-labuan. Jangan tertukar dengan Epilachna, kumbang koksi pemakan daun.",
     tanaman: ["Mentimun", "Kacang", "Terong"],
     pembasmian: "Pungut hama secara manual pagi/sore hari.",
@@ -151,7 +169,7 @@ const dataHama: Hama[] = [
     id: 14,
     nama: "Siput Babi / Bekicot",
     latin: "Achatina fulica",
-    gambar: commonsFile("Achatina fulica (Giant African land snail).jpg"),
+    gambar: auditedImage(14),
     deskripsi: "Makan daun dan batang muda, meninggalkan bekas lendir mengkilap di pagi hari.",
     tanaman: ["Bibit Sayuran", "Kubis", "Sawi"],
     pembasmian: "Tabur abu kayu atau garam di sekeliling bedengan.",
@@ -161,7 +179,7 @@ const dataHama: Hama[] = [
     id: 15,
     nama: "Rayap",
     latin: "Termitoidae (contoh: Cryptotermes domesticus)",
-    gambar: commonsFile("CSIRO ScienceImage 3745 Workers of the drywood termite Cryptotermes domesticus.jpg"),
+    gambar: auditedImage(15),
     deskripsi: "Hama tanah yang memakan material kayu, juga bisa menyerang perakaran tanaman kayu-kayuan dan stek.",
     tanaman: ["Singkong", "Karet", "Kopi", "Cengkeh"],
     pembasmian: "Menghancurkan sarang, memastikan tidak ada sisa kayu mati di lahan.",
@@ -171,7 +189,7 @@ const dataHama: Hama[] = [
     id: 16,
     nama: "Nematoda Bintil Akar",
     latin: "Meloidogyne spp. (contoh gejala M. incognita)",
-    gambar: commonsFile("Tomato (Solanum lycopersicum)- Root knot nematodes - 27421750599.jpg"),
+    gambar: auditedImage(16),
     deskripsi: "Cacing mikroskopis di dalam tanah yang menyerang akar sehingga membengkak/bintil-bintil. Tanaman kerdil dan layu siang hari.",
     tanaman: ["Tomat", "Cabai", "Mentimun", "Seledri"],
     pembasmian: "Rotasi tanaman dengan Tagetes (Bunga Kenikir/Marigold).",
@@ -211,7 +229,7 @@ const dataHama: Hama[] = [
     id: 20,
     nama: "Kutu Putih (Mealybug)",
     latin: "Pseudococcidae (contoh: Planococcus citri)",
-    gambar: commonsFile("Planococcus citri from CSIRO.jpg"),
+    gambar: auditedImage(20),
     deskripsi: "Serangga penghisap cairan berselimut lilin putih bertepung. Menyebabkan pertumbuhan kerdil dan muncul jamur jelaga hitam.",
     tanaman: ["Pepaya", "Singkong", "Jambu", "Mangga"],
     pembasmian: "Semprot dengan campuran air sabun pencuci piring dan sedikit minyak nabati untuk merontokkan lilin pelindungnya.",
@@ -241,7 +259,7 @@ const dataHama: Hama[] = [
     id: 23,
     nama: "Ulat Bawang",
     latin: "Spodoptera exigua",
-    gambar: commonsFile("Spodoptera exigua.png"),
+    gambar: auditedImage(23),
     deskripsi: "Ulat memakan daun bawang dari dalam tabung daun, sehingga daun terlihat putih transparan dan kempes.",
     tanaman: ["Bawang Merah", "Bawang Putih", "Bawang Daun"],
     pembasmian: "Membuang kelompok telur yang biasanya ada di ujung daun.",
@@ -251,7 +269,7 @@ const dataHama: Hama[] = [
     id: 24,
     nama: "Semut Api",
     latin: "Solenopsis spp. (contoh: S. invicta)",
-    gambar: commonsFile("Solenopsis invicta - fire ant worker.jpg"),
+    gambar: auditedImage(24),
     deskripsi: "Bersimbiosis dengan kutu daun, melindungi kutu dari predator dan memakan ekskresinya (embun madu). Gigitannya perih.",
     tanaman: ["Cabai", "Tomat", "Tanaman Buah"],
     pembasmian: "Gunakan umpan gula dicampur boraks.",
@@ -271,7 +289,7 @@ const dataHama: Hama[] = [
     id: 26,
     nama: "Ulat Api",
     latin: "Setora nitens",
-    gambar: commonsFile("Setora nitens.jpg"),
+    gambar: auditedImage(26),
     deskripsi: "Ulat berbulu menyengat yang menyerang kelapa sawit dan tanaman perkebunan lain, menghabiskan daun kelapa dari bawah ke atas.",
     tanaman: ["Kelapa Sawit", "Kelapa"],
     pembasmian: "Penggunaan jamur Cordyceps atau virus ulat api.",
@@ -291,7 +309,7 @@ const dataHama: Hama[] = [
     id: 28,
     nama: "Ulat Grayak Jagung",
     latin: "Spodoptera frugiperda",
-    gambar: commonsFile("Spodoptera frugiperda caterpillar01.jpg"),
+    gambar: auditedImage(28),
     deskripsi: "Fall Armyworm, ulat invansif baru yang sangat merusak tanaman jagung, bersembunyi di pucuk daun (titik tumbuh).",
     tanaman: ["Jagung"],
     pembasmian: "Tanam serempak. Tumpangsari dengan legum.",
@@ -331,7 +349,7 @@ const dataHama: Hama[] = [
     id: 32,
     nama: "Gusung / Bubuk Jagung",
     latin: "Sitophilus zeamais",
-    gambar: commonsFile("Maize Weevil - Sitophilus zeamais.jpg"),
+    gambar: auditedImage(32),
     deskripsi: "Kumbang kecil bermoncong panjang yang melubangi biji jagung dan beras di tempat penyimpanan (gudang).",
     tanaman: ["Jagung (Gudang)", "Beras"],
     pembasmian: "Jemur biji sampai kadar air rendah (<12%), simpan di wadah kedap udara.",
@@ -411,7 +429,7 @@ const dataHama: Hama[] = [
     id: 40,
     nama: "Burung Pipit",
     latin: "Lonchura spp. (contoh: L. punctulata)",
-    gambar: commonsFile("The Scaly-breasted Munia knows exactly where the best seeds are.jpg"),
+    gambar: auditedImage(40),
     deskripsi: "Memakan bulir padi menjelang masa panen dalam jumlah koloni besar.",
     tanaman: ["Padi", "Sorgum"],
     pembasmian: "Gunakan orang-orangan sawah, jaring penutup, atau pita mengkilap.",
@@ -481,7 +499,7 @@ const dataHama: Hama[] = [
     id: 47,
     nama: "Ulat Penggerek Batang Jagung",
     latin: "Ostrinia furnacalis",
-    gambar: commonsFile("O furnacalis 2.JPG"),
+    gambar: auditedImage(47),
     deskripsi: "Masuk memakan batang dan tongkol jagung. Batang mudah patah dan tongkol tidak terisi sempurna.",
     tanaman: ["Jagung"],
     pembasmian: "Musnahkan sisa panen jagung.",
@@ -501,7 +519,7 @@ const dataHama: Hama[] = [
     id: 49,
     nama: "Babi Hutan",
     latin: "Sus scrofa",
-    gambar: commonsFile("Wild boar (Sus scrofa).jpg"),
+    gambar: auditedImage(49),
     deskripsi: "Hama mamalia yang memakan dan membongkar perakaran umbi-umbian (singkong), jagung, kacang.",
     tanaman: ["Singkong", "Kacang Tanah", "Padi"],
     pembasmian: "Pemagaran dengan seng atau kawat. Perburuan masal.",
@@ -511,7 +529,7 @@ const dataHama: Hama[] = [
     id: 50,
     nama: "Kera / Monyet",
     latin: "Macaca spp. (contoh: M. fascicularis)",
-    gambar: commonsFile("Macaca fascicularis, Ubud Monkey Forest, Bali, 20220822 1053 0059.jpg"),
+    gambar: auditedImage(50),
     deskripsi: "Merusak dan memakan buah, tongkol jagung, padi di ladang yang berbatasan dengan hutan.",
     tanaman: ["Jagung", "Pisang", "Kakao"],
     pembasmian: "Penjagaan, pemasangan jaring, penggunaan petasan/suara.",
@@ -528,17 +546,18 @@ function getImageStatus(hama: Hama) {
   return 'Spesies terverifikasi';
 }
 
-function getCommonsSource(src: string) {
-  if (!src) return '';
+function getCommonsSource(hama: Hama) {
+  const audited = auditedImages[hama.id];
+  if (audited) {
+    return `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(audited.sourceFile)}`;
+  }
+  if (!hama.gambar) return '';
   try {
-    const url = new URL(src);
+    const url = new URL(hama.gambar);
     const parts = url.pathname.split('/').filter(Boolean);
-    const specialFileIndex = parts.findIndex((part) => part === 'Special:FilePath');
-    const rawName = specialFileIndex >= 0
-      ? parts.slice(specialFileIndex + 1).join('/')
-      : parts.includes('thumb')
-        ? parts.at(-2) ?? ''
-        : parts.at(-1) ?? '';
+    const rawName = parts.includes('thumb')
+      ? parts.at(-2) ?? ''
+      : parts.at(-1) ?? '';
     return rawName
       ? `https://commons.wikimedia.org/wiki/File:${rawName}`
       : 'https://commons.wikimedia.org/';
@@ -776,7 +795,7 @@ export function JenisHamaView() {
                             </span>
                             {hama.gambar && (
                               <a
-                                href={getCommonsSource(hama.gambar)}
+                                href={getCommonsSource(hama)}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="font-bold text-[#24533F] underline decoration-[#9FA9A2] underline-offset-2 hover:text-[#183D2D]"
