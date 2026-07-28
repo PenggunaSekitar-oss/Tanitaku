@@ -21,7 +21,7 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: Event) {
       if (ref.current && !ref.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -38,14 +38,21 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
 
   return (
     <div className={`relative ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`} ref={ref}>
-      <div 
+      <button
+        type="button"
         className={`w-full flex items-center justify-between min-h-[48px] px-4 py-2.5 rounded-[8px_3px_8px_3px] bg-surface-high neo-border-thin ${disabled ? 'pointer-events-none' : 'cursor-pointer hover:bg-surface'}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        tabIndex={disabled ? -1 : 0}
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-required={required || undefined}
+        aria-invalid={error || undefined}
         onKeyDown={(e) => {
           if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
             setIsOpen(!isOpen);
+          } else if (e.key === 'Escape') {
+            setIsOpen(false);
           }
         }}
       >
@@ -55,16 +62,19 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
         <span className={`material-symbols-outlined text-[20px] transition-transform duration-200 shrink-0 ${isOpen ? 'rotate-180 text-action' : 'text-on-surface-muted'}`}>
           expand_more
         </span>
-      </div>
+      </button>
 
       {isOpen && !disabled && (
-        <div className="absolute z-50 min-w-[100%] w-max mt-2 bg-surface neo-border  rounded-[8px_3px_8px_3px] max-h-[200px] overflow-y-auto py-1" style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}>
+        <div role="listbox" className="absolute z-50 min-w-[100%] w-max mt-2 bg-surface neo-border  rounded-[8px_3px_8px_3px] max-h-[200px] overflow-y-auto py-1" style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}>
           {options.length === 0 ? (
             <div className="p-4 text-on-surface-muted text-[15px] text-center">Tidak ada opsi</div>
           ) : (
-            options.map((opt) => (
-              <div 
-                key={opt.value}
+            options.map((opt, index) => (
+              <button
+                type="button"
+                role="option"
+                aria-selected={value === opt.value}
+                key={`${opt.value}-${index}`}
                 className={`px-4 py-3 cursor-pointer transition-colors flex items-center justify-between gap-4 ${value === opt.value ? 'bg-action text-on-action font-black' : 'text-on-surface hover:bg-surface-high'}`}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
               >
@@ -72,7 +82,7 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
                 {value === opt.value && (
                   <span className="material-symbols-outlined text-[18px]">check</span>
                 )}
-              </div>
+              </button>
             ))
           )}
         </div>

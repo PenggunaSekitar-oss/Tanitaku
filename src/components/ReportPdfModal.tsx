@@ -4,6 +4,12 @@ import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import { generateOperationalPdfReport } from '../utils/pdfGenerator';
 import { Select } from './Select';
+import {
+  buildReportPeriodOptions,
+  getKeuanganRecordDate,
+  matchesReportPeriod,
+  type ReportPeriodOption,
+} from '../utils/reportPeriod';
 
 interface ReportPdfModalProps {
   isOpen: boolean;
@@ -14,21 +20,15 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
   const { keuangan, logAktivitas, blokLahan, tanaman } = useTaniOps();
   const { showToast } = useToast();
 
-  const [periode, setPeriode] = useState<string>('Juli 2026');
+  const periodeOptions = buildReportPeriodOptions();
+  const fallbackPeriod: ReportPeriodOption = { value: 'all', label: 'Semua Periode Tanam' };
+  const [periode, setPeriode] = useState<string>(periodeOptions[0]?.value ?? 'all');
   const [selectedBlokId, setSelectedBlokId] = useState<string>('semua');
   const [namaKebun, setNamaKebun] = useState<string>(() => localStorage.getItem('tanita_farm_name') || 'Kebun Presisi TANITA');
   const [managerName, setManagerName] = useState<string>(() => localStorage.getItem('tanita_manager_name') || 'Muh Amin Arsyad');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   if (!isOpen) return null;
-
-  const periodeOptions = [
-    { value: 'Juli 2026', label: 'Juli 2026 (Bulan Berjalan)' },
-    { value: 'Juni 2026', label: 'Juni 2026' },
-    { value: 'Mei 2026', label: 'Mei 2026' },
-    { value: 'Triwulan III - 2026', label: 'Triwulan III (Q3 2026)' },
-    { value: 'Semua Periode Tanam', label: 'Semua Akumulasi Periode Tanam' },
-  ];
 
   const blokOptions = [
     { value: 'semua', label: 'Semua Blok Lahan Kebun' },
@@ -43,11 +43,14 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
       localStorage.setItem('tanita_farm_name', namaKebun);
       localStorage.setItem('tanita_manager_name', managerName);
 
+      const selectedPeriod = periodeOptions.find((option) => option.value === periode) || periodeOptions[0] || fallbackPeriod;
       generateOperationalPdfReport({
-        periodeLabel: periode,
+        periodeLabel: selectedPeriod.label.replace(' (Bulan Berjalan)', ''),
         namaKebun,
         managerName,
         blokFilterId: selectedBlokId,
+        startDate: selectedPeriod.startDate,
+        endDate: selectedPeriod.endDate,
         keuangan,
         logAktivitas,
         blokLahan,
@@ -64,13 +67,16 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
     }
   };
 
-  const filteredLogCount = selectedBlokId === 'semua' 
-    ? logAktivitas.length 
-    : logAktivitas.filter(l => l.blokId === selectedBlokId).length;
+  const selectedPeriod = periodeOptions.find((option) => option.value === periode) || periodeOptions[0] || fallbackPeriod;
+  const filteredLogCount = logAktivitas.filter((record) =>
+    (selectedBlokId === 'semua' || record.blokId === selectedBlokId) &&
+    matchesReportPeriod(record.tanggal, selectedPeriod.startDate, selectedPeriod.endDate)
+  ).length;
 
-  const filteredKeuanganCount = selectedBlokId === 'semua'
-    ? keuangan.length
-    : keuangan.filter(k => k.blokId === selectedBlokId).length;
+  const filteredKeuanganCount = keuangan.filter((record) =>
+    (selectedBlokId === 'semua' || record.blokId === selectedBlokId) &&
+    matchesReportPeriod(getKeuanganRecordDate(record), selectedPeriod.startDate, selectedPeriod.endDate)
+  ).length;
 
   return (
     <AnimatePresence>

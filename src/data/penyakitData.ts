@@ -30,7 +30,8 @@ export const TANAMAN_OPTIONS = [
 
 export const PENYAKIT_OPTIONS = [
   { value: 'Semua', label: 'Semua Kategori (Hama & Penyakit)' },
-  { value: 'Hama', label: 'Hama Serangga & Nematoda' },
+  { value: 'Hama', label: 'Hama Serangga' },
+  { value: 'Nematoda', label: 'Nematoda' },
   { value: 'Jamur', label: 'Penyakit Jamur / Fungi' },
   { value: 'Bakteri', label: 'Penyakit Bakteri' },
   { value: 'Virus', label: 'Penyakit Virus' }
@@ -399,5 +400,5 @@ export const PENYAKIT_DB: Penyakit[] = [
   { id: 'p27', nama: 'Karat Daun Kopi (Hemileia vastatrix)', kategori: 'Jamur', tanaman: ['Perkebunan'], gejala: 'Bercak oranye bertepung di bawah daun kopi.', penyebab: 'Hemileia.', kimia: 'Anvil 50SC, Amistar.', organik: 'Tembaga cair.', pencegahan: 'Tanam arabika varietas tahan.' },
   { id: 'p28', nama: 'Embun Jelaga (Capnodium)', kategori: 'Jamur', tanaman: ['Mangga', 'Jeruk'], gejala: 'Lapisan jelaga hitam menutup permukaan daun.', penyebab: 'Jamur yang tumbuh dari kotoran kutu.', kimia: 'Basmi kutu daun & semprot pencuci jelaga.', organik: 'Air sabun hangat.', pencegahan: 'Kendalikan kutu putih.' },
   { id: 'p29', nama: 'Kerdil Pisang (Bunchy Top)', kategori: 'Virus', tanaman: ['Pisang'], gejala: 'Daun pisang kerdil sempit tegak mengelompok di pucuk.', penyebab: 'Banana Bunchy Top Virus (BBTV).', kimia: 'Kendalikan Kutu Daun Pentalonia.', organik: 'Cabut dan musnahkan rumpun.', pencegahan: 'Bibit kultur jaringan.' },
-  { id: '30', nama: 'Jamur Upas (Corticium salmonicolor)', kategori: 'Jamur', tanaman: ['Perkebunan', 'Mangga'], gejala: 'Kerak merah jambu (pink) di kulit cabang hingga mengelupas.', penyebab: 'Corticium.', kimia: 'Nordox 56WP oles.', organik: 'Bubur kalifornia.', pencegahan: 'Pangkas cabang bersinggungan.' }
+  { id: 'jamur-30', nama: 'Jamur Upas (Corticium salmonicolor)', kategori: 'Jamur', tanaman: ['Perkebunan', 'Mangga'], gejala: 'Kerak merah jambu (pink) di kulit cabang hingga mengelupas.', penyebab: 'Corticium.', kimia: 'Nordox 56WP oles.', organik: 'Bubur kalifornia.', pencegahan: 'Pangkas cabang bersinggungan.' }
 ];

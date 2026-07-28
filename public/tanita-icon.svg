@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">TANITA</title>
+  <rect width="512" height="512" rx="112" fill="#154734"/>
+  <path d="M256 92c-76 38-122 101-122 171 0 75 49 133 122 157 73-24 122-82 122-157 0-70-46-133-122-171Z" fill="#fefefa"/>
+  <path d="M256 150v222M256 238c-37-32-73-45-108-39M256 285c40-31 77-42 111-34" fill="none" stroke="#154734" stroke-width="28" stroke-linecap="round"/>
+</svg>

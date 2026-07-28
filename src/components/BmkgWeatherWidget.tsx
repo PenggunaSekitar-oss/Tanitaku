@@ -20,10 +20,70 @@ interface BMKGWeatherData {
     wd: string;
     image: string;
     local_datetime: string;
+    utc_datetime?: string;
   };
 }
 
+interface BMKGForecastEntry {
+  weather_desc?: string;
+  t?: number;
+  hu?: number;
+  ws?: number;
+  wd?: string;
+  image?: string;
+  local_datetime?: string;
+  utc_datetime?: string;
+}
+
+const parseForecastDate = (entry: BMKGForecastEntry): Date | null => {
+  const raw = entry.utc_datetime || entry.local_datetime;
+  if (!raw) return null;
+  const normalized = raw.replace(' ', 'T') + (entry.utc_datetime && !raw.endsWith('Z') ? 'Z' : '');
+  const parsed = new Date(normalized);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+export function selectNearestForecast(
+  forecastGroups: unknown,
+  now = new Date(),
+): BMKGForecastEntry | null {
+  if (!Array.isArray(forecastGroups)) return null;
+  const entries = forecastGroups.flat(Infinity).filter(
+    (item): item is BMKGForecastEntry => typeof item === 'object' && item !== null,
+  );
+  if (entries.length === 0) return null;
+
+  const timedEntries = entries
+    .map((entry) => ({ entry, date: parseForecastDate(entry) }))
+    .filter((item): item is { entry: BMKGForecastEntry; date: Date } => item.date !== null);
+  if (timedEntries.length === 0) return entries[0] ?? null;
+
+  const upcoming = timedEntries
+    .filter(({ date }) => date.getTime() >= now.getTime())
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+  if (upcoming.length > 0) return upcoming[0]?.entry ?? null;
+
+  return timedEntries.sort(
+    (a, b) =>
+      Math.abs(a.date.getTime() - now.getTime()) -
+      Math.abs(b.date.getTime() - now.getTime()),
+  )[0]?.entry ?? null;
+}
+
+const getRegionTimeZone = (province: string) => {
+  if (/Papua|Maluku/i.test(province)) return { zone: 'Asia/Jayapura', label: 'WIT' };
+  if (/Sulawesi|Bali|Nusa Tenggara|Kalimantan (Selatan|Timur|Utara)/i.test(province)) {
+    return { zone: 'Asia/Makassar', label: 'WITA' };
+  }
+  return { zone: 'Asia/Jakarta', label: 'WIB' };
+};
+
 export function BmkgWeatherWidget({ onOpenBotModal }: { onOpenBotModal?: () => void }) {
+  const fallbackRegion: BMKGRegion = BMKG_REGIONS[0] ?? {
+    name: 'Wilayah BMKG',
+    code: '73.04.01.1001',
+    provinsi: 'Sulawesi Selatan',
+  };
   const [selectedCode, setSelectedCode] = useState<string>(() => {
     return localStorage.getItem('bmkg_selected_region') || "73.04.01.1001"; // Default Binamu
   });
@@ -36,8 +96,9 @@ export function BmkgWeatherWidget({ onOpenBotModal }: { onOpenBotModal?: () => v
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const selectedRegion = BMKG_REGIONS.find(r => r.code === selectedCode) || BMKG_REGIONS[0];
+  const selectedRegion = BMKG_REGIONS.find(r => r.code === selectedCode) || fallbackRegion;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -50,15 +111,22 @@ export function BmkgWeatherWidget({ onOpenBotModal }: { onOpenBotModal?: () => v
   }, []);
 
   const fetchBmkgData = async (code: string) => {
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setLoading(true);
     setError(null);
+    setData(null);
     try {
-      const res = await fetch(`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${code}`);
+      const res = await fetch(`https://api.bmkg.go.id/publik/prakiraan-cuaca?adm4=${code}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) throw new Error("Gagal mengambil data dari server BMKG");
       const json = await res.json();
       
-      if (json.lokasi && json.data && json.data[0] && json.data[0].cuaca && json.data[0].cuaca[0] && json.data[0].cuaca[0][0]) {
-        const cuaca = json.data[0].cuaca[0][0];
+      const cuaca = selectNearestForecast(json.data?.[0]?.cuaca);
+      if (json.lokasi && cuaca) {
+        if (controller.signal.aborted) return;
         setData({
           lokasi: json.lokasi,
           current: {
@@ -68,30 +136,44 @@ export function BmkgWeatherWidget({ onOpenBotModal }: { onOpenBotModal?: () => v
             ws: cuaca.ws ?? 10,
             wd: cuaca.wd || "S",
             image: cuaca.image || "",
-            local_datetime: cuaca.local_datetime || new Date().toLocaleString("id-ID")
+            local_datetime: cuaca.local_datetime || '',
+            utc_datetime: cuaca.utc_datetime,
           }
         });
-        setLastUpdated(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
+        const region = BMKG_REGIONS.find((item) => item.code === code) || fallbackRegion;
+        const regionTime = getRegionTimeZone(region.provinsi);
+        setLastUpdated(new Date().toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: regionTime.zone,
+        }));
       } else {
         throw new Error("Format data BMKG tidak sesuai");
       }
     } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       console.error("BMKG Fetch error:", err);
       setError("Tidak dapat terhubung ke API BMKG. Silakan coba lagi.");
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchBmkgData(selectedCode);
     localStorage.setItem('bmkg_selected_region', selectedCode);
+    const refreshTimer = window.setInterval(() => fetchBmkgData(selectedCode), 30 * 60 * 1000);
+    return () => {
+      window.clearInterval(refreshTimer);
+      abortControllerRef.current?.abort();
+    };
   }, [selectedCode]);
 
   const filteredRegions = BMKG_REGIONS.filter(r => 
     r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     r.provinsi.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const selectedTimeZone = getRegionTimeZone(selectedRegion.provinsi);
 
   const getAgriTip = (desc: string) => {
     const d = desc.toLowerCase();
@@ -116,7 +198,7 @@ export function BmkgWeatherWidget({ onOpenBotModal }: { onOpenBotModal?: () => v
           {/* Logo Badge BMKG */}
           <div className="bg-amber-400 text-slate-950 font-extrabold text-[11px] px-2.5 py-1 rounded-lg flex items-center gap-1.5 shrink-0 shadow-2xs">
             <span className="material-symbols-outlined text-[15px] text-slate-900">verified</span>
-            REAL-TIME BMKG
+            PRAKIRAAN BMKG
           </div>
           <span className="text-xs text-blue-200/80 font-mono hidden md:inline">
             Official Data API BMKG
@@ -262,7 +344,12 @@ export function BmkgWeatherWidget({ onOpenBotModal }: { onOpenBotModal?: () => v
               </span>
               {lastUpdated && (
                 <span className="text-[11px] text-blue-200/70">
-                  \u00B7 Update: {lastUpdated} WIB
+                  \u00B7 Diambil: {lastUpdated} {selectedTimeZone.label}
+                </span>
+              )}
+              {data?.current?.local_datetime && (
+                <span className="text-[11px] text-blue-200/70">
+                  \u00B7 Slot prakiraan: {data.current.local_datetime}
                 </span>
               )}
             </p>

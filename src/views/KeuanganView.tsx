@@ -7,16 +7,19 @@ import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ReportPdfModal } from '../components/ReportPdfModal';
+import { formatLocalDate } from '../utils/localDate';
 
 export function KeuanganView() {
-  const { keuangan, addKeuangan, updateKeuangan, deleteKeuangan, blokLahan, tanaman } = useTaniOps();
+  const { keuangan, logAktivitas, addKeuangan, updateKeuangan, deleteKeuangan, blokLahan, tanaman } = useTaniOps();
   const { showToast } = useToast();
 
   // Mobile Tab State ('analisis' | 'input')
   const [activeTab, setActiveTab] = useState<'analisis' | 'input'>('analisis');
 
   const initialForm = { 
-    blokId: 'overall', 
+    blokId: blokLahan[0]?.id || 'overall',
+    tanamanId: '',
+    transactionDate: formatLocalDate(),
     komoditas: '', 
     biayaTetap: 0, 
     namaBenih: '', 
@@ -78,7 +81,9 @@ export function KeuanganView() {
   const updateMultiItemRow = (idx: number, field: string, val: any) => {
     setMultiItems(prev => {
       const updated = [...prev];
-      updated[idx] = { ...updated[idx], [field]: val };
+      const currentItem = updated[idx];
+      if (!currentItem) return prev;
+      updated[idx] = { ...currentItem, [field]: val };
       return updated;
     });
   };
@@ -127,10 +132,17 @@ export function KeuanganView() {
 
   // Set default crop if available
   useEffect(() => {
-    if (tanaman.length > 0 && !form.komoditas && !editingId) {
-      setForm((prev: any) => ({ ...prev, komoditas: tanaman[0].komoditas }));
+    if (tanaman.length > 0 && !form.tanamanId && !editingId) {
+      const firstPlant = tanaman[0];
+      if (!firstPlant) return;
+      setForm((prev: any) => ({
+        ...prev,
+        tanamanId: firstPlant.id,
+        blokId: firstPlant.blokId,
+        komoditas: firstPlant.komoditas,
+      }));
     }
-  }, [tanaman, form.komoditas, editingId]);
+  }, [tanaman, form.tanamanId, editingId]);
 
   // Live Auto Calculations for Form
   const currentBiayaBenih = (form.jumlahBenih || 0) * (form.hargaBenih || 0);
@@ -141,16 +153,27 @@ export function KeuanganView() {
   const currentEstimasiLaba = currentEstimasiOmset - currentTotalBiaya;
 
   // Global Financial Metrics
-  const totalSemuaBiaya = keuangan.reduce((acc, k) => 
+  const totalBiayaKeuangan = keuangan.reduce((acc, k) =>
     acc + (k.biayaTetap || 0) + (k.biayaBenih || 0) + (k.biayaPupuk || 0) + (k.biayaPestisida || 0) + (k.biayaLain || 0), 0
   );
+  const totalBiayaLog = logAktivitas.reduce((acc, log) => acc + (log.biaya || 0), 0);
+  const totalSemuaBiaya = totalBiayaKeuangan + totalBiayaLog;
   const totalSemuaPendapatan = keuangan.reduce((acc, k) => acc + (k.targetHasil || 0) * (k.hargaJual || 0), 0);
   const totalLabaBersih = totalSemuaPendapatan - totalSemuaBiaya;
-  const aggregateBcRatio = totalSemuaBiaya > 0 ? (totalSemuaPendapatan / totalSemuaBiaya) : 0;
-  const isOverallProfitable = totalLabaBersih >= 0;
+  const aggregateRcRatio = totalSemuaBiaya > 0 ? (totalSemuaPendapatan / totalSemuaBiaya) : null;
+  const hasFinancialData = keuangan.length > 0 || totalBiayaLog > 0;
+  const isOverallProfitable = hasFinancialData ? totalLabaBersih >= 0 : null;
 
   const handleCalculate = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.transactionDate) {
+      showToast('Tanggal transaksi wajib diisi.', 'error');
+      return;
+    }
+    if (blokLahan.length > 0 && (!form.blokId || form.blokId === 'overall')) {
+      showToast('Pilih blok lahan untuk data keuangan ini.', 'error');
+      return;
+    }
     const finalData = {
       ...form,
       biayaBenih: currentBiayaBenih,
@@ -244,7 +267,7 @@ export function KeuanganView() {
             <span className="font-mono font-black text-base sm:text-xl text-[#0A0A0A] block truncate">
               {formatCurrency(totalSemuaBiaya)}
             </span>
-            <span className="text-[10px] text-[#5C5C5C]">Investasi Bibit, Pupuk, &amp; Pestisida</span>
+            <span className="text-[10px] text-[#5C5C5C]">Input Keuangan + Biaya Log Aktivitas</span>
           </div>
         </div>
 
@@ -266,31 +289,47 @@ export function KeuanganView() {
         <div className="p-3.5 sm:p-4 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col justify-between">
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] sm:text-xs font-bold text-[#5C5C5C] uppercase tracking-wider">Profit Net / Margin</span>
-            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border border-[#0A0A0A] ${isOverallProfitable ? 'bg-[#154734] text-white' : 'bg-[#C43C2C] text-white'}`}>
-              {isOverallProfitable ? 'SURPLUS' : 'DEFISIT'}
+            <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border border-[#0A0A0A] ${
+              isOverallProfitable === null
+                ? 'bg-[#E6E6DC] text-[#5C5C5C]'
+                : isOverallProfitable
+                  ? 'bg-[#154734] text-white'
+                  : 'bg-[#C43C2C] text-white'
+            }`}>
+              {isOverallProfitable === null ? 'BELUM ADA DATA' : isOverallProfitable ? 'SURPLUS' : 'DEFISIT'}
             </span>
           </div>
           <div>
-            <span className={`font-mono font-black text-base sm:text-xl block truncate ${isOverallProfitable ? 'text-[#154734]' : 'text-[#C43C2C]'}`}>
+            <span className={`font-mono font-black text-base sm:text-xl block truncate ${
+              isOverallProfitable === null ? 'text-[#5C5C5C]' : isOverallProfitable ? 'text-[#154734]' : 'text-[#C43C2C]'
+            }`}>
               {formatCurrency(totalLabaBersih)}
             </span>
             <span className="text-[10px] text-[#5C5C5C]">Proyeksi Keuntungan Bersih</span>
           </div>
         </div>
 
-        {/* Card 4: B/C Ratio */}
+        {/* Card 4: R/C Ratio */}
         <div className="p-3.5 sm:p-4 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col justify-between">
           <div className="flex justify-between items-center mb-1">
-            <span className="text-[10px] sm:text-xs font-bold text-[#5C5C5C] uppercase tracking-wider">B/C Ratio</span>
+            <span className="text-[10px] sm:text-xs font-bold text-[#5C5C5C] uppercase tracking-wider">R/C Ratio</span>
             <span className="material-symbols-outlined text-[#154734] text-[20px] bg-[#E6E6DC] p-1 rounded border border-[#0A0A0A]">calculate</span>
           </div>
           <div>
             <div className="flex items-baseline gap-2">
               <span className="font-mono font-black text-base sm:text-xl text-[#0A0A0A]">
-                {aggregateBcRatio.toFixed(2)}
+                {aggregateRcRatio === null ? 'N/A' : aggregateRcRatio.toFixed(2)}
               </span>
-              <span className={`text-[10px] font-bold ${aggregateBcRatio >= 1 ? 'text-[#154734]' : 'text-[#C43C2C]'}`}>
-                {aggregateBcRatio >= 1 ? 'Sangat Layak' : 'Evaluasi Input'}
+              <span className={`text-[10px] font-bold ${
+                aggregateRcRatio === null
+                  ? 'text-[#5C5C5C]'
+                  : aggregateRcRatio > 1
+                    ? 'text-[#154734]'
+                    : aggregateRcRatio === 1
+                      ? 'text-amber-700'
+                      : 'text-[#C43C2C]'
+              }`}>
+                {aggregateRcRatio === null ? 'Belum Ada Data' : aggregateRcRatio > 1 ? 'Layak' : aggregateRcRatio === 1 ? 'Impas' : 'Evaluasi Input'}
               </span>
             </div>
             <span className="text-[10px] text-[#5C5C5C]">Rasio Kelayakan Usaha</span>
@@ -362,32 +401,68 @@ export function KeuanganView() {
                 {tanaman.length > 0 ? (
                   <div>
                     <label className="block text-[11px] font-semibold text-[#5C5C5C] mb-1">
-                      Pilih Komoditas
+                      Pilih Tanaman &amp; Blok
                     </label>
                     <Select
-                      value={form.komoditas || (tanaman[0]?.komoditas || '')}
-                      onChange={v => setForm({ ...form, komoditas: v })}
+                      value={form.tanamanId || ''}
+                      onChange={v => {
+                        const selectedPlant = tanaman.find((item) => item.id === v);
+                        if (!selectedPlant) return;
+                        setForm({
+                          ...form,
+                          tanamanId: selectedPlant.id,
+                          blokId: selectedPlant.blokId,
+                          komoditas: selectedPlant.komoditas,
+                        });
+                      }}
                       options={tanaman.map(t => ({
-                        value: t.komoditas,
+                        value: t.id,
                         label: `${t.komoditas} ${t.varietas ? `(${t.varietas})` : ''} - ${blokLahan.find(b => b.id === t.blokId)?.nama || 'Blok Lahan'}`
                       }))}
                     />
                   </div>
                 ) : (
-                  <div>
-                    <label className="block text-[11px] font-semibold text-[#5C5C5C] mb-1">
-                      Nama Komoditas / Tanaman
-                    </label>
-                    <input
-                      type="text"
-                      value={form.komoditas || ''}
-                      onChange={e => setForm({ ...form, komoditas: e.target.value })}
-                      placeholder="Contoh: Cabai Merah Keriting"
-                      className="w-full bg-white border-2 border-[#0A0A0A] px-3 py-2.5 min-h-[44px] text-xs font-medium rounded text-[#0A0A0A] focus:outline-none"
-                      required
-                    />
-                  </div>
+                  <>
+                    {blokLahan.length > 0 && (
+                      <div>
+                        <label className="block text-[11px] font-semibold text-[#5C5C5C] mb-1">
+                          Pilih Blok Lahan
+                        </label>
+                        <Select
+                          value={form.blokId || ''}
+                          onChange={v => setForm({ ...form, blokId: v })}
+                          options={blokLahan.map((blok) => ({ value: blok.id, label: blok.nama }))}
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-[11px] font-semibold text-[#5C5C5C] mb-1">
+                        Nama Komoditas / Tanaman
+                      </label>
+                      <input
+                        type="text"
+                        value={form.komoditas || ''}
+                        onChange={e => setForm({ ...form, komoditas: e.target.value })}
+                        placeholder="Contoh: Cabai Merah Keriting"
+                        className="w-full bg-white border-2 border-[#0A0A0A] px-3 py-2.5 min-h-[44px] text-xs font-medium rounded text-[#0A0A0A] focus:outline-none"
+                        required
+                      />
+                    </div>
+                  </>
                 )}
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#5C5C5C] mb-1">
+                    Tanggal Transaksi / Analisis
+                  </label>
+                  <input
+                    type="date"
+                    value={form.transactionDate || ''}
+                    onChange={e => setForm({ ...form, transactionDate: e.target.value })}
+                    className="w-full bg-white border-2 border-[#0A0A0A] px-3 py-2.5 min-h-[44px] text-xs font-medium rounded text-[#0A0A0A] focus:outline-none"
+                    required
+                  />
+                </div>
               </div>
 
               {/* SECTION B: BIAYA OPERASIONAL */}
@@ -740,6 +815,11 @@ export function KeuanganView() {
                           <td className="p-2.5 sm:p-3 align-top">
                             <span className="font-bold text-[#0A0A0A] block text-xs sm:text-sm">
                               {k.komoditas || 'Operasional Lahan'}
+                            </span>
+                            <span className="text-[10px] text-[#5C5C5C] block mt-0.5">
+                              {blokLahan.find((blok) => blok.id === k.blokId)?.nama || 'Blok tidak ditemukan'}
+                              {' · '}
+                              {k.transactionDate || 'Tanpa tanggal'}
                             </span>
                             <span className="text-[10px] text-[#0A0A0A] bg-[#E6E6DC] px-1.5 py-0.5 rounded border border-[#0A0A0A] inline-block mt-1 font-mono font-bold">
                               Target: {k.targetHasil || 0} {k.satuanHasil || 'Kg'}
