@@ -8,7 +8,6 @@ export function CariPupukView() {
   const [fungsiInput, setFungsiInput] = useState('');
   const [hstInput, setHstInput] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
   const [showRumusGuide, setShowRumusGuide] = useState(false);
   const [searchParams, setSearchParams] = useState({ tanaman: '', hst: -1, fungsi: '' });
 
@@ -25,14 +24,8 @@ export function CariPupukView() {
     e.preventDefault();
     if (!tanamanInput || !hstInput) return;
     
-    setIsSearching(true);
-    setHasSearched(false);
-    
-    setTimeout(() => {
-      setSearchParams({ tanaman: tanamanInput, hst: parseInt(hstInput, 10), fungsi: fungsiInput });
-      setHasSearched(true);
-      setIsSearching(false);
-    }, 600);
+    setSearchParams({ tanaman: tanamanInput, hst: parseInt(hstInput, 10), fungsi: fungsiInput });
+    setHasSearched(true);
   };
 
   const resetSearch = () => {
@@ -117,7 +110,7 @@ export function CariPupukView() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display font-extrabold text-sm uppercase text-[#0A0A0A]">
-                  DATABASE TERVERIFIKASI
+                  KATALOG LOKAL
                 </span>
                 <span className="text-[10px] font-bold uppercase bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
                   {PUPUK_DB.length}+ Data Ready
@@ -140,10 +133,10 @@ export function CariPupukView() {
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="font-display font-extrabold text-sm sm:text-base uppercase text-[#0A0A0A] leading-snug">
-                Rumus Pemupukan Presisi "REKOMENDASI" (Prinsip 5 Tepat)
+                Checklist penggunaan pupuk (prinsip 5 tepat)
               </h3>
               <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Aturan standar nutrisi hara tanaman agar hemat biaya &amp; hasil panen maksimal.
+                Panduan umum untuk memeriksa sasaran, jenis, dosis, waktu, dan cara aplikasi.
               </p>
             </div>
           </div>
@@ -221,11 +214,10 @@ export function CariPupukView() {
         </div>
         <button 
           type="submit"
-          disabled={isSearching}
           className="w-full md:w-auto min-h-[48px] bg-[#154734] text-white font-extrabold px-6 py-3 rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition flex items-center justify-center gap-2 disabled:opacity-70"
         >
-          {isSearching ? <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span> : <span className="material-symbols-outlined text-lg">search</span>}
-          {isSearching ? "MEMPROSES..." : "CARI PUPUK"}
+          <span className="material-symbols-outlined text-lg">search</span>
+          Cari pupuk
         </button>
       </form>
 
@@ -246,7 +238,7 @@ export function CariPupukView() {
           <div className="col-span-full p-12 text-center flex flex-col items-center gap-4 bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] rounded">
             <span className="material-symbols-outlined text-5xl text-[#5C5C5C]">compost</span>
             <p className="text-[#0A0A0A] font-extrabold text-lg uppercase">Mulai Pencarian Pupuk</p>
-            <p className="text-xs text-[#5C5C5C] max-w-md">Masukkan jenis tanaman dan umur HST (Hari Setelah Tanam) untuk melihat rekomendasi pupuk yang paling cocok untuk fase pertumbuhan saat ini.</p>
+            <p className="text-xs text-[#5C5C5C] max-w-md">Masukkan konteks tanaman dan HST untuk memfilter rentang umur pada katalog pupuk.</p>
           </div>
         ) : filteredPupuk.length === 0 ? (
           <div className="col-span-full p-12 text-center flex flex-col items-center gap-4 bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] rounded">
@@ -260,7 +252,7 @@ export function CariPupukView() {
               {idx === 0 && (pupuk as any).score >= 15 && (
                 <div className="absolute -top-3 -right-2 bg-[#154734] text-white font-extrabold text-[10px] px-3 py-1 rounded border border-[#0A0A0A] z-10 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px]">star</span>
-                  REKOMENDASI UTAMA
+                  KECOCOKAN FILTER TERTINGGI
                 </div>
               )}
               <div className="p-4 border-b-2 border-[#0A0A0A] flex justify-between items-start bg-[#154734] text-white font-normal rounded-t">

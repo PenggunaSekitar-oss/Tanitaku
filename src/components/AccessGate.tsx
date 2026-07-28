@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BrandLockup } from './BrandLockup';
 
 interface AccessGateProps {
   children: React.ReactNode;
@@ -31,12 +32,16 @@ export function AccessGate({ children }: AccessGateProps) {
   const [isVerifying, setIsVerifying] = useState<boolean>(false);
 
   useEffect(() => {
-    const savedCodeHash = localStorage.getItem('tanita_access_code_hash');
-    if (savedCodeHash && VALID_CODE_HASHES.includes(savedCodeHash)) {
-      setIsUnlocked(true);
+    try {
+      const savedCodeHash = localStorage.getItem('tanita_access_code_hash');
+      if (savedCodeHash && VALID_CODE_HASHES.includes(savedCodeHash)) {
+        setIsUnlocked(true);
+      }
+      localStorage.removeItem('tanita_access_granted');
+      localStorage.removeItem('tanita_redeem_code');
+    } catch {
+      setErrorMsg('Penyimpanan browser tidak tersedia. Akses tidak dapat dipertahankan.');
     }
-    localStorage.removeItem('tanita_access_granted');
-    localStorage.removeItem('tanita_redeem_code');
   }, []);
 
   const handleVerifyCode = async () => {
@@ -71,36 +76,30 @@ export function AccessGate({ children }: AccessGateProps) {
     }
   };
 
-  const handleLock = () => {
-    localStorage.removeItem('tanita_access_code_hash');
-    setIsUnlocked(false);
-    setInputCode('');
-    setErrorMsg('');
-  };
-
   const getWaLink = () => {
-    const savedNum = localStorage.getItem('tanita_wa_number');
+    let savedNum: string | null = null;
+    try {
+      savedNum = localStorage.getItem('tanita_wa_number');
+    } catch {
+      // A generic WhatsApp compose URL is used below.
+    }
     let num = savedNum ? savedNum.replace(/\D/g, '') : '';
     if (num.startsWith('0')) {
       num = '62' + num.slice(1);
     }
-    const text = encodeURIComponent('Halo Admin TANITA, saya membutuhkan bantuan akses / kode lisensi aplikasi TANITA.');
+    const text = encodeURIComponent('Halo Admin TANITA, saya membutuhkan bantuan kode akses perangkat TANITA.');
     return num ? `https://wa.me/${num}?text=${text}` : `https://wa.me/?text=${text}`;
   };
 
   if (!isUnlocked) {
     return (
-      <div className="min-h-screen bg-slate-100 text-slate-900 flex items-center justify-center p-4 sm:p-6 relative font-sans selection:bg-[#154734] selection:text-white">
+      <div className="relative flex min-h-screen items-center justify-center bg-[#ECEBE5] p-4 font-sans text-[#1B2721] selection:bg-[#C9DCCE] selection:text-[#17251E] sm:p-6">
         {/* Main Access Gate Card */}
-        <div className="w-full max-w-md bg-[#FEFEFA] border border-slate-200/90 shadow-lg rounded-3xl p-6 sm:p-8 relative z-10 flex flex-col gap-6 my-auto">
+        <div className="relative z-10 my-auto flex w-full max-w-md flex-col gap-6 rounded-[22px] border border-[#D6D3CA] bg-[#FBFAF6] p-6 shadow-[0_18px_50px_rgba(28,39,33,0.08)] sm:p-8">
           
           {/* Header Section */}
           <div className="flex flex-col items-center text-center gap-3">
-            <img 
-              src="https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png" 
-              alt="TANITA Logo" 
-              className="h-16 sm:h-20 w-auto object-contain p-1" 
-            />
+            <BrandLockup />
 
             <div className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-800 border border-slate-200 font-display font-extrabold text-[11px] px-3 py-1 rounded-full uppercase tracking-wider">
               <span className="material-symbols-outlined text-xs font-extrabold text-[#154734]">verified_user</span>
@@ -108,11 +107,11 @@ export function AccessGate({ children }: AccessGateProps) {
             </div>
 
             <div className="space-y-1 mt-1">
-              <h1 className="font-display font-black text-2xl text-slate-950 tracking-tight">
-                Redeem Kode Akses
+              <h1 className="font-display text-2xl font-semibold tracking-[-0.035em] text-[#19251F]">
+                Buka perangkat
               </h1>
-              <p className="text-xs sm:text-sm font-display font-semibold text-slate-600 leading-relaxed max-w-xs mx-auto">
-                Masukkan kode aktivasi untuk membuka aplikasi pada perangkat ini.
+              <p className="mx-auto max-w-xs text-xs font-medium leading-relaxed text-[#69736C] sm:text-sm">
+                Masukkan kode akses yang diberikan pengelola untuk membuka ruang kerja lokal.
               </p>
             </div>
           </div>
@@ -143,10 +142,10 @@ export function AccessGate({ children }: AccessGateProps) {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-display font-extrabold text-slate-900 uppercase tracking-wider">
-                  Kode Akses / Redeem
+                  Kode akses
                 </label>
                 <span className="text-[10px] font-mono font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">
-                  Lisensi Rahasia
+                  Tersimpan lokal
                 </span>
               </div>
 
@@ -161,7 +160,7 @@ export function AccessGate({ children }: AccessGateProps) {
                     setInputCode(e.target.value);
                     if (errorMsg) setErrorMsg('');
                   }}
-                  placeholder="Masukkan kode lisensi..."
+                  placeholder="Masukkan kode akses..."
                   className="w-full bg-slate-50 border border-slate-300 focus:border-slate-950 focus:bg-white p-3.5 pl-11 pr-11 rounded-2xl text-slate-950 font-display font-bold text-base tracking-widest placeholder:text-slate-400 placeholder:font-sans placeholder:tracking-normal placeholder:text-sm focus:outline-none transition-all shadow-2xs focus:ring-2 focus:ring-slate-950/10"
                   autoFocus
                 />
@@ -187,7 +186,7 @@ export function AccessGate({ children }: AccessGateProps) {
               disabled={isVerifying}
               className="w-full h-12 bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-display font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-2xs hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 border border-slate-800"
             >
-              <span>{isVerifying ? 'Memverifikasi…' : 'Verifikasi & Buka Akses'}</span>
+              <span>{isVerifying ? 'Memverifikasi…' : 'Verifikasi kode'}</span>
               <span className="material-symbols-outlined text-xl font-bold">arrow_forward</span>
             </button>
           </form>
@@ -223,12 +222,8 @@ export function AccessGate({ children }: AccessGateProps) {
             >
               <div className="flex justify-between items-center border-b border-slate-100 pb-3.5">
                 <div className="flex items-center gap-2">
-                  <img 
-                    src="https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png" 
-                    alt="TANITA Logo" 
-                    className="h-7 w-auto object-contain shrink-0" 
-                  />
-                  <span className="text-xs font-display font-bold text-slate-500">&middot; Akses System</span>
+                  <BrandLockup compact />
+                  <span className="text-xs font-display font-bold text-slate-500">&middot; Bantuan akses</span>
                 </div>
                 <button 
                   type="button"
@@ -241,7 +236,7 @@ export function AccessGate({ children }: AccessGateProps) {
 
               <div className="space-y-3">
                 <p className="text-xs font-display font-medium text-slate-600 leading-relaxed">
-                  Kode Akses TANITA Operations merupakan kunci aktivasi resmi yang diterbitkan oleh administrator sistem kebun.
+                  Kode akses TANITA diterbitkan oleh pengelola ruang kerja kebun untuk membuka aplikasi pada perangkat ini.
                 </p>
 
                 <div className="p-4 bg-[#154734]/10 rounded-2xl border border-[#154734]/30 flex flex-col gap-2">
@@ -250,7 +245,7 @@ export function AccessGate({ children }: AccessGateProps) {
                     <span>Petunjuk Aktivasi:</span>
                   </div>
                   <p className="text-xs font-display font-medium text-slate-700 leading-relaxed">
-                    Silakan masukkan kode lisensi rahasia yang telah Anda terima. Jika Anda belum memiliki atau kehilangan kode, hubungi manajer operasional TANITA.
+                    Masukkan kode yang telah Anda terima. Jika Anda belum memiliki atau kehilangan kode, hubungi pengelola operasional TANITA.
                   </p>
                 </div>
 

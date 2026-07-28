@@ -249,30 +249,18 @@ export function PemantauanView() {
   };
 
   return (
-    <div className="flex flex-col min-h-full pb-16 bg-[#F8FAFC] text-slate-900 font-sans selection:bg-[#154734] selection:text-white">
-      {/* Top Hero Section */}
-      <div className="relative overflow-hidden pt-6 pb-6 px-4 sm:px-6 bg-[#FEFEFA] border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto relative z-10 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest bg-[#154734]/15 text-[#154734] border border-[#154734]/30 px-3 py-1 rounded-full">
-              Lahan Presisi
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
-            Pemantauan Lahan &amp; Tanaman
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Manajemen blok lahan dan pencatatan riwayat penanaman komoditas secara real-time.
-          </p>
-        </div>
-      </div>
+    <div className="flex min-h-full flex-col gap-6 pb-16 font-sans text-[#1B2721]">
+      <PageHeader
+        title="Lahan & Tanaman"
+        subtitle="Kelola ukuran blok, estimasi populasi, tanggal tanam, dan status operasional tanaman."
+      />
 
       {/* Surface Content */}
-      <div className="bg-[#FEFEFA] text-slate-900 p-4 sm:p-6 relative z-10 flex flex-col gap-6">
-        <div className="max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="relative z-10 flex flex-col gap-6 text-slate-900">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
           
           {/* Recharts - Growth Progress Chart */}
-          <div className="rounded-[24px] overflow-hidden shadow-xs border border-slate-200 bg-[#FEFEFA] p-1">
+          <div>
             <GrowthChart tanamanList={tanaman} />
           </div>
 
@@ -888,7 +876,7 @@ export function PemantauanView() {
           </div>
           <div className="col-span-1 lg:col-span-2">
             {tanaman.length === 0 ? (
-              <EmptyState icon="psychiatry" title="Belum Ada Tanaman" message="Tambahkan data tanam untuk mulai pemantauan HST dan fase pertumbuhan." />
+              <EmptyState icon="psychiatry" title="Belum Ada Tanaman" message="Tambahkan data tanam untuk mulai memantau umur dan status operasional." />
             ) : (
               <div className="grid grid-cols-1 gap-4">
                 {tanaman.map(t => {
@@ -947,20 +935,20 @@ export function PemantauanView() {
                             <span className="font-display font-bold text-2xl text-white bg-[#154734] px-2.5 py-0.5 rounded border border-[#0A0A0A] shadow-[1px_1px_0px_0px_#0A0A0A] inline-block">{hst} <span className="text-sm font-sans font-medium text-white/90">HST</span></span>
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-xs text-on-surface-muted font-bold uppercase">Fase</span>
+                            <span className="text-xs text-on-surface-muted font-bold uppercase">Kelompok umur</span>
                             <span className="font-display font-bold text-lg text-success mt-1">{fase}</span>
                           </div>
                         </div>
                       </div>
                       <div className="border-t border-outline px-4 py-2 bg-surface-high/50 rounded-b-[8px]">
-                        <Accordion title="Rekomendasi Tindakan & Perawatan" icon="tips_and_updates" defaultOpen={false}>
+                        <Accordion title="Checklist Verifikasi Lapangan" icon="fact_check" defaultOpen={false}>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex flex-col">
                               <span className="text-xs font-bold text-on-surface-muted uppercase mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">compost</span> Pupuk</span>
                               <span className="text-sm font-sans">{rekomendasi.pupuk}</span>
                             </div>
                             <div className="flex flex-col">
-                              <span className="text-xs font-bold text-on-surface-muted uppercase mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pest_control</span> Pestisida</span>
+                              <span className="text-xs font-bold text-on-surface-muted uppercase mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">pest_control</span> Perlindungan tanaman</span>
                               <span className="text-sm font-sans">{rekomendasi.pestisida}</span>
                             </div>
                             <div className="flex flex-col">
@@ -976,6 +964,9 @@ export function PemantauanView() {
                               <span className="text-sm font-sans bg-action/10 p-2 rounded-sm border-l-2 border-action">{rekomendasi.tips}</span>
                             </div>
                           </div>
+                          <p className="mt-4 border-t border-[#DEDCD4] pt-3 text-[10px] font-medium leading-relaxed text-[#707A73]">
+                            Panduan ini bersifat umum berdasarkan umur catatan. Konfirmasi komoditas, varietas, kondisi lahan, label produk, dan hasil pengamatan sebelum bertindak.
+                          </p>
                         </Accordion>
                       </div>
                     </div>

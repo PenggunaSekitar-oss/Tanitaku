@@ -10,7 +10,6 @@ export function CariPestisidaView() {
   const [hamaInput, setHamaInput] = useState('');
   const [tanamanInput, setTanamanInput] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<typeof PESTISIDA_CATALOG>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showRumusGuide, setShowRumusGuide] = useState(false);
@@ -26,11 +25,17 @@ export function CariPestisidaView() {
   }, [feedbackToast]);
 
   useEffect(() => {
-    const targetHama = localStorage.getItem('targetPestisida');
-    const targetTanaman = localStorage.getItem('targetTanaman');
+    let targetHama: string | null = null;
+    let targetTanaman: string | null = null;
+    try {
+      targetHama = localStorage.getItem('targetPestisida');
+      targetTanaman = localStorage.getItem('targetTanaman');
+    } catch {
+      return;
+    }
 
-    let initialHama = targetHama || '';
-    let initialTanaman = targetTanaman || '';
+    const initialHama = targetHama || '';
+    const initialTanaman = targetTanaman || '';
 
     if (targetHama) setHamaInput(targetHama);
     if (targetTanaman) setTanamanInput(targetTanaman);
@@ -43,8 +48,12 @@ export function CariPestisidaView() {
         type: 'success'
       });
 
-      localStorage.removeItem('targetPestisida');
-      localStorage.removeItem('targetTanaman');
+      try {
+        localStorage.removeItem('targetPestisida');
+        localStorage.removeItem('targetTanaman');
+      } catch {
+        // Search results are already loaded, so cleanup failure is non-blocking.
+      }
     }
   }, []);
 
@@ -56,29 +65,24 @@ export function CariPestisidaView() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSearching(true);
+    setHasSearched(true);
+    const resultCount = performSearch(hamaInput, tanamanInput);
 
-    setTimeout(() => {
-      setHasSearched(true);
-      const resultCount = performSearch(hamaInput, tanamanInput);
-      setIsSearching(false);
-
-      let msg = 'Menampilkan seluruh database pestisida.';
-      if (resultCount === 0) {
-        setFeedbackToast({
-          message: 'Tidak ada produk yang cocok. Periksa ejaan dan verifikasi label produk; aplikasi tidak akan menampilkan produk pengganti yang tidak relevan.',
-          type: 'error',
-        });
-        return;
-      } else if (hamaInput && tanamanInput) {
-        msg = `Ditemukan ${resultCount} produk yang cocok untuk target ${hamaInput} pada ${tanamanInput}.`;
-      } else if (hamaInput) {
-        msg = `Ditemukan ${resultCount} produk yang cocok untuk target ${hamaInput}.`;
-      } else if (tanamanInput) {
-        msg = `Ditemukan ${resultCount} produk yang secara eksplisit mencantumkan ${tanamanInput}.`;
-      }
-      setFeedbackToast({ message: msg, type: 'success' });
-    }, 600);
+    let msg = 'Menampilkan seluruh katalog pestisida.';
+    if (resultCount === 0) {
+      setFeedbackToast({
+        message: 'Tidak ada produk yang cocok. Periksa ejaan dan verifikasi label produk; aplikasi tidak akan menampilkan produk pengganti yang tidak relevan.',
+        type: 'error',
+      });
+      return;
+    } else if (hamaInput && tanamanInput) {
+      msg = `Ditemukan ${resultCount} produk yang cocok untuk target ${hamaInput} pada ${tanamanInput}.`;
+    } else if (hamaInput) {
+      msg = `Ditemukan ${resultCount} produk yang cocok untuk target ${hamaInput}.`;
+    } else if (tanamanInput) {
+      msg = `Ditemukan ${resultCount} produk yang secara eksplisit mencantumkan ${tanamanInput}.`;
+    }
+    setFeedbackToast({ message: msg, type: 'success' });
   };
 
   const handleReset = () => {
@@ -287,9 +291,9 @@ export function CariPestisidaView() {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-end pt-2 border-t-2 border-[#0A0A0A]">
-            <button type="submit" disabled={isSearching} className="w-full sm:w-64 bg-[#154734] text-white font-extrabold min-h-[48px] px-6 rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition disabled:opacity-70 flex items-center justify-center gap-2">
-              {isSearching ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : <span className="material-symbols-outlined text-lg">search</span>}
-              {isSearching ? "MEMPROSES..." : "CARI REKOMENDASI PESTISIDA"}
+            <button type="submit" className="w-full sm:w-64 bg-[#154734] text-white font-extrabold min-h-[48px] px-6 rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition flex items-center justify-center gap-2">
+              <span className="material-symbols-outlined text-lg">search</span>
+              Cari pestisida
             </button>
             <button type="button" onClick={() => setShowResetConfirm(true)} className="w-full sm:w-32 bg-[#E6E6DC] border-2 border-[#0A0A0A] text-[#0A0A0A] font-extrabold min-h-[48px] px-4 rounded hover:bg-[#d0d0c4] transition">
               RESET

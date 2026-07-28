@@ -8,7 +8,14 @@ export function KocorView() {
   const [volumeAir, setVolumeAir] = useState<number | "">("");
 
   const hitungKocor = () => {
-    if (dosis === "" || volumeAir === "") return 0;
+    if (
+      dosis === "" ||
+      volumeAir === "" ||
+      !Number.isFinite(dosis) ||
+      !Number.isFinite(volumeAir) ||
+      dosis <= 0 ||
+      volumeAir <= 0
+    ) return 0;
     return dosis * volumeAir;
   };
 
@@ -20,21 +27,18 @@ export function KocorView() {
     setSatuan("ml");
   };
 
-  const getEquivalents = (val: number, unit: string) => {
+  const getEquivalents = (val: number, unit: typeof satuan) => {
     if (val <= 0) return null;
     if (unit === 'ml') {
       const sdt = (val / 5).toFixed(1).replace(/\.0$/, '');
       const sdm = (val / 15).toFixed(1).replace(/\.0$/, '');
-      const tutup = (val / 10).toFixed(1).replace(/\.0$/, '');
-      return `${sdm} sdm (${sdt} sdt) atau ~${tutup} tutup botol`;
+      return `Sekitar ${sdm} sendok makan atau ${sdt} sendok teh standar`;
     }
     if (unit === 'gram') {
       return 'Gunakan timbangan digital. Gram tidak boleh dikonversi ke sendok tanpa data densitas produk.';
     }
     if (unit === 'liter') {
-      const gelas = (val * 1000 / 220).toFixed(1).replace(/\.0$/, '');
-      const ember = (val / 5).toFixed(1).replace(/\.0$/, '');
-      return `${gelas} gelas air mineral (220ml) atau ~${ember} ember 5 Liter`;
+      return `${val.toLocaleString('id-ID')} liter; gunakan wadah ukur bervolume jelas`;
     }
     return null;
   };
@@ -42,27 +46,15 @@ export function KocorView() {
   const equivalents = getEquivalents(hasil, satuan);
 
   return (
-    <div className="flex flex-col min-h-full pb-16 bg-[#F8FAFC] text-slate-900 font-sans selection:bg-[#154734] selection:text-white">
-      {/* Top Hero Section */}
-      <div className="relative overflow-hidden pt-6 pb-6 px-4 sm:px-6 bg-[#FEFEFA] border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto relative z-10 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest bg-[#154734]/15 text-[#154734] border border-[#154734]/30 px-3 py-1 rounded-full">
-              Kalkulator Dosis
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
-            Kalkulator Kocor
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Hitung kebutuhan dosis pupuk &amp; pestisida secara presisi untuk pengocoan tanaman.
-          </p>
-        </div>
-      </div>
+    <div className="flex min-h-full flex-col gap-6 pb-16 font-sans text-[#1B2721]">
+      <PageHeader
+        title="Kalkulator Larutan"
+        subtitle="Kalikan dosis pada label produk per liter dengan volume air yang akan disiapkan."
+      />
 
       {/* Surface Content */}
-      <div className="bg-[#FEFEFA] text-slate-900 p-4 sm:p-6 relative z-10 flex flex-col gap-6">
-        <div className="max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="relative z-10 flex flex-col gap-6 text-slate-900">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start">
         {/* Panel Form Input */}
@@ -117,7 +109,7 @@ export function KocorView() {
                 <div className="w-[120px] sm:w-[140px] shrink-0">
                   <Select
                     value={satuan}
-                    onChange={(val) => setSatuan(val as any)}
+                    onChange={(val) => setSatuan(val as typeof satuan)}
                     options={[
                       { value: "ml", label: "Mili (ml)" },
                       { value: "gram", label: "Gram (g)" },
@@ -191,13 +183,13 @@ export function KocorView() {
           <div className="bg-surface-high/60 p-3 sm:p-4 rounded-xl border border-outline mt-1 text-xs text-on-surface-muted flex flex-col gap-1.5">
             <span className="font-bold text-on-surface uppercase tracking-wider text-[11px] flex items-center gap-1.5">
               <span className="material-symbols-outlined text-[15px] text-action">info</span>
-              Panduan Patokan Alat Ukur Lapangan:
+              Catatan alat ukur:
             </span>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 font-sans text-[11px]">
-              <div>• 1 Sendok makan (sdm) ≈ 15 ml / 15 gram</div>
-              <div>• 1 Sendok teh (sdt) ≈ 5 ml / 5 gram</div>
-              <div>• 1 Tutup botol pestisida ≈ 10 - 12 ml</div>
-              <div>• 1 Gelas air mineral ≈ 220 ml</div>
+              <div>• 1 sendok makan standar ≈ 15 ml cairan</div>
+              <div>• 1 sendok teh standar ≈ 5 ml cairan</div>
+              <div>• Gunakan timbangan untuk satuan gram</div>
+              <div>• Ukuran tutup botol berbeda antarproduk</div>
             </div>
           </div>
         </div>
@@ -239,7 +231,7 @@ export function KocorView() {
             <div className="flex flex-col gap-3 bg-surface-high/40 p-3.5 sm:p-4 rounded-xl border border-outline">
               <div>
                 <span className="text-[11px] font-bold text-on-surface-muted uppercase tracking-wider block mb-1">
-                  Estimasi Takaran Sendok / Alat Ukur:
+                  Perkiraan alat ukur:
                 </span>
                 <div className="bg-[#154734] text-white font-extrabold text-xs sm:text-sm px-3 py-1.5 rounded-lg border border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] inline-block w-full">
                   {equivalents}

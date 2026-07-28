@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import { generateOperationalPdfReport } from '../utils/pdfGenerator';
@@ -24,8 +24,20 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
   const fallbackPeriod: ReportPeriodOption = { value: 'all', label: 'Semua Periode Tanam' };
   const [periode, setPeriode] = useState<string>(periodeOptions[0]?.value ?? 'all');
   const [selectedBlokId, setSelectedBlokId] = useState<string>('semua');
-  const [namaKebun, setNamaKebun] = useState<string>(() => localStorage.getItem('tanita_farm_name') || 'Kebun Presisi TANITA');
-  const [managerName, setManagerName] = useState<string>(() => localStorage.getItem('tanita_manager_name') || 'Muh Amin Arsyad');
+  const [namaKebun, setNamaKebun] = useState<string>(() => {
+    try {
+      return localStorage.getItem('tanita_farm_name') || '';
+    } catch {
+      return '';
+    }
+  });
+  const [managerName, setManagerName] = useState<string>(() => {
+    try {
+      return localStorage.getItem('tanita_manager_name') || '';
+    } catch {
+      return '';
+    }
+  });
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   if (!isOpen) return null;
@@ -40,14 +52,18 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
       setIsGenerating(true);
       
       // Save updated names to local storage for convenience
-      localStorage.setItem('tanita_farm_name', namaKebun);
-      localStorage.setItem('tanita_manager_name', managerName);
+      try {
+        localStorage.setItem('tanita_farm_name', namaKebun.trim());
+        localStorage.setItem('tanita_manager_name', managerName.trim());
+      } catch {
+        // PDF generation remains available when browser storage is blocked.
+      }
 
       const selectedPeriod = periodeOptions.find((option) => option.value === periode) || periodeOptions[0] || fallbackPeriod;
       generateOperationalPdfReport({
         periodeLabel: selectedPeriod.label.replace(' (Bulan Berjalan)', ''),
-        namaKebun,
-        managerName,
+        namaKebun: namaKebun.trim() || 'Kebun TANITA',
+        managerName: managerName.trim() || 'Penanggung jawab belum dicatat',
         blokFilterId: selectedBlokId,
         startDate: selectedPeriod.startDate,
         endDate: selectedPeriod.endDate,
@@ -80,23 +96,23 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
+      <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[#17211C]/55 p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="bg-[#FEFEFA] border-2 border-black shadow-[6px_6px_0px_0px_#000] rounded-2xl w-full max-w-lg p-5 sm:p-6 my-auto overflow-hidden flex flex-col gap-5"
+          className="my-auto flex w-full max-w-lg flex-col gap-5 overflow-hidden rounded-[20px] border border-[#D8D5CC] bg-[#FBFAF6] p-5 shadow-[0_20px_60px_rgba(15,25,20,0.18)] sm:p-6"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Modal */}
           <div className="flex justify-between items-start border-b border-slate-200 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#154734] text-white border-2 border-black shadow-[2px_2px_0px_0px_#000] flex items-center justify-center font-bold shrink-0">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#E7EDE9] font-bold text-[#24533F]">
                 <span className="material-symbols-outlined text-2xl">picture_as_pdf</span>
               </div>
               <div>
-                <h3 className="font-display font-black text-lg sm:text-xl text-slate-950 uppercase tracking-tight">
-                  Cetak Laporan PDF Bulanan
+                <h3 className="font-display text-lg font-semibold tracking-[-0.025em] text-[#1B2721] sm:text-xl">
+                  Buat laporan PDF
                 </h3>
                 <p className="text-xs text-slate-500 font-medium">
                   Ringkasan Keuangan & Log Aktivitas Lapangan TANITA
@@ -162,7 +178,7 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
                   type="text"
                   value={managerName}
                   onChange={(e) => setManagerName(e.target.value)}
-                  placeholder="Contoh: Muh Amin Arsyad"
+                  placeholder="Nama penanggung jawab"
                   className="w-full bg-white border-2 border-black rounded-lg px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none"
                 />
               </div>

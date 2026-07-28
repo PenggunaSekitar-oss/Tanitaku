@@ -19,7 +19,7 @@ export function MobileBottomNav({ currentView, onNavigate, onOpenSidebar, onOpen
   const handlePintasanClick = onOpenPintasan || onOpenSidebar;
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[#FEFEFA]/95 backdrop-blur-md border-t border-slate-200/80 px-3 py-1.5 shadow-lg shadow-slate-200/50 flex items-center justify-around gap-1 selection:bg-[#154734] selection:text-white">
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around gap-1 border-t border-[#D9D8D1] bg-[#FBFAF6] px-2 py-1.5 md:hidden">
       {NAV_ITEMS.map((item) => {
         const isActive = currentView === item.id;
         return (
@@ -27,16 +27,16 @@ export function MobileBottomNav({ currentView, onNavigate, onOpenSidebar, onOpen
             key={item.id}
             whileTap={{ scale: 0.94 }}
             onClick={() => onNavigate(item.id)}
-            className={`flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all min-h-[46px] cursor-pointer ${
+            className={`flex min-h-[48px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-1 py-1.5 transition ${
               isActive
-                ? 'bg-[#154734] text-white font-bold shadow-xs shadow-[#154734]/20'
-                : 'text-slate-600 hover:bg-slate-100/70 hover:text-slate-900'
+                ? 'bg-[#E2EBE4] font-bold text-[#173F35]'
+                : 'text-[#69736D] hover:bg-[#F0EEE8] hover:text-[#27332C]'
             }`}
           >
-            <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-white' : 'text-[#154734]'}`}>
+            <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-[#24533F]' : 'text-[#69736D]'}`}>
               {item.icon}
             </span>
-            <span className={`text-[10px] font-display font-semibold uppercase tracking-wider leading-none mt-0.5 ${isActive ? 'text-white' : 'text-slate-700'}`}>
+            <span className="mt-0.5 text-[9px] font-semibold leading-none">
               {item.label}
             </span>
           </motion.button>
@@ -47,13 +47,13 @@ export function MobileBottomNav({ currentView, onNavigate, onOpenSidebar, onOpen
       <motion.button
         whileTap={{ scale: 0.94 }}
         onClick={handlePintasanClick}
-        className="flex-1 flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all min-h-[46px] cursor-pointer text-slate-700 hover:bg-[#154734]/10 hover:text-[#154734]"
+        className="flex min-h-[48px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-1 py-1.5 text-[#69736D] transition hover:bg-[#F0EEE8] hover:text-[#27332C]"
         title="Pintasan Fitur Operasional"
       >
-        <span className="material-symbols-outlined text-[20px] text-[#154734] font-bold">
+        <span className="material-symbols-outlined text-[20px]">
           grid_view
         </span>
-        <span className="text-[10px] font-display font-bold uppercase tracking-wider leading-none mt-0.5 text-slate-800">
+        <span className="mt-0.5 text-[9px] font-semibold leading-none">
           Pintasan
         </span>
       </motion.button>

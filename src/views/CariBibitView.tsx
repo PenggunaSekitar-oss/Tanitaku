@@ -19,7 +19,6 @@ export function CariBibitView() {
   const [ketinggian, setKetinggian] = useState('Rendah');
   const [cuaca, setCuaca] = useState('Semua');
   const [hasSearched, setHasSearched] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
   const [showRumusGuide, setShowRumusGuide] = useState(false);
   const [results, setResults] = useState<BibitItem[]>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -35,10 +34,7 @@ export function CariBibitView() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSearching(true);
-    
-    setTimeout(() => {
-      setHasSearched(true);
+    setHasSearched(true);
       
       const query = komoditas.trim().toLowerCase();
       
@@ -103,16 +99,14 @@ export function CariBibitView() {
       
       const filtered = scored.filter(i => i.isMatch);
       filtered.sort((a, b) => b.score - a.score);
-      setResults(filtered);
-      setIsSearching(false);
-    }, 600);
+    setResults(filtered);
   };
 
   return (
     <div className="flex flex-col gap-6 w-full pb-12">
       <PageHeader
-        title="Cari Bibit Unggul"
-        subtitle="Rekomendasi varietas bibit unggul presisi berdasarkan Ketinggian Lahan (H) & Penyesuaian Musim (M)."
+        title="Referensi Bibit"
+        subtitle="Filter katalog varietas berdasarkan ketinggian dan karakter musim yang tercatat. Verifikasi kembali informasi pada label produsen."
       />
 
       {/* DATABASE READY COUNTER BADGE */}
@@ -127,7 +121,7 @@ export function CariBibitView() {
                 Database Varietas Siap
               </span>
               <span className="text-xs text-[#5C5C5C] font-medium">
-                Sistem memiliki data {CATALOG.length} varietas bibit terverifikasi
+                {CATALOG.length} varietas tersedia pada katalog lokal
               </span>
             </div>
           </div>
@@ -146,10 +140,10 @@ export function CariBibitView() {
             </span>
             <div className="min-w-0 flex-1">
               <h3 className="font-display font-extrabold text-sm sm:text-base uppercase text-[#0A0A0A] leading-snug">
-                Rumus Rekomendasi Bibit Presisi (Prinsip H &amp; M)
+                Cara kerja filter ketinggian &amp; musim
               </h3>
               <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Aturan pemilihan varietas bibit unggul berdasarkan Ketinggian Lahan (H) dan Penyesuaian Musim (M).
+                Kecocokan dihitung dari teks adaptasi ketinggian dan karakter musim pada katalog.
               </p>
             </div>
           </div>
@@ -219,9 +213,8 @@ export function CariBibitView() {
             />
           </div>
           <div className="md:col-span-3 pt-2 flex flex-col sm:flex-row gap-3">
-            <button type="submit" disabled={isSearching} className="flex-1 bg-[#154734] text-white font-extrabold min-h-[52px] rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition disabled:opacity-70 flex items-center justify-center gap-2">
-              {isSearching ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : null}
-              {isSearching ? "MEMPROSES..." : "CARI REKOMENDASI BIBIT"}
+            <button type="submit" className="flex-1 bg-[#154734] text-white font-extrabold min-h-[52px] rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition flex items-center justify-center gap-2">
+              Cari bibit
             </button>
             <button type="button" onClick={() => setShowResetConfirm(true)} className="sm:w-32 bg-[#E6E6DC] border-2 border-[#0A0A0A] text-[#0A0A0A] font-extrabold min-h-[52px] rounded hover:bg-[#d0d0c4] transition">
               RESET
@@ -246,7 +239,7 @@ export function CariBibitView() {
                     {idx === 0 && (item as any).score >= 15 && (
                       <div className="absolute -top-3 -right-2 bg-[#154734] text-white font-extrabold text-[10px] px-3 py-1 rounded border border-[#0A0A0A] z-10 flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">star</span>
-                        REKOMENDASI UTAMA
+                        KECOCOKAN FILTER TERTINGGI
                       </div>
                     )}
                     
@@ -263,10 +256,10 @@ export function CariBibitView() {
                     <div className="p-4 flex flex-col gap-3 flex-1">
                       {idx === 0 && (item as any).score >= 15 && (
                         <div className="bg-[#E6E6DC]/50 border-l-4 border-[#154734] p-3 mb-1 rounded text-xs border-y border-r border-[#0A0A0A]">
-                          <p className="font-bold text-[#154734] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">psychology</span> Alasan Rekomendasi Presisi</p>
+                          <p className="font-bold text-[#154734] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">filter_alt</span> Alasan kecocokan filter</p>
                           <p className="text-[#5C5C5C] text-xs leading-relaxed">
-                            Sangat direkomendasikan untuk komoditas <b>{item.komoditas}</b> di <b>{item.rekomendasiDataran || (item.ketinggian ? item.ketinggian.join(', ') : '')}</b>. 
-                            Potensi hasil mencapai <b>{item.potensiHasil}</b> dengan keunggulan utama: <i>{details.keunggulanText}</i>.
+                            Katalog mencantumkan <b>{item.komoditas}</b> untuk <b>{item.rekomendasiDataran || (item.ketinggian ? item.ketinggian.join(', ') : '')}</b>.
+                            Potensi hasil yang tertulis: <b>{item.potensiHasil}</b>. Klaim produsen tetap perlu diverifikasi: <i>{details.keunggulanText}</i>.
                           </p>
                         </div>
                       )}

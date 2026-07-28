@@ -9,16 +9,12 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
   const [tanamanInput, setTanamanInput] = useState('Semua');
   const [kategoriInput, setKategoriInput] = useState('Semua');
   const [hasSearched, setHasSearched] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
   const [results, setResults] = useState<Penyakit[]>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSearching(true);
-    
-    setTimeout(() => {
-      setHasSearched(true);
+    setHasSearched(true);
       
       const scored = PENYAKIT_CATALOG.map(item => {
         let score = 0;
@@ -57,9 +53,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
       let filtered = scored.filter(i => i.isMatch);
       filtered.sort((a, b) => b.score - a.score);
 
-      setResults(filtered);
-      setIsSearching(false);
-    }, 600);
+    setResults(filtered);
   };
 
   const availablePenyakit = tanamanInput === 'Semua' 
@@ -101,8 +95,8 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
   return (
     <div className="flex flex-col gap-6 w-full pb-12">
       <PageHeader
-        title="Cari Penyakit & Hama"
-        subtitle="Ensiklopedia lengkap diagnosa hama, jamur, bakteri & virus tanaman beserta rekomendasi solusinya."
+        title="Referensi Penyakit Tanaman"
+        subtitle="Cari kecocokan nama dan gejala pada katalog hama, jamur, bakteri, atau virus. Hasil bukan diagnosis lapangan."
       />
 
       <div className="w-full flex flex-col gap-6">
@@ -115,14 +109,14 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-display font-extrabold text-sm uppercase text-[#0A0A0A]">
-                  DATABASE TERVERIFIKASI
+                  KATALOG LOKAL
                 </span>
                 <span className="text-[10px] font-bold uppercase bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
                   {PENYAKIT_CATALOG.length}+ Data Ready
                 </span>
               </div>
               <p className="text-xs text-[#5C5C5C] mt-0.5">
-                Katalog resmi penyebab kerusakan tanaman & formulasi penanganan presisi
+                Referensi penyebab, gejala, dan opsi penanganan untuk verifikasi lebih lanjut
               </p>
             </div>
           </div>
@@ -164,9 +158,8 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             />
           </div>
           <div className="md:col-span-3 pt-2 border-t-2 border-[#0A0A0A] flex flex-col sm:flex-row gap-3">
-            <button type="submit" disabled={isSearching} className="flex-1 bg-[#154734] text-white font-extrabold min-h-[48px] rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition disabled:opacity-70 flex items-center justify-center gap-2">
-              {isSearching ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : null}
-              {isSearching ? "MEMPROSES..." : "CARI DIAGNOSA"}
+            <button type="submit" className="flex-1 bg-[#154734] text-white font-extrabold min-h-[48px] rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition flex items-center justify-center gap-2">
+              Cari referensi
             </button>
             <button type="button" onClick={() => setShowResetConfirm(true)} className="sm:w-32 bg-[#E6E6DC] border-2 border-[#0A0A0A] text-[#0A0A0A] font-extrabold min-h-[48px] rounded hover:bg-[#d0d0c4] transition">
               RESET
@@ -179,7 +172,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between border-b-2 border-[#0A0A0A] pb-2">
             <h3 className="font-display font-extrabold uppercase text-lg text-[#0A0A0A]">Hasil Identifikasi</h3>
-            <span className="text-xs font-bold bg-white text-[#0A0A0A] px-3 py-1.5 rounded border-2 border-[#0A0A0A]">{results.length} Diagnosa Ditemukan</span>
+            <span className="text-xs font-bold bg-white text-[#0A0A0A] px-3 py-1.5 rounded border-2 border-[#0A0A0A]">{results.length} Referensi Ditemukan</span>
           </div>
 
           {results.length > 0 ? (
@@ -191,7 +184,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
                     {idx === 0 && (item as any).score >= 10 && (
                       <div className="absolute -top-3 -right-2 bg-[#154734] text-white font-extrabold text-[10px] px-3 py-1 rounded border border-[#0A0A0A] z-10 flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">star</span>
-                        REKOMENDASI UTAMA
+                        KECOCOKAN FILTER TERTINGGI
                       </div>
                     )}
                     
@@ -282,7 +275,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             <div className="p-12 bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] text-center flex flex-col items-center justify-center gap-4 rounded">
               <span className="material-symbols-outlined text-5xl text-[#5C5C5C]">search_off</span>
               <div>
-                <p className="text-base font-bold text-[#0A0A0A]">Tidak ada diagnosa ditemukan</p>
+                <p className="text-base font-bold text-[#0A0A0A]">Tidak ada referensi ditemukan</p>
                 <p className="text-xs text-[#5C5C5C] mt-1">Coba ubah filter tanaman atau kategori organisme.</p>
               </div>
             </div>
@@ -302,4 +295,3 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
     </div>
   );
 }
-

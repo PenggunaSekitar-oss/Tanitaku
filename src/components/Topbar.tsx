@@ -1,7 +1,52 @@
 import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
+import { BrandLockup } from './BrandLockup';
 
-export function Topbar({ onOpenSidebar }: any) {
+interface TopbarProps {
+  onOpenSidebar: () => void;
+  currentView: string;
+}
+
+const VIEW_LABELS: Record<string, string> = {
+  dashboard: 'Ringkasan kebun',
+  pemantauan: 'Lahan & tanaman',
+  pemupukan: 'Jadwal perawatan',
+  kocor: 'Kalkulator larutan',
+  'jenis-hama': 'Referensi hama',
+  'cari-bibit': 'Referensi bibit',
+  'cari-pupuk': 'Referensi pupuk',
+  'cari-pestisida': 'Referensi pestisida',
+  'cari-penyakit': 'Identifikasi penyakit',
+  keuangan: 'Keuangan',
+  log: 'Jurnal aktivitas',
+  pengaturan: 'Pengaturan',
+};
+
+const formatNotificationTimestamp = (value: string): string => {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  const today = new Date();
+  const sameDay =
+    parsed.getFullYear() === today.getFullYear() &&
+    parsed.getMonth() === today.getMonth() &&
+    parsed.getDate() === today.getDate();
+  const time = new Intl.DateTimeFormat('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(parsed);
+  if (sameDay) return `Hari ini, ${time}`;
+
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: parsed.getFullYear() === today.getFullYear() ? undefined : 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(parsed);
+};
+
+export function Topbar({ onOpenSidebar, currentView }: TopbarProps) {
   const [isNotifOpen, setIsNotifOpen] = useState<boolean>(false);
 
   const {
@@ -14,16 +59,18 @@ export function Topbar({ onOpenSidebar }: any) {
   } = useToast();
 
   return (
-    <header className="h-16 border-b border-slate-200/80 bg-[#FEFEFA]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 relative z-[999]">
-      <div className="flex items-center gap-3">
-        <img 
-          src="https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png" 
-          alt="TANITA Logo" 
-          className="h-8 sm:h-10 w-auto object-contain shrink-0"
-        />
-        <div className="hidden md:flex items-center gap-1.5 bg-[#154734]/10 text-[#154734] font-bold text-xs px-3 py-1.5 rounded-xl border border-[#154734]/30 uppercase tracking-wider font-display">
-          <span className="material-symbols-outlined text-[16px] text-[#154734]">eco</span>
-          <span>TANAM. PANTAU. PANEN.</span>
+    <header className="relative z-[999] flex h-[72px] shrink-0 items-center justify-between border-b border-[#D9D8D1] bg-[#FBFAF6] px-4 sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="md:hidden">
+          <BrandLockup compact />
+        </div>
+        <div className="hidden min-w-0 md:block">
+          <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#8A918D]">
+            Ruang kerja
+          </p>
+          <p className="truncate text-sm font-bold text-[#243029]">
+            {VIEW_LABELS[currentView] ?? 'TANITA'}
+          </p>
         </div>
       </div>
 
@@ -33,13 +80,13 @@ export function Topbar({ onOpenSidebar }: any) {
           <button
             type="button"
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className="p-2 bg-[#FEFEFA] text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-xl border border-slate-200 transition cursor-pointer flex items-center justify-center shrink-0 min-h-[42px] min-w-[42px] shadow-xs"
+            className="flex min-h-[42px] min-w-[42px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#D8D5CC] bg-white p-2 text-[#59645D] transition hover:border-[#AEB8B1] hover:text-[#1C211D]"
             title="Pusat Notifikasi Tani"
           >
             <span className="material-symbols-outlined text-xl">notifications</span>
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-500 text-white font-bold text-[10px] px-1.5 py-0.2 rounded-full border border-white shadow-xs">
-                {unreadCount}
+                {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
           </button>
@@ -49,23 +96,23 @@ export function Topbar({ onOpenSidebar }: any) {
             <>
               {/* Backdrop overlay */}
               <div
-                className="fixed inset-0 z-[9998] bg-slate-900/20 backdrop-blur-xs sm:bg-transparent"
+                className="fixed inset-0 z-[9998] bg-[#17211C]/25 sm:bg-transparent"
                 onClick={() => setIsNotifOpen(false)}
               />
 
               <div
-                className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[380px] md:w-[420px] z-[9999] bg-[#FEFEFA] text-slate-900 border border-slate-200 shadow-xl rounded-2xl p-4 flex flex-col gap-3 max-h-[calc(100vh-5rem)] overflow-hidden"
+                className="fixed left-4 right-4 top-16 z-[9999] flex max-h-[calc(100vh-5rem)] flex-col gap-3 overflow-hidden rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 text-[#1B2721] shadow-[0_18px_50px_rgba(20,31,25,0.16)] sm:absolute sm:left-auto sm:right-0 sm:top-12 sm:w-[380px] md:w-[420px]"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <div className="flex items-center gap-2.5">
-                    <span className="w-8 h-8 rounded-xl bg-[#154734] text-white flex items-center justify-center font-bold shrink-0 shadow-sm shadow-[#154734]/20">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#E7EDE9] font-bold text-[#24533F]">
                       <span className="material-symbols-outlined text-lg">notifications_active</span>
                     </span>
                     <div>
                       <h3 className="font-display font-bold text-sm text-slate-900">
-                        Pusat Notifikasi Tani
+                        Notifikasi
                       </h3>
                       <span className="text-[11px] font-medium text-slate-500 block">
                         {unreadCount > 0 ? `${unreadCount} Notifikasi Belum Dibaca` : 'Semua Notifikasi Telah Dibaca'}
@@ -84,12 +131,12 @@ export function Topbar({ onOpenSidebar }: any) {
                 </div>
 
                 {/* Action Bar: Mark All Read & Clear All */}
-                <div className="flex items-center justify-between gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-[#E0DED6] bg-[#F4F3EE] p-2">
                   <button
                     type="button"
                     onClick={() => markAllAsRead()}
                     disabled={notificationsList.length === 0 || unreadCount === 0}
-                    className="flex-1 py-2 px-3 bg-[#FEFEFA] text-slate-800 font-semibold text-xs rounded-lg border border-slate-200 shadow-xs hover:bg-[#154734] hover:text-white disabled:opacity-40 transition flex items-center justify-center gap-1 cursor-pointer min-h-[38px]"
+                    className="flex min-h-[38px] flex-1 cursor-pointer items-center justify-center gap-1 rounded-lg border border-[#D8D5CC] bg-white px-3 py-2 text-xs font-semibold text-[#34423A] transition hover:border-[#8D9B92] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <span className="material-symbols-outlined text-[16px]">done_all</span>
                     <span>Tandai Semua Dibaca</span>
@@ -99,7 +146,7 @@ export function Topbar({ onOpenSidebar }: any) {
                     type="button"
                     onClick={() => clearAllNotifications()}
                     disabled={notificationsList.length === 0}
-                    className="py-2 px-3 bg-red-50 text-red-600 font-semibold text-xs rounded-lg border border-red-200 hover:bg-red-600 hover:text-white disabled:opacity-40 transition flex items-center justify-center gap-1 cursor-pointer min-h-[38px]"
+                    className="flex min-h-[38px] cursor-pointer items-center justify-center gap-1 rounded-lg border border-[#E2C5BE] bg-[#FBF3F1] px-3 py-2 text-xs font-semibold text-[#9A4033] transition hover:bg-[#F5E5E1] disabled:cursor-not-allowed disabled:opacity-40"
                   >
                     <span className="material-symbols-outlined text-[16px]">delete_sweep</span>
                     <span>Hapus Semua</span>
@@ -168,7 +215,7 @@ export function Topbar({ onOpenSidebar }: any) {
                           </p>
 
                           <div className="flex items-center justify-between gap-2 pt-1 text-[10px] text-slate-500">
-                            <span>{item.timestamp}</span>
+                            <span>{formatNotificationTimestamp(item.timestamp)}</span>
 
                             {item.actionLabel && item.onAction && (
                               <button
@@ -194,11 +241,10 @@ export function Topbar({ onOpenSidebar }: any) {
           )}
         </div>
 
-        <button onClick={onOpenSidebar} className="p-2 text-slate-700 hover:bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center min-h-[42px] min-w-[42px] md:hidden cursor-pointer" title="Menu Navigasi">
+        <button onClick={onOpenSidebar} className="flex min-h-[42px] min-w-[42px] cursor-pointer items-center justify-center rounded-lg border border-[#D8D5CC] bg-white p-2 text-[#59645D] transition hover:bg-[#F2F0EA] md:hidden" title="Menu Navigasi">
           <span className="material-symbols-outlined">menu</span>
         </button>
       </div>
     </header>
   );
 }
-

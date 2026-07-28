@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import { EmptyState } from '../components/EmptyState';
-import { calculateActualFertilizerDose, calculateLuasLahan } from '../utils/calculations';
+import { calculateActualFertilizerDose, calculateEffectiveLuasLahan } from '../utils/calculations';
 import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
@@ -80,27 +80,15 @@ export function PemupukanView() {
   const totalPestisida = pemupukan.filter(p => p.kategori === 'Pestisida').length;
 
   return (
-    <div className="flex flex-col min-h-full pb-16 bg-[#F8FAFC] text-slate-900 font-sans selection:bg-[#154734] selection:text-white">
-      {/* Top Hero Section */}
-      <div className="relative overflow-hidden pt-6 pb-6 px-4 sm:px-6 bg-[#FEFEFA] border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto relative z-10 flex flex-col gap-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest bg-[#154734]/15 text-[#154734] border border-[#154734]/30 px-3 py-1 rounded-full">
-              Formulasi Dosis
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-950 tracking-tight">
-            Jadwal &amp; Dosis Perawatan
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Kelola rencana aplikasi pupuk &amp; pestisida dengan kalkulator dosis presisi berbasis luas lahan.
-          </p>
-        </div>
-      </div>
+    <div className="flex min-h-full flex-col gap-6 pb-16 font-sans text-[#1B2721]">
+      <PageHeader
+        title="Jadwal Perawatan"
+        subtitle="Kelola rencana pupuk atau pestisida dan hitung kebutuhan dari dosis per hektare terhadap luas tanam efektif."
+      />
 
       {/* Surface Content */}
-      <div className="bg-[#FEFEFA] text-slate-900 p-4 sm:p-6 relative z-10 flex flex-col gap-6">
-        <div className="max-w-7xl mx-auto w-full flex flex-col gap-6">
+      <div className="relative z-10 flex flex-col gap-6 text-slate-900">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
 
       <ConfirmModal 
         isOpen={deleteConfirmOpen} 
@@ -414,7 +402,7 @@ export function PemupukanView() {
                     <tbody className="divide-y border-outline font-medium">
                       {filteredList.map(p => {
                         const blok = blokLahan.find(b => b.id === p.blokId);
-                        const luas = blok ? calculateLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, blok.lebarBedengan, blok.jarakAntarBedengan) : 0;
+                        const luas = blok ? calculateEffectiveLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, blok.lebarBedengan, blok.jarakAntarBedengan, blok.luasManualM2, blok.efisiensiLahan) : 0;
                         const dosisAktual = calculateActualFertilizerDose(p.dosisPerHektar, luas);
                         const airAktual = p.literAirPerHektar ? calculateActualFertilizerDose(p.literAirPerHektar, luas) : 0;
                         const isPestisida = p.kategori === 'Pestisida';
@@ -513,7 +501,7 @@ export function PemupukanView() {
                 <div className="flex flex-col gap-3 md:hidden">
                   {filteredList.map(p => {
                     const blok = blokLahan.find(b => b.id === p.blokId);
-                    const luas = blok ? calculateLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, blok.lebarBedengan, blok.jarakAntarBedengan) : 0;
+                    const luas = blok ? calculateEffectiveLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, blok.lebarBedengan, blok.jarakAntarBedengan, blok.luasManualM2, blok.efisiensiLahan) : 0;
                     const dosisAktual = calculateActualFertilizerDose(p.dosisPerHektar, luas);
                     const airAktual = p.literAirPerHektar ? calculateActualFertilizerDose(p.literAirPerHektar, luas) : 0;
                     const isPestisida = p.kategori === 'Pestisida';

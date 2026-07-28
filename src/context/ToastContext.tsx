@@ -56,9 +56,21 @@ export function getManagerGreeting(): string {
   return 'Halo, Kak Manager.';
 }
 
-const getDefaultNotifs = (): AgriNotificationItem[] => {
-  return [];
+const isNotificationItem = (value: unknown): value is AgriNotificationItem => {
+  if (typeof value !== 'object' || value === null) return false;
+  const item = value as Record<string, unknown>;
+  return (
+    typeof item.id === 'string' &&
+    typeof item.title === 'string' &&
+    typeof item.message === 'string' &&
+    typeof item.timestamp === 'string' &&
+    typeof item.read === 'boolean'
+  );
 };
+
+const generateNotificationId = (): string =>
+  globalThis.crypto?.randomUUID?.() ??
+  `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<AgriToastOptions[]>([]);
@@ -71,7 +83,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       }
       const saved = localStorage.getItem('tanita_notifications_history');
       if (saved) {
-        return JSON.parse(saved);
+        const parsed: unknown = JSON.parse(saved);
+        return Array.isArray(parsed) ? parsed.filter(isNotificationItem).slice(0, 100) : [];
       }
     } catch (e) {
       console.error(e);
@@ -113,10 +126,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   };
 
   const showToast = (message: string, type: 'success' | 'error' | 'warning' | 'info' = 'success') => {
-    const id = Date.now().toString() + Math.random().toString(36).substring(2, 5);
+    const id = generateNotificationId();
     const newToast: AgriToastOptions = {
       id,
-      title: type === 'success' ? 'Berhasil' : type === 'error' ? 'Gagal' : 'Informasi',
+      title:
+        type === 'success'
+          ? 'Berhasil'
+          : type === 'error'
+            ? 'Gagal'
+            : type === 'warning'
+              ? 'Peringatan'
+              : 'Informasi',
       message,
       type,
       category: 'umum',
@@ -127,7 +147,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts(prev => [...prev.slice(-3), newToast]);
 
     // Also push to notification drawer history
-    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     const notifItem: AgriNotificationItem = {
       id,
       title: newToast.title,
@@ -135,13 +154,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       type: newToast.type,
       category: newToast.category,
       icon: newToast.icon,
-      timestamp: `Hari ini, ${timeStr}`,
+      timestamp: new Date().toISOString(),
       read: false
     };
 
     setNotificationsList(prev => {
       if (prev.some(n => n.id === id)) return prev;
-      return [notifItem, ...prev];
+      return [notifItem, ...prev].slice(0, 100);
     });
 
     setTimeout(() => {
@@ -150,7 +169,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   };
 
   const showAgriToast = (options: AgriToastOptions) => {
-    const id = options.id || (Date.now().toString() + Math.random().toString(36).substring(2, 5));
+    const id = options.id || generateNotificationId();
     
     // Prevent duplicate toasts with identical id
     setToasts(prev => {
@@ -159,7 +178,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     });
 
     // Push to notification drawer history
-    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     const notifItem: AgriNotificationItem = {
       id,
       title: options.title,
@@ -170,13 +188,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       badgeText: options.badgeText,
       actionLabel: options.actionLabel,
       onAction: options.onAction,
-      timestamp: `Hari ini, ${timeStr}`,
+      timestamp: new Date().toISOString(),
       read: false
     };
 
     setNotificationsList(prev => {
       if (prev.some(n => n.id === id)) return prev;
-      return [notifItem, ...prev];
+      return [notifItem, ...prev].slice(0, 100);
     });
 
     if (options.duration !== 0) {
@@ -206,45 +224,45 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           const isPenyiraman = toast.category === 'penyiraman';
           const isPemupukan = toast.category === 'pemupukan';
           
-          let headerBg = 'bg-surface';
-          let borderAccent = 'border-black';
-          let badgeBg = 'bg-[#154734] text-white';
+          let headerBg = 'bg-[#E8EEE9] text-[#24533F]';
+          let borderAccent = 'border-[#D8D5CC]';
+          let badgeBg = 'bg-[#E4ECE7] text-[#24533F]';
 
           if (isPenyiraman) {
-            headerBg = 'bg-[#154734] text-white';
-            borderAccent = 'border-[#154734]';
-            badgeBg = 'bg-[#154734] text-white';
+            headerBg = 'bg-[#E6F0EA] text-[#24533F]';
+            borderAccent = 'border-[#B9CBBF]';
+            badgeBg = 'bg-[#DDEAE2] text-[#24533F]';
           } else if (isPemupukan) {
-            headerBg = 'bg-[#154734] text-white';
-            borderAccent = 'border-[#154734]';
-            badgeBg = 'bg-[#154734] text-white';
+            headerBg = 'bg-[#E6F0EA] text-[#24533F]';
+            borderAccent = 'border-[#B9CBBF]';
+            badgeBg = 'bg-[#DDEAE2] text-[#24533F]';
           } else if (toast.type === 'error') {
-            headerBg = 'bg-[#C43C2C] text-white';
-            borderAccent = 'border-black';
+            headerBg = 'bg-[#F7E8E4] text-[#A34335]';
+            borderAccent = 'border-[#DAB8B0]';
           } else if (toast.type === 'warning') {
-            headerBg = 'bg-[#154734] text-white';
-            borderAccent = 'border-black';
+            headerBg = 'bg-[#F6EDD9] text-[#885B21]';
+            borderAccent = 'border-[#D9C397]';
           }
 
           return (
             <div
               key={toast.id}
-              className={`pointer-events-auto bg-surface border-3 ${borderAccent} shadow-[5px_5px_0px_0px_#000] rounded-xl p-3.5 flex flex-col gap-2.5 animate-in slide-in-from-top-3 duration-200 transition-all relative`}
+              className={`pointer-events-auto relative flex w-full flex-col gap-2.5 rounded-xl border bg-[#FBFAF6] p-3.5 shadow-[0_14px_36px_rgba(20,31,25,0.14)] animate-in slide-in-from-top-3 duration-200 ${borderAccent}`}
             >
               <div className="flex items-start justify-between gap-2 border-b border-outline/40 pb-2">
                 <div className="flex items-center gap-2 min-w-0">
-                  <span className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 border border-black shadow-[1px_1px_0px_0px_#000] ${headerBg}`}>
+                  <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${headerBg}`}>
                     <span className="material-symbols-outlined text-[18px]">
                       {toast.icon || (isPenyiraman ? 'water_drop' : isPemupukan ? 'compost' : 'notifications')}
                     </span>
                   </span>
                   <div className="flex flex-col min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-brutal font-black text-xs uppercase tracking-wider text-on-surface truncate">
+                      <span className="truncate font-display text-xs font-semibold text-on-surface">
                         {toast.title}
                       </span>
                       {toast.badgeText && (
-                        <span className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded border border-black shadow-[1px_1px_0px_0px_#000] ${badgeBg}`}>
+                        <span className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${badgeBg}`}>
                           {toast.badgeText}
                         </span>
                       )}
@@ -274,7 +292,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                       toast.onAction!();
                       removeToast(toast.id!);
                     }}
-                    className={`px-3 py-1.5 rounded-lg border-2 border-black font-black text-xs shadow-[2px_2px_0px_0px_#000] active:translate-x-[1px] active:translate-y-[1px] transition cursor-pointer flex items-center gap-1 ${
+                    className={`flex cursor-pointer items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
                       isPenyiraman 
                         ? 'bg-[#154734] text-white hover:bg-[#0e3023]' 
                         : isPemupukan 

@@ -94,12 +94,11 @@ export function LogAktivitasView() {
 
   return (
     <div className="flex flex-col gap-6 w-full pb-12">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <PageHeader
-          title="Log Aktivitas Operasional"
-          subtitle="Riwayat semua aktivitas yang telah dilakukan pada lahan Anda."
-        />
-        <div className="flex items-center gap-2 shrink-0">
+      <PageHeader
+        title="Jurnal Aktivitas"
+        subtitle="Catat pekerjaan lapangan, petugas, dan biaya aktual untuk setiap blok."
+        action={
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <button
             type="button"
             onClick={() => setPdfModalOpen(true)}
@@ -118,7 +117,8 @@ export function LogAktivitasView() {
             <span>Export CSV</span>
           </button>
         </div>
-      </div>
+        }
+      />
 
       <ReportPdfModal 
         isOpen={pdfModalOpen} 

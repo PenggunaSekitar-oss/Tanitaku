@@ -23,10 +23,9 @@ export default defineConfig(() => {
           lang: 'id',
           start_url: '/',
           scope: '/',
-          theme_color: '#154734',
-          background_color: '#fefefa',
+          theme_color: '#24533F',
+          background_color: '#F1F0EB',
           display: 'standalone',
-          orientation: 'portrait-primary',
           icons: [
             {
               src: 'pwa-192x192.png',
@@ -56,8 +55,7 @@ export default defineConfig(() => {
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      // HMR is disabled when DISABLE_HMR is set by the host environment.
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},

@@ -116,7 +116,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
 
   const safeGetArray = <T,>(
     key: string,
-    validator: (item: unknown) => item is T,
+    normalize: (item: unknown) => T | null,
   ): T[] => {
     let saved: string | null = null;
     try {
@@ -128,7 +128,9 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
         return [];
       }
 
-      const validItems = parsed.filter(validator);
+      const validItems = parsed
+        .map(normalize)
+        .filter((item): item is T => item !== null);
       if (validItems.length !== parsed.length) backupInvalidPayload(key, saved);
       return validItems;
     } catch (error) {
@@ -151,29 +153,144 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
 
   const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null;
-  const hasStringId = (value: unknown): value is { id: string } =>
-    isRecord(value) && typeof value.id === 'string';
-  const hasStringIdAndBlock = (value: unknown): value is { id: string; blokId: string } =>
-    isRecord(value) && typeof value.id === 'string' && typeof value.blokId === 'string';
+  const asText = (value: unknown): string =>
+    typeof value === 'string' ? value : '';
+  const asNumber = (value: unknown): number => {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const hasIdentity = (item: Record<string, unknown>): boolean =>
+    typeof item.id === 'string' && item.id.trim().length > 0;
+  const hasBlockIdentity = (item: Record<string, unknown>): boolean =>
+    hasIdentity(item) && typeof item.blokId === 'string' && item.blokId.trim().length > 0;
+
+  const normalizeBlokLahan = (value: unknown): BlokLahan | null => {
+    if (!isRecord(value) || !hasIdentity(value)) return null;
+    const tipeInput =
+      value.tipeInput === 'bedengan' || value.tipeInput === 'are' || value.tipeInput === 'hektar'
+        ? value.tipeInput
+        : undefined;
+    return {
+      id: value.id as string,
+      nama: asText(value.nama),
+      jumlahBedengan: asNumber(value.jumlahBedengan),
+      panjangBedengan: asNumber(value.panjangBedengan),
+      lebarBedengan: asNumber(value.lebarBedengan),
+      jarakAntarBedengan: asNumber(value.jarakAntarBedengan),
+      catatan: asText(value.catatan),
+      tipeInput,
+      luasManualM2: value.luasManualM2 == null ? undefined : asNumber(value.luasManualM2),
+      luasAre: value.luasAre == null ? undefined : asNumber(value.luasAre),
+      luasHektar: value.luasHektar == null ? undefined : asNumber(value.luasHektar),
+      efisiensiLahan: value.efisiensiLahan == null ? undefined : asNumber(value.efisiensiLahan),
+    };
+  };
+
+  const normalizeTanaman = (value: unknown): Tanaman | null => {
+    if (!isRecord(value) || !hasBlockIdentity(value)) return null;
+    return {
+      id: value.id as string,
+      blokId: value.blokId as string,
+      komoditas: asText(value.komoditas),
+      varietas: asText(value.varietas),
+      tanggalTanam: asText(value.tanggalTanam),
+      metodeTanam: asText(value.metodeTanam),
+      barisTanaman: asNumber(value.barisTanaman),
+      jarakTanam: asNumber(value.jarakTanam),
+      jumlahTanaman: asNumber(value.jumlahTanaman),
+      catatan: asText(value.catatan),
+      status: value.status === 'Panen' ? 'Panen' : 'Aktif',
+    };
+  };
+
+  const normalizeLogAktivitas = (value: unknown): LogAktivitas | null => {
+    if (!isRecord(value) || !hasBlockIdentity(value)) return null;
+    return {
+      id: value.id as string,
+      blokId: value.blokId as string,
+      tanggal: asText(value.tanggal),
+      kategori: asText(value.kategori),
+      deskripsi: asText(value.deskripsi),
+      biaya: asNumber(value.biaya),
+      petugas: asText(value.petugas),
+    };
+  };
+
+  const normalizePemupukan = (value: unknown): Pemupukan | null => {
+    if (!isRecord(value) || !hasBlockIdentity(value)) return null;
+    return {
+      id: value.id as string,
+      blokId: value.blokId as string,
+      kategori: asText(value.kategori),
+      jenisPupuk: asText(value.jenisPupuk),
+      metodeAplikasi: asText(value.metodeAplikasi),
+      satuanDosis: asText(value.satuanDosis),
+      tujuan: asText(value.tujuan),
+      dosisPerHektar: asNumber(value.dosisPerHektar),
+      literAirPerHektar:
+        value.literAirPerHektar == null ? undefined : asNumber(value.literAirPerHektar),
+      tanggalAplikasi: asText(value.tanggalAplikasi),
+      intervalHari: asNumber(value.intervalHari),
+      catatan: asText(value.catatan),
+    };
+  };
+
+  const normalizeKeuangan = (value: unknown): Keuangan | null => {
+    if (!isRecord(value) || !hasBlockIdentity(value)) return null;
+    const optionalText = (key: string) =>
+      value[key] == null ? undefined : asText(value[key]);
+    const optionalNumber = (key: string) =>
+      value[key] == null ? undefined : asNumber(value[key]);
+    return {
+      id: value.id as string,
+      blokId: value.blokId as string,
+      tanamanId: optionalText('tanamanId'),
+      transactionDate: optionalText('transactionDate'),
+      biayaTetap: asNumber(value.biayaTetap),
+      namaBenih: optionalText('namaBenih'),
+      jumlahBenih: optionalNumber('jumlahBenih'),
+      satuanBenih: optionalText('satuanBenih'),
+      hargaBenih: optionalNumber('hargaBenih'),
+      tanggalPembelianBenih: optionalText('tanggalPembelianBenih'),
+      biayaBenih: asNumber(value.biayaBenih),
+      namaPupuk: optionalText('namaPupuk'),
+      jumlahPupuk: optionalNumber('jumlahPupuk'),
+      satuanPupuk: optionalText('satuanPupuk'),
+      hargaPupuk: optionalNumber('hargaPupuk'),
+      tanggalPembelianPupuk: optionalText('tanggalPembelianPupuk'),
+      biayaPupuk: asNumber(value.biayaPupuk),
+      namaPestisida: optionalText('namaPestisida'),
+      jumlahPestisida: optionalNumber('jumlahPestisida'),
+      satuanPestisida: optionalText('satuanPestisida'),
+      hargaPestisida: optionalNumber('hargaPestisida'),
+      tanggalPembelianPestisida: optionalText('tanggalPembelianPestisida'),
+      biayaPestisida: asNumber(value.biayaPestisida),
+      biayaLain: asNumber(value.biayaLain),
+      targetHasil: asNumber(value.targetHasil),
+      satuanHasil: optionalText('satuanHasil'),
+      hargaJual: asNumber(value.hargaJual),
+      komoditas: optionalText('komoditas'),
+    };
+  };
 
   const [blokLahan, setBlokLahan] = useState<BlokLahan[]>(() => {
-    const raw = safeGetArray<BlokLahan>('taniops_blokLahan', (item): item is BlokLahan => hasStringId(item));
+    const raw = safeGetArray<BlokLahan>('taniops_blokLahan', normalizeBlokLahan);
     return raw.filter((item) => !item.id.includes('demo'));
   });
   const [tanaman, setTanaman] = useState<Tanaman[]>(() => {
-    const raw = safeGetArray<Tanaman>('taniops_tanaman', (item): item is Tanaman => hasStringIdAndBlock(item));
+    const raw = safeGetArray<Tanaman>('taniops_tanaman', normalizeTanaman);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [logAktivitas, setLogAktivitas] = useState<LogAktivitas[]>(() => {
-    const raw = safeGetArray<LogAktivitas>('taniops_logAktivitas', (item): item is LogAktivitas => hasStringIdAndBlock(item));
+    const raw = safeGetArray<LogAktivitas>('taniops_logAktivitas', normalizeLogAktivitas);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [pemupukan, setPemupukan] = useState<Pemupukan[]>(() => {
-    const raw = safeGetArray<Pemupukan>('taniops_pemupukan', (item): item is Pemupukan => hasStringIdAndBlock(item));
+    const raw = safeGetArray<Pemupukan>('taniops_pemupukan', normalizePemupukan);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [keuangan, setKeuangan] = useState<Keuangan[]>(() => {
-    const raw = safeGetArray<Keuangan>('taniops_keuangan', (item): item is Keuangan => hasStringIdAndBlock(item));
+    const raw = safeGetArray<Keuangan>('taniops_keuangan', normalizeKeuangan);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
 
