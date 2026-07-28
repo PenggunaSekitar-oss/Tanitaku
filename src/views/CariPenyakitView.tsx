@@ -3,7 +3,13 @@ import React, { useState } from 'react';
 import { Select } from '../components/Select';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CatalogMeta } from '../components/CatalogMeta';
-import { PENYAKIT_DB as PENYAKIT_CATALOG, TANAMAN_OPTIONS, PENYAKIT_OPTIONS, Penyakit } from '../data/penyakitData';
+import {
+  PENYAKIT_ONLY_DB as PENYAKIT_CATALOG,
+  TANAMAN_OPTIONS,
+  PENYAKIT_OPTIONS,
+  Penyakit,
+  getDiagnosisMetadata,
+} from '../data/penyakitData';
 import { CatalogHistory } from '../components/CatalogHistory';
 import { EmptyState } from '../components/EmptyState';
 import { HelpTip } from '../components/HelpTip';
@@ -143,7 +149,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
     <div className="flex flex-col gap-6 w-full pb-12">
       <PageHeader
         title="Referensi Penyakit Tanaman"
-        subtitle="Cari kecocokan nama dan gejala pada katalog hama, jamur, bakteri, atau virus. Hasil bukan diagnosis lapangan."
+        subtitle="Cocokkan penyakit, gangguan fisiologis, dan defisiensi berdasarkan gejala. Katalog hama tersedia terpisah pada menu Jenis Hama."
         action={<CatalogMeta count={PENYAKIT_CATALOG.length} unit="referensi" />}
       />
 
@@ -158,7 +164,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
       />
       <section className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6">
         <h2 className="mb-4 font-display text-base font-semibold text-[#26352D]">
-          Filter hama dan penyakit
+          Filter penyakit dan gangguan tanaman
         </h2>
         
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
@@ -172,7 +178,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             />
           </div>
           <div className="flex flex-col w-full">
-            <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Kategori Organisme</label>
+            <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Kategori Gangguan</label>
             <Select 
               options={PENYAKIT_OPTIONS} 
               value={kategoriInput} 
@@ -182,14 +188,14 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
           </div>
           <div className="flex flex-col w-full">
             <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">
-              Nama hama / penyakit spesifik
+              Nama penyakit / gangguan spesifik
               <HelpTip label="Identifikasi penyakit" text="Hasil berasal dari kecocokan nama dan gejala katalog, bukan diagnosis laboratorium atau pengamatan langsung di lahan." />
             </label>
             <Select 
               options={dynamicPenyakitOptions} 
               value={penyakitInput} 
               onChange={(val) => setPenyakitInput(val)} 
-              placeholder="-- Semua Hama &amp; Penyakit --"
+              placeholder="-- Semua penyakit dan gangguan --"
               className="w-full"
             />
           </div>
@@ -215,6 +221,8 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {results.map((item, idx) => {
                 const targetKeyword = extractSearchKeyword(item);
+                const diagnosis = getDiagnosisMetadata(item);
+                const canSearchPesticide = !['Fisiologis', 'Defisiensi'].includes(item.kategori);
                 return (
                   <div key={item.id || idx} className="bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col h-full relative overflow-hidden">
                     {idx === 0 && (item as any).score >= 10 && (
@@ -244,6 +252,13 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
                             Inang: {t}
                           </span>
                         ))}
+                        <span className={`text-[11px] font-bold uppercase tracking-wider border px-2.5 py-1 rounded ${
+                          diagnosis.tingkatRisiko === 'Tinggi'
+                            ? 'border-[#C88B84] bg-[#F8EDEA] text-[#87362F]'
+                            : 'border-[#B8B5AC] bg-white text-[#4D5A52]'
+                        }`}>
+                          Risiko {diagnosis.tingkatRisiko}
+                        </span>
                       </div>
 
                       <div className="flex flex-col gap-3">
@@ -255,14 +270,46 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
                           <p className="text-xs text-[#0A0A0A] leading-relaxed font-medium">{item.gejala}</p>
                         </div>
 
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          <div className="rounded border border-[#C8C5BC] bg-white p-3">
+                            <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#365444]">
+                              Bagian terdampak
+                            </span>
+                            <p className="text-xs leading-relaxed text-[#3F4C45]">{diagnosis.bagianTerdampak.join(' · ')}</p>
+                          </div>
+                          <div className="rounded border border-[#C8C5BC] bg-white p-3">
+                            <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#365444]">
+                              Kondisi pemicu
+                            </span>
+                            <p className="text-xs leading-relaxed text-[#3F4C45]">{diagnosis.kondisiPemicu.join(' · ')}</p>
+                          </div>
+                          <div className="rounded border border-[#C8C5BC] bg-white p-3 sm:col-span-2">
+                            <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#365444]">
+                              Bandingkan sebelum menyimpulkan
+                            </span>
+                            <p className="text-xs leading-relaxed text-[#3F4C45]">{diagnosis.diagnosisPembanding.join(' · ')}</p>
+                          </div>
+                        </div>
+
+                        <div className="rounded border-l-4 border-[#B77A34] bg-[#FBF5E9] p-3">
+                          <span className="mb-1 block text-[11px] font-bold uppercase tracking-wider text-[#79501F]">
+                            Tindakan awal
+                          </span>
+                          <p className="text-xs leading-relaxed text-[#4E463B]">{diagnosis.tindakanAwal}</p>
+                        </div>
+
                         <div className="bg-[#E6E6DC]/40 border border-[#0A0A0A] p-3 rounded flex flex-col gap-2">
                           <span className="text-xs font-bold uppercase tracking-wider text-[#0A0A0A] block flex items-center gap-1">
                             <span className="material-symbols-outlined text-[15px]">medication</span>
-                            Penanganan Kimia / Bakterisida / Fungisida
+                            Opsi pengendalian · verifikasi label
                           </span>
                           <p className="text-xs text-[#0A0A0A] font-semibold leading-relaxed">{item.kimia}</p>
-                          
-                          <button 
+
+                          <p className="rounded bg-white p-2 text-[11px] leading-relaxed text-[#655C51]">
+                            Nama dagang pada referensi bukan instruksi aplikasi. Pastikan tanaman, sasaran, dosis, interval, masa tunggu, dan status pendaftaran masih sesuai label produk.
+                          </p>
+
+                          {canSearchPesticide && <button
                             type="button"
                             onClick={() => {
                               localStorage.setItem('targetPestisida', targetKeyword);
@@ -283,6 +330,7 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
                             </div>
                             <span className="material-symbols-outlined text-[#154734] text-xl font-bold">arrow_forward</span>
                           </button>
+                          }
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -301,6 +349,9 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
                             <p className="text-xs text-[#0A0A0A] leading-relaxed">{item.pencegahan}</p>
                           </div>
                         </div>
+                        <p className="text-[11px] leading-relaxed text-[#6A6A63]">
+                          Status data: {diagnosis.sumberStatus}. Hasil ini bukan diagnosis laboratorium atau pemeriksaan langsung di lahan.
+                        </p>
                       </div>
                     </div>
                   </div>

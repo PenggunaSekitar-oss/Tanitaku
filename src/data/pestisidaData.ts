@@ -1,3 +1,5 @@
+import { buildMarketMetadata, MarketMetadata } from './marketMetadata';
+
 export interface PestisidaItem {
   nama: string;
   jenis: string;
@@ -7,6 +9,10 @@ export interface PestisidaItem {
   kekurangan: string;
   harga: string;
   dosis: string;
+}
+
+export function getPestisidaMarketMetadata(item: PestisidaItem): MarketMetadata {
+  return buildMarketMetadata('pestisida', `${item.nama} ${item.bahanAktif}`, item.harga);
 }
 
 export const HAMA_OPTIONS = [

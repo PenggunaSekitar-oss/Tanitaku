@@ -8,6 +8,46 @@ export interface Penyakit {
   kimia: string;
   organik: string;
   pencegahan: string;
+  namaIlmiah?: string;
+  bagianTerdampak?: string[];
+  kondisiPemicu?: string[];
+  diagnosisPembanding?: string[];
+  tindakanAwal?: string;
+  tingkatRisiko?: 'Rendah' | 'Sedang' | 'Tinggi';
+  sumberStatus?: 'Referensi lapangan' | 'Perlu konfirmasi ahli';
+}
+
+export interface DiagnosisMetadata {
+  bagianTerdampak: string[];
+  kondisiPemicu: string[];
+  diagnosisPembanding: string[];
+  tindakanAwal: string;
+  tingkatRisiko: 'Rendah' | 'Sedang' | 'Tinggi';
+  sumberStatus: 'Referensi lapangan' | 'Perlu konfirmasi ahli';
+}
+
+export function getDiagnosisMetadata(item: Penyakit): DiagnosisMetadata {
+  const text = `${item.nama} ${item.gejala} ${item.penyebab}`.toLowerCase();
+  const bagianTerdampak = item.bagianTerdampak || [
+    ...(text.includes('akar') ? ['Akar'] : []),
+    ...(text.includes('batang') ? ['Batang'] : []),
+    ...(text.includes('daun') ? ['Daun'] : []),
+    ...(text.includes('buah') ? ['Buah'] : []),
+    ...(text.includes('umbi') ? ['Umbi'] : []),
+  ];
+
+  return {
+    bagianTerdampak: bagianTerdampak.length ? bagianTerdampak : ['Bagian tanaman sesuai gejala'],
+    kondisiPemicu: item.kondisiPemicu || ['Periksa kelembapan, drainase, cuaca, dan riwayat lahan'],
+    diagnosisPembanding: item.diagnosisPembanding || [
+      'Kekurangan hara',
+      'Kerusakan akar atau air',
+      'Gangguan lain dengan gejala serupa',
+    ],
+    tindakanAwal: item.tindakanAwal || 'Foto gejala, periksa bagian bawah daun dan akar, lalu pisahkan tanaman bergejala sebelum memilih perlakuan.',
+    tingkatRisiko: item.tingkatRisiko || (item.kategori === 'Virus' || item.kategori === 'Bakteri' ? 'Tinggi' : 'Sedang'),
+    sumberStatus: item.sumberStatus || 'Perlu konfirmasi ahli',
+  };
 }
 
 export const TANAMAN_OPTIONS = [
@@ -29,12 +69,13 @@ export const TANAMAN_OPTIONS = [
 ];
 
 export const PENYAKIT_OPTIONS = [
-  { value: 'Semua', label: 'Semua Kategori (Hama & Penyakit)' },
-  { value: 'Hama', label: 'Hama Serangga' },
+  { value: 'Semua', label: 'Semua Kategori Penyakit' },
   { value: 'Nematoda', label: 'Nematoda' },
   { value: 'Jamur', label: 'Penyakit Jamur / Fungi' },
   { value: 'Bakteri', label: 'Penyakit Bakteri' },
-  { value: 'Virus', label: 'Penyakit Virus' }
+  { value: 'Virus', label: 'Penyakit Virus' },
+  { value: 'Fisiologis', label: 'Gangguan Fisiologis' },
+  { value: 'Defisiensi', label: 'Defisiensi Hara' }
 ];
 
 export const PENYAKIT_DB: Penyakit[] = [
@@ -400,5 +441,110 @@ export const PENYAKIT_DB: Penyakit[] = [
   { id: 'p27', nama: 'Karat Daun Kopi (Hemileia vastatrix)', kategori: 'Jamur', tanaman: ['Perkebunan'], gejala: 'Bercak oranye bertepung di bawah daun kopi.', penyebab: 'Hemileia.', kimia: 'Anvil 50SC, Amistar.', organik: 'Tembaga cair.', pencegahan: 'Tanam arabika varietas tahan.' },
   { id: 'p28', nama: 'Embun Jelaga (Capnodium)', kategori: 'Jamur', tanaman: ['Mangga', 'Jeruk'], gejala: 'Lapisan jelaga hitam menutup permukaan daun.', penyebab: 'Jamur yang tumbuh dari kotoran kutu.', kimia: 'Basmi kutu daun & semprot pencuci jelaga.', organik: 'Air sabun hangat.', pencegahan: 'Kendalikan kutu putih.' },
   { id: 'p29', nama: 'Kerdil Pisang (Bunchy Top)', kategori: 'Virus', tanaman: ['Pisang'], gejala: 'Daun pisang kerdil sempit tegak mengelompok di pucuk.', penyebab: 'Banana Bunchy Top Virus (BBTV).', kimia: 'Kendalikan Kutu Daun Pentalonia.', organik: 'Cabut dan musnahkan rumpun.', pencegahan: 'Bibit kultur jaringan.' },
-  { id: 'jamur-30', nama: 'Jamur Upas (Corticium salmonicolor)', kategori: 'Jamur', tanaman: ['Perkebunan', 'Mangga'], gejala: 'Kerak merah jambu (pink) di kulit cabang hingga mengelupas.', penyebab: 'Corticium.', kimia: 'Nordox 56WP oles.', organik: 'Bubur kalifornia.', pencegahan: 'Pangkas cabang bersinggungan.' }
+  { id: 'jamur-30', nama: 'Jamur Upas (Corticium salmonicolor)', kategori: 'Jamur', tanaman: ['Perkebunan', 'Mangga'], gejala: 'Kerak merah jambu (pink) di kulit cabang hingga mengelupas.', penyebab: 'Corticium.', kimia: 'Nordox 56WP oles.', organik: 'Bubur kalifornia.', pencegahan: 'Pangkas cabang bersinggungan.' },
+  {
+    id: 'fisiologis-1',
+    nama: 'Busuk Ujung Buah (Blossom-end Rot)',
+    kategori: 'Fisiologis',
+    tanaman: ['Cabai', 'Tomat', 'Terong'],
+    gejala: 'Bercak cekung kecokelatan muncul dari ujung buah lalu menghitam; jaringan tidak menunjukkan pola sebaran infeksi.',
+    penyebab: 'Gangguan distribusi kalsium ke buah, sering terkait suplai air yang tidak stabil atau kerusakan akar.',
+    kimia: 'Bukan penyakit menular. Jangan memilih fungisida hanya dari gejala ini; koreksi air dan hara berdasarkan kondisi lahan.',
+    organik: 'Jaga kelembapan tanah stabil dengan mulsa dan bahan organik matang.',
+    pencegahan: 'Hindari siklus sangat kering lalu sangat basah dan pemupukan nitrogen berlebihan.',
+    bagianTerdampak: ['Buah'],
+    kondisiPemicu: ['Irigasi tidak stabil', 'Akar terganggu', 'Salinitas atau nitrogen berlebih'],
+    diagnosisPembanding: ['Antraknosa pada buah', 'Luka matahari', 'Busuk buah bakteri'],
+    tindakanAwal: 'Belah beberapa buah, cek pola bercak dari ujung buah, lalu evaluasi kelembapan dan kondisi akar.',
+    tingkatRisiko: 'Sedang',
+    sumberStatus: 'Referensi lapangan'
+  },
+  {
+    id: 'fisiologis-2',
+    nama: 'Luka Terbakar Matahari (Sunscald)',
+    kategori: 'Fisiologis',
+    tanaman: ['Cabai', 'Tomat', 'Mangga'],
+    gejala: 'Bercak pucat atau putih kecokelatan pada sisi buah yang terpapar langsung, kemudian jaringan mengering.',
+    penyebab: 'Paparan panas dan radiasi tinggi setelah buah kehilangan naungan daun.',
+    kimia: 'Tidak memerlukan pestisida. Lindungi buah dan pulihkan kanopi secara bertahap.',
+    organik: 'Gunakan naungan ringan atau pertahankan kanopi sehat.',
+    pencegahan: 'Hindari pemangkasan berat menjelang cuaca sangat panas.',
+    bagianTerdampak: ['Buah'],
+    kondisiPemicu: ['Cuaca sangat panas', 'Kanopi terbuka', 'Pemangkasan berat'],
+    diagnosisPembanding: ['Busuk ujung buah', 'Antraknosa', 'Luka mekanis'],
+    tindakanAwal: 'Amati posisi bercak terhadap arah matahari dan pastikan tidak ada tanda infeksi menyebar.',
+    tingkatRisiko: 'Rendah',
+    sumberStatus: 'Referensi lapangan'
+  },
+  {
+    id: 'defisiensi-1',
+    nama: 'Defisiensi Nitrogen',
+    kategori: 'Defisiensi',
+    tanaman: ['Cabai', 'Tomat', 'Terong', 'Jagung', 'Padi', 'Kacang'],
+    gejala: 'Daun tua menguning relatif merata, pertumbuhan lambat, dan tanaman tampak pucat.',
+    penyebab: 'Pasokan atau serapan nitrogen tidak mencukupi; akar, pH, dan kehilangan hara perlu diperiksa.',
+    kimia: 'Konfirmasi lewat riwayat pemupukan atau uji tanah/daun sebelum menambah pupuk nitrogen.',
+    organik: 'Gunakan sumber organik matang sesuai analisis kebutuhan lahan.',
+    pencegahan: 'Bagi aplikasi nitrogen dan sesuaikan dengan fase serta potensi kehilangan.',
+    bagianTerdampak: ['Daun tua', 'Seluruh tajuk'],
+    kondisiPemicu: ['Tanah miskin bahan organik', 'Pencucian hara', 'Akar tidak sehat'],
+    diagnosisPembanding: ['Genangan akar', 'Defisiensi sulfur', 'Penyakit pembuluh'],
+    tindakanAwal: 'Bandingkan daun tua dan muda, cek akar serta riwayat pupuk, lalu lakukan uji tanah bila memungkinkan.',
+    tingkatRisiko: 'Sedang',
+    sumberStatus: 'Referensi lapangan'
+  },
+  {
+    id: 'defisiensi-2',
+    nama: 'Defisiensi Kalium',
+    kategori: 'Defisiensi',
+    tanaman: ['Cabai', 'Tomat', 'Jagung', 'Padi', 'Kacang'],
+    gejala: 'Tepi daun tua menguning lalu mengering seperti terbakar; pengisian buah atau biji dapat terganggu.',
+    penyebab: 'Serapan kalium rendah atau tidak seimbang dengan unsur lain.',
+    kimia: 'Koreksi sumber kalium berdasarkan analisis tanah dan kebutuhan komoditas, bukan dari warna daun saja.',
+    organik: 'Perbaiki bahan organik dan kesehatan akar; kandungan hara bahan organik tetap perlu diketahui.',
+    pencegahan: 'Pertahankan keseimbangan hara dan kelembapan tanah.',
+    bagianTerdampak: ['Tepi daun tua', 'Buah atau biji'],
+    kondisiPemicu: ['Tanah berpasir', 'Pencucian hara', 'Keseimbangan kation terganggu'],
+    diagnosisPembanding: ['Daun terbakar garam', 'Kekeringan', 'Penyakit bercak daun'],
+    tindakanAwal: 'Periksa pola simetris pada daun tua dan cek salinitas serta riwayat pemupukan.',
+    tingkatRisiko: 'Sedang',
+    sumberStatus: 'Referensi lapangan'
+  },
+  {
+    id: 'defisiensi-3',
+    nama: 'Defisiensi Magnesium',
+    kategori: 'Defisiensi',
+    tanaman: ['Cabai', 'Tomat', 'Jagung', 'Kacang', 'Perkebunan'],
+    gejala: 'Jaringan di antara tulang daun tua menguning sementara tulang daun tetap lebih hijau.',
+    penyebab: 'Magnesium kurang tersedia atau serapannya terganggu oleh ketidakseimbangan kalium/kalsium dan pH.',
+    kimia: 'Konfirmasi pH dan analisis hara sebelum koreksi magnesium.',
+    organik: 'Perbaiki pH dan bahan organik sesuai hasil analisis tanah.',
+    pencegahan: 'Hindari pemupukan satu unsur berlebihan dan pantau pH.',
+    bagianTerdampak: ['Daun tua'],
+    kondisiPemicu: ['Tanah masam', 'Kalium berlebih', 'Pencucian hara'],
+    diagnosisPembanding: ['Defisiensi besi pada daun muda', 'Virus mosaik', 'Kerusakan akar'],
+    tindakanAwal: 'Pastikan gejala mulai dari daun tua dan cek pH sebelum menambah unsur.',
+    tingkatRisiko: 'Sedang',
+    sumberStatus: 'Referensi lapangan'
+  },
+  {
+    id: 'defisiensi-4',
+    nama: 'Defisiensi Besi',
+    kategori: 'Defisiensi',
+    tanaman: ['Cabai', 'Tomat', 'Terong', 'Kacang', 'Perkebunan'],
+    gejala: 'Daun muda menguning di antara tulang daun, sedangkan tulang daun tetap hijau.',
+    penyebab: 'Besi tidak tersedia bagi akar, sering terkait pH terlalu tinggi atau akar terganggu.',
+    kimia: 'Periksa pH media/tanah dan kesehatan akar sebelum menggunakan sumber besi.',
+    organik: 'Tambahkan bahan organik matang secara bertahap bila sesuai hasil pemeriksaan tanah.',
+    pencegahan: 'Jaga pH sesuai kebutuhan komoditas dan drainase akar.',
+    bagianTerdampak: ['Daun muda'],
+    kondisiPemicu: ['pH tinggi', 'Akar tergenang', 'Media terlalu berkapur'],
+    diagnosisPembanding: ['Defisiensi magnesium', 'Defisiensi sulfur', 'Kerusakan herbisida'],
+    tindakanAwal: 'Bandingkan daun termuda dan daun tua, lalu ukur pH media atau tanah.',
+    tingkatRisiko: 'Sedang',
+    sumberStatus: 'Referensi lapangan'
+  }
 ];
+
+export const HAMA_DB = PENYAKIT_DB.filter((item) => item.kategori === 'Hama');
+export const PENYAKIT_ONLY_DB = PENYAKIT_DB.filter((item) => item.kategori !== 'Hama');

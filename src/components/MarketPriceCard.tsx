@@ -1,0 +1,143 @@
+import { useEffect, useState } from 'react';
+import { MarketCatalog, MarketMetadata } from '../data/marketMetadata';
+import {
+  readMarketPrice,
+  removeMarketPrice,
+  saveMarketPrice,
+} from '../utils/marketPrice';
+import { formatLocalDate } from '../utils/localDate';
+
+interface MarketPriceCardProps {
+  catalog: MarketCatalog;
+  itemId: string;
+  metadata: MarketMetadata;
+  subsidizedPrice?: string;
+}
+
+const today = () => formatLocalDate(new Date());
+
+export function MarketPriceCard({
+  catalog,
+  itemId,
+  metadata,
+  subsidizedPrice,
+}: MarketPriceCardProps) {
+  const [current, setCurrent] = useState(() => readMarketPrice(catalog, itemId, metadata));
+  const [editing, setEditing] = useState(false);
+  const [draftPrice, setDraftPrice] = useState(current.price);
+  const [draftRegion, setDraftRegion] = useState(current.region);
+
+  useEffect(() => {
+    const next = readMarketPrice(catalog, itemId, metadata);
+    setCurrent(next);
+    setDraftPrice(next.price);
+    setDraftRegion(next.region);
+    setEditing(false);
+  }, [catalog, itemId]);
+
+  const handleSave = () => {
+    if (!draftPrice.trim() || !draftRegion.trim()) return;
+    const override = {
+      price: draftPrice,
+      region: draftRegion,
+      observedAt: today(),
+    };
+    saveMarketPrice(catalog, itemId, override);
+    setCurrent({ ...metadata, ...override, source: 'Catatan pengguna' });
+    setEditing(false);
+  };
+
+  const handleReset = () => {
+    removeMarketPrice(catalog, itemId);
+    setCurrent(metadata);
+    setDraftPrice(metadata.price);
+    setDraftRegion(metadata.region);
+    setEditing(false);
+  };
+
+  return (
+    <div className="rounded-xl border border-[#C9C6BC] bg-[#F5F3EC] p-3 text-[#26352D]">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#5C675F]">
+            Kisaran harga · bukan indikator keamanan
+          </p>
+          <p className="mt-1 text-sm font-extrabold leading-snug">{current.price}</p>
+        </div>
+        <span className="rounded-full border border-[#A9B4AC] bg-white px-2 py-1 text-[10px] font-bold text-[#365444]">
+          {current.availability}
+        </span>
+      </div>
+
+      <div className="mt-2 grid gap-1 text-[11px] text-[#59635D] sm:grid-cols-2">
+        <span>Wilayah: <b className="text-[#35453C]">{current.region}</b></span>
+        <span>Kemasan umum: <b className="text-[#35453C]">{current.commonPack}</b></span>
+        <span>Diperbarui: <b className="text-[#35453C]">{current.observedAt}</b></span>
+        <span>Kanal: <b className="text-[#35453C]">{current.channels.join(' · ')}</b></span>
+      </div>
+
+      {subsidizedPrice && (
+        <p className="mt-2 border-t border-[#D8D5CC] pt-2 text-[11px] text-[#59635D]">
+          Referensi harga subsidi: <b className="text-[#35453C]">{subsidizedPrice}</b>. Ketersediaan mengikuti ketentuan penyaluran setempat.
+        </p>
+      )}
+
+      {editing ? (
+        <div className="mt-3 grid gap-2 border-t border-[#D8D5CC] pt-3">
+          <label className="text-[11px] font-bold text-[#45534B]">
+            Harga/kemasan di lokasi Anda
+            <input
+              value={draftPrice}
+              onChange={(event) => setDraftPrice(event.target.value)}
+              className="mt-1 min-h-10 w-full rounded-lg border border-[#A9A69E] bg-white px-3 text-sm font-medium outline-none focus:border-[#24533F]"
+              placeholder="Contoh: Rp 50.000 / 500 g"
+            />
+          </label>
+          <label className="text-[11px] font-bold text-[#45534B]">
+            Wilayah atau nama toko
+            <input
+              value={draftRegion}
+              onChange={(event) => setDraftRegion(event.target.value)}
+              className="mt-1 min-h-10 w-full rounded-lg border border-[#A9A69E] bg-white px-3 text-sm font-medium outline-none focus:border-[#24533F]"
+              placeholder="Contoh: Denpasar · toko tani setempat"
+            />
+          </label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!draftPrice.trim() || !draftRegion.trim()}
+              className="min-h-9 rounded-lg bg-[#24533F] px-3 text-xs font-bold text-white disabled:opacity-40"
+            >
+              Simpan harga lokal
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              className="min-h-9 rounded-lg border border-[#A9A69E] bg-white px-3 text-xs font-bold"
+            >
+              Batal
+            </button>
+            {current.source === 'Catatan pengguna' && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="min-h-9 rounded-lg px-3 text-xs font-bold text-[#9A382F]"
+              >
+                Hapus catatan
+              </button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-3 min-h-9 rounded-lg border border-[#9FA9A2] bg-white px-3 text-xs font-bold text-[#24533F] hover:bg-[#EEF1ED]"
+        >
+          Perbarui harga lokal
+        </button>
+      )}
+    </div>
+  );
+}

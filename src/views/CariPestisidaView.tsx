@@ -8,7 +8,14 @@ import { InlineNotice } from '../components/InlineNotice';
 import { CatalogHistory } from '../components/CatalogHistory';
 import { CatalogComparison, CompareToggle, ComparisonItem } from '../components/CatalogComparison';
 import { EmptyState } from '../components/EmptyState';
-import { PESTISIDA_CATALOG, HAMA_OPTIONS, PestisidaItem } from '../data/pestisidaData';
+import {
+  PESTISIDA_CATALOG,
+  HAMA_OPTIONS,
+  PestisidaItem,
+  getPestisidaMarketMetadata,
+} from '../data/pestisidaData';
+import { MarketPriceCard } from '../components/MarketPriceCard';
+import { marketAvailabilityRank } from '../data/marketMetadata';
 import { searchPesticides } from '../utils/pesticideSearch';
 import {
   CatalogHistoryEntry,
@@ -75,7 +82,11 @@ export function CariPestisidaView() {
   }, []);
 
   const performSearch = (hamaVal: string, tanamanVal: string) => {
-    const matches = searchPesticides(PESTISIDA_CATALOG, hamaVal, tanamanVal);
+    const matches = searchPesticides(PESTISIDA_CATALOG, hamaVal, tanamanVal)
+      .sort((a, b) =>
+        marketAvailabilityRank(getPestisidaMarketMetadata(b).availability) -
+        marketAvailabilityRank(getPestisidaMarketMetadata(a).availability),
+      );
     setResults(matches);
     return matches.length;
   };
@@ -388,13 +399,14 @@ export function CariPestisidaView() {
                           <span className="text-xs font-bold font-mono text-[#0A0A0A]">{item.dosis}</span>
                         </div>
                         
-                        <div className="bg-[#8A9A5B] border border-[#0A0A0A] p-2.5 rounded flex flex-col gap-1 text-white shadow-2xs">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-white flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[14px] text-white">sell</span>
-                            Harga Per Item / Botol (Pasaran Bebas)
-                          </span>
-                          <span className="text-sm font-black text-white">{item.harga}</span>
-                        </div>
+                        <MarketPriceCard
+                          catalog="pestisida"
+                          itemId={`${item.nama}:${item.bahanAktif}`}
+                          metadata={getPestisidaMarketMetadata(item)}
+                        />
+                        <p className="rounded border-l-4 border-[#B77A34] bg-[#FBF5E9] p-2.5 text-[11px] leading-relaxed text-[#5E4B33]">
+                          Ketersediaan di toko tidak berarti produk cocok atau aman. Cocokkan tanaman, sasaran, dosis, masa tunggu, dan status pendaftaran pada label sebelum membeli.
+                        </p>
                       </div>
 
                       <div className="border-t-2 border-[#0A0A0A] pt-2 mt-auto flex flex-col gap-2">

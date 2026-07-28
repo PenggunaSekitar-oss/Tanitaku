@@ -2,11 +2,19 @@ import React, { useState, useMemo } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { Select } from '../components/Select';
 import { CatalogMeta } from '../components/CatalogMeta';
-import { PUPUK_DB, Pupuk, getPupukDetails } from '../data/pupukData';
+import {
+  PUPUK_DB,
+  Pupuk,
+  getPupukDetails,
+  getNormalizedPupukCategory,
+  getPupukMarketMetadata,
+} from '../data/pupukData';
 import { CatalogHistory } from '../components/CatalogHistory';
 import { CatalogComparison, CompareToggle, ComparisonItem } from '../components/CatalogComparison';
 import { EmptyState } from '../components/EmptyState';
 import { HelpTip } from '../components/HelpTip';
+import { MarketPriceCard } from '../components/MarketPriceCard';
+import { marketAvailabilityRank } from '../data/marketMetadata';
 import {
   CatalogHistoryEntry,
   readCatalogHistory,
@@ -110,6 +118,7 @@ export function CariPupukView() {
     const scored = PUPUK_DB.map(p => {
       let score = 0;
       let isMatch = true;
+      score += marketAvailabilityRank(getPupukMarketMetadata(p).availability) * 2;
 
       // Filter by HST
       if (searchParams.hst >= p.minHst && searchParams.hst <= p.maxHst) {
@@ -332,6 +341,9 @@ export function CariPupukView() {
                 <div>
                   <span className="text-[10px] font-bold text-[#5C5C5C] uppercase block mb-1">Kandungan Utama</span>
                   <div className="font-mono text-xs text-[#0A0A0A] font-bold">{pupuk.kandungan}</div>
+                  <span className="mt-2 inline-flex rounded-full border border-[#B8B5AC] bg-white px-2 py-1 text-[10px] font-bold text-[#3F5147]">
+                    {getNormalizedPupukCategory(pupuk)}
+                  </span>
                 </div>
 
                 {/* Harga Non-Subsidi Section */}
@@ -339,27 +351,12 @@ export function CariPupukView() {
                   const details = getPupukDetails(pupuk);
                   return (
                     <>
-                      <div className="bg-[#8A9A5B] border border-[#0A0A0A] p-3 rounded flex flex-col gap-2 text-white shadow-2xs">
-                        <div className="flex items-center justify-between flex-wrap gap-1">
-                          <span className="text-xs font-extrabold uppercase tracking-wider text-white flex items-center gap-1.5">
-                            <span className="material-symbols-outlined text-[16px] text-white">storefront</span>
-                            Harga Non-Subsidi (Pasaran Bebas)
-                          </span>
-                        </div>
-                        <div className="text-sm font-black text-white">
-                          {details.hargaNonSubsidi}
-                        </div>
-                        {details.hargaSubsidi ? (
-                          <div className="text-xs text-white pt-2 border-t border-white/30 flex flex-wrap justify-between items-center gap-1.5">
-                            <span className="font-semibold text-white/90">Perbandingan HET Subsidi:</span>
-                            <span className="font-bold text-[#0A0A0A] bg-white px-2 py-0.5 rounded border border-[#0A0A0A]">{details.hargaSubsidi}</span>
-                          </div>
-                        ) : (
-                          <div className="text-[11px] text-white/90 italic">
-                            *Produk non-subsidi pasaran bebas, dapat dibeli tanpa quota KTP.
-                          </div>
-                        )}
-                      </div>
+                      <MarketPriceCard
+                        catalog="pupuk"
+                        itemId={pupuk.id}
+                        metadata={getPupukMarketMetadata(pupuk)}
+                        subsidizedPrice={details.hargaSubsidi}
+                      />
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>

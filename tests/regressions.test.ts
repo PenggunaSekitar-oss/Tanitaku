@@ -29,6 +29,20 @@ import {
 } from '../src/utils/calculations';
 import { getScheduleOccurrences } from '../src/utils/schedule';
 import { upsertCatalogHistory } from '../src/utils/catalogHistory';
+import {
+  HAMA_DB,
+  PENYAKIT_ONLY_DB,
+  PENYAKIT_OPTIONS,
+} from '../src/data/penyakitData';
+import {
+  PUPUK_DB,
+  getNormalizedPupukCategory,
+  getPupukMarketMetadata,
+} from '../src/data/pupukData';
+import {
+  BIBIT_CATALOG,
+  getBibitMarketMetadata,
+} from '../src/data/bibitData';
 
 test('input desimal menerima titik dan koma tanpa mengubah besaran', () => {
   assert.equal(parseLocalizedNumberInput('0.5', true).value, 0.5);
@@ -117,6 +131,31 @@ test('pencarian pestisida memakai target dan tidak gugur ketika tanaman diisi', 
 
   const cropOnly = searchPesticides(PESTISIDA_CATALOG, '', 'Apel');
   assert.equal(cropOnly.length, 0);
+});
+
+test('katalog penyakit terpisah dari hama dan memuat gangguan non-infeksi', () => {
+  assert.ok(HAMA_DB.length > 0);
+  assert.ok(PENYAKIT_ONLY_DB.length > 0);
+  assert.ok(HAMA_DB.every((item) => item.kategori === 'Hama'));
+  assert.ok(PENYAKIT_ONLY_DB.every((item) => item.kategori !== 'Hama'));
+  assert.ok(PENYAKIT_ONLY_DB.some((item) => item.kategori === 'Fisiologis'));
+  assert.ok(PENYAKIT_ONLY_DB.some((item) => item.kategori === 'Defisiensi'));
+  assert.equal(PENYAKIT_OPTIONS.some((option) => option.value === 'Hama'), false);
+});
+
+test('metadata pasar memuat kanal, wilayah, dan kemasan tanpa menjadi status keamanan', () => {
+  const pupuk = PUPUK_DB.find((item) => item.nama.toLowerCase().includes('urea'));
+  const bibit = BIBIT_CATALOG.find((item) => item.nama === 'Anjasmoro');
+  assert.ok(pupuk);
+  assert.ok(bibit);
+
+  const pupukMeta = getPupukMarketMetadata(pupuk);
+  const bibitMeta = getBibitMarketMetadata(bibit);
+  assert.deepEqual(pupukMeta.channels, ['Marketplace', 'Toko tani']);
+  assert.equal(pupukMeta.region, 'Referensi nasional');
+  assert.ok(pupukMeta.commonPack.length > 0);
+  assert.equal(bibitMeta.availability, 'Cukup mudah');
+  assert.equal(getNormalizedPupukCategory(pupuk), 'Anorganik tunggal');
 });
 
 test('periode laporan dibentuk dinamis dan memfilter tanggal', () => {
@@ -277,10 +316,14 @@ test('UI mempertahankan logo TANITA dan menghapus label promosi berulang', () =>
     resolve(process.cwd(), 'src/components/BannerCarousel.tsx'),
     'utf8',
   );
-  const originalLogo =
-    'https://res.cloudinary.com/ddc26noa/image/upload/v1784860433/5199_1_j0xnzq.png';
+  const localOfficialLogo = '/tanita-logo-official.png';
+  const logoBytes = readFileSync(resolve(process.cwd(), 'public', 'tanita-logo-official.png'));
 
-  assert.ok(brand.includes(originalLogo));
+  assert.ok(brand.includes(localOfficialLogo));
+  assert.deepEqual(
+    [...logoBytes.subarray(0, 8)],
+    [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+  );
   assert.doesNotMatch(brand, /tanita-icon/);
   assert.doesNotMatch(
     banner,

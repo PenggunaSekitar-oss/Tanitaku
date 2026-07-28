@@ -1,3 +1,5 @@
+import { buildMarketMetadata, MarketAvailability, MarketMetadata } from './marketMetadata';
+
 export interface BibitItem {
   nama: string;
   produsen: string;
@@ -11,6 +13,10 @@ export interface BibitItem {
   kekurangan?: string;
   ketinggian?: string[];
   cuaca?: string[];
+  ketersediaan?: MarketAvailability;
+  kemasanUmum?: string;
+  kelasBenih?: string;
+  statusData?: 'Label produk' | 'Referensi varietas' | 'Perlu verifikasi';
 }
 
 export function getBibitDetails(item: BibitItem): {
@@ -77,6 +83,16 @@ export function getBibitDetails(item: BibitItem): {
   };
 }
 
+export function getBibitMarketMetadata(item: BibitItem): MarketMetadata {
+  const details = getBibitDetails(item);
+  const metadata = buildMarketMetadata('bibit', `${item.nama} ${item.produsen} ${item.komoditas}`, details.harga);
+  return {
+    ...metadata,
+    availability: item.ketersediaan || metadata.availability,
+    commonPack: item.kemasanUmum || metadata.commonPack,
+  };
+}
+
 export const KOMODITAS_OPTIONS = [
   'Semua Komoditas',
   'Cabai Rawit',
@@ -94,6 +110,12 @@ export const KOMODITAS_OPTIONS = [
   'Sawi & Caisim',
   'Kacang Panjang & Buncis',
   'Kangkung & Bayam',
+  'Kedelai',
+  'Kacang Hijau & Kacang Tanah',
+  'Umbi & Kentang',
+  'Pisang',
+  'Kopi & Kakao',
+  'Kelapa',
   'Buah & Horti Lainnya'
 ];
 
@@ -636,7 +658,149 @@ export const BIBIT_CATALOG: BibitItem[] = [
   { nama: 'Jagung Bisi 222', produsen: 'BISI', komoditas: 'Jagung', deskripsi: 'Jagung pakan tongkol ganda.', keunggulan: ['Dua tongkol sama besar', 'Biji rapat merah'], potensiHasil: '13.5 Ton/Ha', umurPanen: '105 HST', rekomendasiDataran: 'Rendah-Menengah' },
   { nama: 'Padi Situ Bagendit', produsen: 'Sukamandi', komoditas: 'Padi', deskripsi: 'Padi gogo & sawah tadah hujan.', keunggulan: ['Tahan kekeringan lahan kering', 'Nasi pulen'], potensiHasil: '6.5 Ton/Ha', umurPanen: '110 HST', rekomendasiDataran: 'Rendah' },
   { nama: 'Padi Umbul Umbul', produsen: 'Petani Lokal', komoditas: 'Padi', deskripsi: 'Padi galur lokal berbulir panjang.', keunggulan: ['Malai super panjang 400 bulir', 'Nasi enak'], potensiHasil: '10 Ton/Ha', umurPanen: '105 HST', rekomendasiDataran: 'Rendah' },
-  { nama: 'Pepaya Bangkok', produsen: 'Impor Thailand', komoditas: 'Buah & Horti Lainnya', deskripsi: 'Pepaya buah jumbo.', keunggulan: ['Buah hingga 3kg', 'Daging kenyal manis'], potensiHasil: '70 Ton/Ha', umurPanen: '8 Bulan', rekomendasiDataran: 'Rendah' }
+  { nama: 'Pepaya Bangkok', produsen: 'Impor Thailand', komoditas: 'Buah & Horti Lainnya', deskripsi: 'Pepaya buah jumbo.', keunggulan: ['Buah hingga 3kg', 'Daging kenyal manis'], potensiHasil: '70 Ton/Ha', umurPanen: '8 Bulan', rekomendasiDataran: 'Rendah' },
+
+  // Komoditas pangan dan perkebunan yang lazim tersedia di marketplace/toko tani.
+  {
+    nama: 'Anjasmoro',
+    produsen: 'Penangkar benih bersertifikat',
+    komoditas: 'Kedelai',
+    deskripsi: 'Varietas kedelai berbiji besar untuk lahan sawah maupun tegalan sesuai rekomendasi wilayah.',
+    keunggulan: ['Biji besar', 'Bahan baku tempe', 'Benih tersedia melalui penangkar'],
+    potensiHasil: 'Ikuti deskripsi pada label benih',
+    umurPanen: '82 - 92 HST',
+    rekomendasiDataran: 'Rendah - Menengah',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: '1 kg atau 5 kg',
+    kelasBenih: 'Benih berlabel',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Dena 1',
+    produsen: 'Penangkar benih bersertifikat',
+    komoditas: 'Kedelai',
+    deskripsi: 'Kedelai adaptif naungan; kecocokan lokasi perlu dicocokkan dengan deskripsi varietas.',
+    keunggulan: ['Adaptif pada naungan', 'Pilihan diversifikasi lahan'],
+    potensiHasil: 'Ikuti deskripsi pada label benih',
+    umurPanen: '78 - 85 HST',
+    rekomendasiDataran: 'Rendah - Menengah',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: '1 kg atau 5 kg',
+    kelasBenih: 'Benih berlabel',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Vima 1',
+    produsen: 'Penangkar benih bersertifikat',
+    komoditas: 'Kacang Hijau & Kacang Tanah',
+    deskripsi: 'Kacang hijau berumur genjah untuk lahan sawah setelah padi atau tegalan.',
+    keunggulan: ['Umur genjah', 'Sesuai rotasi setelah padi'],
+    potensiHasil: 'Ikuti deskripsi pada label benih',
+    umurPanen: '55 - 60 HST',
+    rekomendasiDataran: 'Rendah',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: '1 kg atau 5 kg',
+    kelasBenih: 'Benih berlabel',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Talam 1',
+    produsen: 'Penangkar benih bersertifikat',
+    komoditas: 'Kacang Hijau & Kacang Tanah',
+    deskripsi: 'Kacang tanah untuk lahan kering; kebutuhan kapur dan drainase mengikuti hasil uji tanah.',
+    keunggulan: ['Adaptif lahan kering', 'Polong seragam'],
+    potensiHasil: 'Ikuti deskripsi pada label benih',
+    umurPanen: '90 - 100 HST',
+    rekomendasiDataran: 'Rendah - Menengah',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: '1 kg atau 5 kg',
+    kelasBenih: 'Benih berlabel',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Granola L',
+    produsen: 'Penangkar benih kentang',
+    komoditas: 'Umbi & Kentang',
+    deskripsi: 'Benih kentang konsumsi yang umum dipasarkan; pilih kelas benih dan ukuran umbi yang jelas.',
+    keunggulan: ['Pasar konsumsi luas', 'Benih tersedia dari penangkar dataran tinggi'],
+    potensiHasil: 'Mengikuti kelas benih dan kondisi lahan',
+    umurPanen: '90 - 120 HST',
+    rekomendasiDataran: 'Tinggi',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: '5 kg atau 20 kg',
+    kelasBenih: 'Umbi benih berlabel',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Ubi Jalar Cilembu',
+    produsen: 'Penangkar stek lokal',
+    komoditas: 'Umbi & Kentang',
+    deskripsi: 'Bahan tanam berupa stek pucuk; pastikan asal kebun induk dan bebas gejala virus.',
+    keunggulan: ['Bahan tanam mudah dikirim', 'Pasar segar dan olahan'],
+    potensiHasil: 'Mengikuti mutu stek dan kondisi lahan',
+    umurPanen: '120 - 150 HST',
+    rekomendasiDataran: 'Menengah - Tinggi',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: 'Ikat stek',
+    kelasBenih: 'Stek dari kebun induk sehat',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Pisang Cavendish Kultur Jaringan',
+    produsen: 'Laboratorium kultur jaringan',
+    komoditas: 'Pisang',
+    deskripsi: 'Bibit aklimatisasi dalam polybag; pilih pemasok dengan identitas varietas dan batch yang jelas.',
+    keunggulan: ['Pertumbuhan seragam', 'Mudah ditemukan di penjual bibit'],
+    potensiHasil: 'Mengikuti jarak tanam dan kondisi kebun',
+    umurPanen: '9 - 14 bulan',
+    rekomendasiDataran: 'Rendah - Menengah',
+    ketersediaan: 'Mudah ditemukan',
+    kemasanUmum: 'Bibit polybag satuan',
+    kelasBenih: 'Kultur jaringan teraklimatisasi',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Kopi Arabika S 795',
+    produsen: 'Penangkar bibit kopi',
+    komoditas: 'Kopi & Kakao',
+    deskripsi: 'Bibit kopi arabika untuk dataran tinggi; pilih bibit bersertifikat atau beridentitas sumber entres.',
+    keunggulan: ['Dikenal luas oleh penangkar', 'Pilihan kebun arabika'],
+    potensiHasil: 'Mengikuti umur tanaman dan pemeliharaan',
+    umurPanen: 'Mulai berproduksi 2,5 - 3,5 tahun',
+    rekomendasiDataran: 'Tinggi',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: 'Bibit polybag satuan',
+    kelasBenih: 'Bibit beridentitas sumber',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Kakao Sulawesi 1',
+    produsen: 'Penangkar bibit kakao',
+    komoditas: 'Kopi & Kakao',
+    deskripsi: 'Bahan tanam kakao klonal; pastikan identitas entres, sambungan, dan kesehatan bibit.',
+    keunggulan: ['Tersedia di sentra kakao', 'Bahan tanam klonal'],
+    potensiHasil: 'Mengikuti mutu bibit dan kondisi kebun',
+    umurPanen: 'Mulai berproduksi 2,5 - 3 tahun',
+    rekomendasiDataran: 'Rendah - Menengah',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: 'Bibit sambung polybag',
+    kelasBenih: 'Bibit beridentitas entres',
+    statusData: 'Perlu verifikasi'
+  },
+  {
+    nama: 'Kelapa Genjah',
+    produsen: 'Penangkar bibit kelapa',
+    komoditas: 'Kelapa',
+    deskripsi: 'Bibit siap tanam; varietas dan sumber kebun induk wajib tercantum oleh penjual.',
+    keunggulan: ['Mulai berbuah lebih cepat daripada tipe dalam', 'Banyak tersedia di penjual bibit'],
+    potensiHasil: 'Mengikuti varietas dan kondisi kebun',
+    umurPanen: 'Mulai berproduksi 3 - 5 tahun',
+    rekomendasiDataran: 'Rendah',
+    ketersediaan: 'Cukup mudah',
+    kemasanUmum: 'Bibit satuan',
+    kelasBenih: 'Bibit dari kebun induk teridentifikasi',
+    statusData: 'Perlu verifikasi'
+  }
 ];
 
 export const CUACA_OPTIONS = [
@@ -650,4 +814,3 @@ export const ELEVATION_OPTIONS = [
   { value: 'Menengah', label: 'Dataran Menengah (400 - 700 mdpl)' },
   { value: 'Tinggi', label: 'Dataran Tinggi (> 700 mdpl)' }
 ];
-

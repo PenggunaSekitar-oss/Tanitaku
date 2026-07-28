@@ -1,3 +1,5 @@
+import { buildMarketMetadata, MarketMetadata } from './marketMetadata';
+
 export interface Pupuk {
   id: string;
   nama: string;
@@ -13,6 +15,28 @@ export interface Pupuk {
   kekurangan?: string;
   hargaNonSubsidi?: string;
   hargaSubsidi?: string;
+}
+
+export type PupukCategory =
+  | 'Anorganik tunggal'
+  | 'Anorganik majemuk'
+  | 'Pupuk mikro'
+  | 'Pupuk daun'
+  | 'Pupuk organik'
+  | 'Pupuk hayati'
+  | 'Pembenah tanah'
+  | 'ZPT';
+
+export function getNormalizedPupukCategory(pupuk: Pupuk): PupukCategory {
+  const haystack = `${pupuk.nama} ${pupuk.kategori} ${pupuk.kandungan}`.toLowerCase();
+  if (/zpt|hormon|auksin|giberelin|sitokinin/.test(haystack)) return 'ZPT';
+  if (/hayati|mikroba|trichoderma|mikoriza|rhizobium|azotobacter|em4/.test(haystack)) return 'Pupuk hayati';
+  if (/dolomit|kaptan|kapur|humat|zeolit|biochar|pembenah/.test(haystack)) return 'Pembenah tanah';
+  if (/organik|kompos|kandang|kascing|guano|poc/.test(haystack)) return 'Pupuk organik';
+  if (/daun|foliar|gandasil|growmore|mamigro/.test(haystack)) return 'Pupuk daun';
+  if (/mikro|boron|zinc|seng|mangan|tembaga|fe |besi/.test(haystack)) return 'Pupuk mikro';
+  if (/majemuk|npk|map|mkp|kno3|dap/.test(haystack)) return 'Anorganik majemuk';
+  return 'Anorganik tunggal';
 }
 
 export function getPupukPrices(pupuk: Pupuk): { nonSubsidi: string; subsidi?: string } {
@@ -172,6 +196,11 @@ export function getPupukDetails(pupuk: Pupuk): {
     hargaNonSubsidi: prices.nonSubsidi,
     hargaSubsidi: prices.subsidi
   };
+}
+
+export function getPupukMarketMetadata(pupuk: Pupuk): MarketMetadata {
+  const details = getPupukDetails(pupuk);
+  return buildMarketMetadata('pupuk', `${pupuk.nama} ${pupuk.kategori}`, details.hargaNonSubsidi);
 }
 
 export const PUPUK_DB: Pupuk[] = [

@@ -3,11 +3,20 @@ import React, { useState } from 'react';
 import { Select } from '../components/Select';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CatalogMeta } from '../components/CatalogMeta';
-import { BIBIT_CATALOG as CATALOG, ELEVATION_OPTIONS, CUACA_OPTIONS, BibitItem, getBibitDetails } from '../data/bibitData';
+import {
+  BIBIT_CATALOG as CATALOG,
+  ELEVATION_OPTIONS,
+  CUACA_OPTIONS,
+  BibitItem,
+  getBibitDetails,
+  getBibitMarketMetadata,
+} from '../data/bibitData';
 import { CatalogHistory } from '../components/CatalogHistory';
 import { CatalogComparison, CompareToggle, ComparisonItem } from '../components/CatalogComparison';
 import { EmptyState } from '../components/EmptyState';
 import { HelpTip } from '../components/HelpTip';
+import { MarketPriceCard } from '../components/MarketPriceCard';
+import { marketAvailabilityRank } from '../data/marketMetadata';
 import {
   CatalogHistoryEntry,
   readCatalogHistory,
@@ -52,6 +61,7 @@ export function CariBibitView() {
       const scored = CATALOG.map(item => {
         let score = 0;
         let isMatch = true;
+        score += marketAvailabilityRank(getBibitMarketMetadata(item).availability) * 2;
         
         // Match Komoditas / Nama
         if (query) {
@@ -252,7 +262,7 @@ export function CariBibitView() {
               {results.map((item, idx) => {
                 const details = getBibitDetails(item);
                 return (
-                  <div key={idx} className="bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col h-full relative overflow-hidden">
+                  <div key={`${item.nama}:${item.produsen}`} className="bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col h-full relative overflow-hidden">
                     {idx === 0 && (item as any).score >= 15 && (
                       <div className="absolute -top-3 -right-2 bg-[#154734] text-white font-extrabold text-[10px] px-3 py-1 rounded border border-[#0A0A0A] z-10 flex items-center gap-1">
                         <span className="material-symbols-outlined text-[14px]">star</span>
@@ -323,17 +333,24 @@ export function CariBibitView() {
                           <span className="text-xs font-bold text-[#0A0A0A]">{item.potensiHasil}</span>
                         </div>
                         
-                        {/* Harga Kemasan Section */}
-                        <div className="col-span-2 bg-[#8A9A5B] border border-[#0A0A0A] p-2.5 rounded flex flex-col gap-1 text-white shadow-2xs">
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider text-white flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[14px] text-white">sell</span>
-                            Harga Per Kemasan (Pasaran Bebas)
-                          </span>
-                          <span className="text-sm font-black text-white">{details.harga}</span>
+                        <div className="col-span-2">
+                          <MarketPriceCard
+                            catalog="bibit"
+                            itemId={`${item.nama}:${item.produsen}`}
+                            metadata={getBibitMarketMetadata(item)}
+                          />
                         </div>
                       </div>
 
                       <div className="border-t-2 border-[#0A0A0A] pt-3 mt-auto flex flex-col gap-2">
+                        <div className="grid grid-cols-1 gap-2 text-[11px] sm:grid-cols-2">
+                          <p className="rounded border border-[#C8C5BC] bg-white p-2 text-[#4F5B54]">
+                            Mutu bahan tanam: <b>{item.kelasBenih || 'Periksa label, lot, dan pemasok'}</b>
+                          </p>
+                          <p className="rounded border border-[#C8C5BC] bg-white p-2 text-[#4F5B54]">
+                            Status metadata: <b>{item.statusData || 'Perlu verifikasi label'}</b>
+                          </p>
+                        </div>
                         <div>
                           <span className="text-[10px] font-bold uppercase tracking-wider text-[#154734] block mb-1 flex items-center gap-1">
                             <span className="material-symbols-outlined text-[14px]">check_circle</span> 
