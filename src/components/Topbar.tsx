@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 import { BrandLockup } from './BrandLockup';
+import { SyncStatus } from './SyncStatus';
 
 interface TopbarProps {
   onOpenSidebar: () => void;
@@ -75,6 +76,7 @@ export function Topbar({ onOpenSidebar, currentView }: TopbarProps) {
       </div>
 
       <div className="flex items-center gap-2.5">
+        <SyncStatus />
         {/* Notification Bell Button & Drawer Container */}
         <div className="relative">
           <button

@@ -8,6 +8,8 @@ import { AccessGate } from './components/AccessGate';
 import { ToastProvider } from './context/ToastContext';
 import { AgriDynamicToastNotifier } from './components/AgriDynamicToastNotifier';
 import { BrandLockup } from './components/BrandLockup';
+import { Breadcrumbs } from './components/Breadcrumbs';
+import { ModuleSkeleton } from './components/Skeleton';
 
 const DashboardView = lazy(() => import('./views/DashboardView').then((module) => ({ default: module.DashboardView })));
 const PemantauanView = lazy(() => import('./views/PemantauanView').then((module) => ({ default: module.PemantauanView })));
@@ -100,6 +102,7 @@ export default function App() {
               <Topbar currentView={currentView} onOpenSidebar={() => setSidebarOpen(true)} />
               <div className="flex-1 overflow-y-auto flex flex-col justify-between">
                 <main className="app-content mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 lg:p-8 xl:px-10">
+                  <Breadcrumbs currentView={currentView} onNavigate={navigateTo} />
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentView}
@@ -110,11 +113,7 @@ export default function App() {
                       className="w-full h-full"
                     >
                       <Suspense
-                        fallback={
-                          <div className="min-h-[40vh] flex items-center justify-center text-sm font-bold text-slate-500">
-                            Memuat modul TANITA…
-                          </div>
-                        }
+                        fallback={<ModuleSkeleton />}
                       >
                         {renderView()}
                       </Suspense>

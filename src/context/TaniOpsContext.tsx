@@ -142,7 +142,11 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
 
   const safeSetItem = (key: string, value: unknown): boolean => {
     try {
+      window.dispatchEvent(new CustomEvent('taniops-storage-saving', { detail: { key } }));
       localStorage.setItem(key, JSON.stringify(value));
+      const savedAt = new Date().toISOString();
+      localStorage.setItem('tanita_last_saved_at', savedAt);
+      window.dispatchEvent(new CustomEvent('taniops-storage-saved', { detail: { key, savedAt } }));
       return true;
     } catch (e) {
       console.error(`Gagal menyimpan ${key} ke penyimpanan browser`, e);

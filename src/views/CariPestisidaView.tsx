@@ -5,8 +5,20 @@ import { TanamanSelect } from '../components/TanamanSelect';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CatalogMeta } from '../components/CatalogMeta';
 import { InlineNotice } from '../components/InlineNotice';
+import { CatalogHistory } from '../components/CatalogHistory';
+import { CatalogComparison, CompareToggle, ComparisonItem } from '../components/CatalogComparison';
+import { EmptyState } from '../components/EmptyState';
 import { PESTISIDA_CATALOG, HAMA_OPTIONS, PestisidaItem } from '../data/pestisidaData';
 import { searchPesticides } from '../utils/pesticideSearch';
+import {
+  CatalogHistoryEntry,
+  readCatalogHistory,
+  upsertCatalogHistory,
+  writeCatalogHistory,
+} from '../utils/catalogHistory';
+
+type PestisidaFilters = { hama: string; tanaman: string };
+const HISTORY_KEY = 'tanita_history_pestisida';
 
 export function CariPestisidaView() {
   const [hamaInput, setHamaInput] = useState('');
@@ -15,6 +27,10 @@ export function CariPestisidaView() {
   const [results, setResults] = useState<typeof PESTISIDA_CATALOG>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [feedbackToast, setFeedbackToast] = useState<{ message: string; type: 'success' | 'info' | 'error' } | null>(null);
+  const [history, setHistory] = useState<CatalogHistoryEntry<PestisidaFilters>[]>(() =>
+    readCatalogHistory<PestisidaFilters>(HISTORY_KEY),
+  );
+  const [compareIds, setCompareIds] = useState<string[]>([]);
 
   useEffect(() => {
     if (feedbackToast) {
@@ -64,6 +80,26 @@ export function CariPestisidaView() {
     return matches.length;
   };
 
+  const saveSearch = (hamaVal: string, tanamanVal: string) => {
+    const filters = { hama: hamaVal, tanaman: tanamanVal };
+    const summary = [hamaVal || 'Semua target', tanamanVal ? `pada ${tanamanVal}` : '']
+      .filter(Boolean)
+      .join(' ');
+    setHistory((current) => {
+      const next = upsertCatalogHistory(current, filters, summary);
+      writeCatalogHistory(HISTORY_KEY, next);
+      return next;
+    });
+  };
+
+  const handleHistorySelect = (entry: CatalogHistoryEntry<PestisidaFilters>) => {
+    setHamaInput(entry.filters.hama);
+    setTanamanInput(entry.filters.tanaman);
+    setHasSearched(true);
+    performSearch(entry.filters.hama, entry.filters.tanaman);
+    setFeedbackToast(null);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -79,13 +115,11 @@ export function CariPestisidaView() {
 
     setHasSearched(true);
     const resultCount = performSearch(hamaInput, tanamanInput);
+    saveSearch(hamaInput, tanamanInput);
 
     let msg = 'Menampilkan seluruh katalog pestisida.';
     if (resultCount === 0) {
-      setFeedbackToast({
-        message: 'Tidak ada produk yang cocok. Periksa ejaan dan verifikasi label produk; aplikasi tidak akan menampilkan produk pengganti yang tidak relevan.',
-        type: 'error',
-      });
+      setFeedbackToast(null);
       return;
     } else if (hamaInput && tanamanInput) {
       msg = `Ditemukan ${resultCount} produk dengan sasaran ${hamaInput}. ${tanamanInput} dipakai sebagai konteks; pastikan tanaman tersebut tercantum pada label produk.`;
@@ -101,17 +135,35 @@ export function CariPestisidaView() {
     setHasSearched(false);
     setResults([]);
     setShowResetConfirm(false);
+    setCompareIds([]);
     setFeedbackToast({ message: 'Filter pencarian pestisida & tanaman berhasil direset.', type: 'info' });
   };
 
-  const getIconForJenis = (jenis: string) => {
-    const j = jenis.toLowerCase();
-    if (j.includes('insektisida')) return 'bug_report';
-    if (j.includes('fungisida')) return 'coronavirus';
-    if (j.includes('bakterisida')) return 'microbiology';
-    if (j.includes('moluskisida') || j.includes('nematisida')) return 'pest_control';
-    return 'science';
+  const toggleCompare = (id: string) => {
+    setCompareIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : current.length < 3
+          ? [...current, id]
+          : current,
+    );
   };
+
+  const comparisonItems: ComparisonItem[] = compareIds
+    .map((id) => PESTISIDA_CATALOG.find((item) => item.nama === id))
+    .filter((item): item is PestisidaItem => Boolean(item))
+    .map((item) => ({
+      id: item.nama,
+      name: item.nama,
+      subtitle: item.jenis,
+      values: {
+        active: item.bahanAktif,
+        target: item.sasaran.join(', '),
+        dose: item.dosis,
+        price: item.harga,
+        note: item.kekurangan,
+      },
+    }));
 
   // Helper untuk menyesuaikan petunjuk penggunaan produk dengan target pencarian.
   const getRumus5Tepat = (hama: string, tanaman: string, item: PestisidaItem) => {
@@ -172,6 +224,15 @@ export function CariPestisidaView() {
             onClose={() => setFeedbackToast(null)}
           />
         )}
+
+      <CatalogHistory
+        entries={history}
+        onSelect={handleHistorySelect}
+        onClear={() => {
+          setHistory([]);
+          writeCatalogHistory(HISTORY_KEY, []);
+        }}
+      />
 
       <section className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6">
         <h2 className="mb-4 font-display text-base font-semibold text-[#26352D]">
@@ -252,6 +313,19 @@ export function CariPestisidaView() {
             </span>
           </div>
 
+          <CatalogComparison
+            items={comparisonItems}
+            fields={[
+              { key: 'active', label: 'Bahan aktif' },
+              { key: 'target', label: 'Sasaran katalog' },
+              { key: 'dose', label: 'Dosis label' },
+              { key: 'price', label: 'Kisaran harga' },
+              { key: 'note', label: 'Catatan' },
+            ]}
+            onRemove={toggleCompare}
+            onClear={() => setCompareIds([])}
+          />
+
           {results.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {results.map((item, idx) => {
@@ -264,9 +338,11 @@ export function CariPestisidaView() {
                         <h3 className="font-display font-extrabold text-lg text-white uppercase leading-snug">{item.nama}</h3>
                         <p className="text-xs font-mono text-white/80 mt-0.5">{item.jenis} &middot; {item.bahanAktif}</p>
                       </div>
-                      <span className="material-symbols-outlined text-white bg-[#0A0A0A] p-2 rounded border border-[#0A0A0A] text-[22px] shrink-0">
-                        {getIconForJenis(item.jenis)}
-                      </span>
+                      <CompareToggle
+                        selected={compareIds.includes(item.nama)}
+                        disabled={compareIds.length >= 3}
+                        onClick={() => toggleCompare(item.nama)}
+                      />
                     </div>
 
                     <div className="p-4 flex flex-col gap-3 flex-1">
@@ -343,15 +419,11 @@ export function CariPestisidaView() {
               })}
             </div>
           ) : (
-            <div className="p-12 bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] text-center flex flex-col items-center justify-center gap-4 rounded">
-              <span className="material-symbols-outlined text-5xl text-[#5C5C5C]">search_off</span>
-              <div>
-                <p className="text-base font-bold text-[#0A0A0A]">Tidak ada pestisida ditemukan</p>
-                <p className="text-xs text-[#5C5C5C] mt-1">
-                  Belum ada produk dengan sasaran yang cocok untuk hama atau penyakit tersebut.
-                </p>
-              </div>
-            </div>
+            <EmptyState
+              icon="search_off"
+              title="Belum ada hasil yang cocok"
+              message="Ubah target pencarian atau pilih salah satu pencarian terakhir."
+            />
           )}
         </div>
       )}

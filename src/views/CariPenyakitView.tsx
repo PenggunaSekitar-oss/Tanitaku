@@ -4,6 +4,18 @@ import { Select } from '../components/Select';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CatalogMeta } from '../components/CatalogMeta';
 import { PENYAKIT_DB as PENYAKIT_CATALOG, TANAMAN_OPTIONS, PENYAKIT_OPTIONS, Penyakit } from '../data/penyakitData';
+import { CatalogHistory } from '../components/CatalogHistory';
+import { EmptyState } from '../components/EmptyState';
+import { HelpTip } from '../components/HelpTip';
+import {
+  CatalogHistoryEntry,
+  readCatalogHistory,
+  upsertCatalogHistory,
+  writeCatalogHistory,
+} from '../utils/catalogHistory';
+
+type PenyakitFilters = { penyakit: string; tanaman: string; kategori: string };
+const HISTORY_KEY = 'tanita_history_penyakit';
 
 export function CariPenyakitView({ navigate }: { navigate?: (view: string) => void }) {
   const [penyakitInput, setPenyakitInput] = useState('');
@@ -12,16 +24,22 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
   const [hasSearched, setHasSearched] = useState(false);
   const [results, setResults] = useState<Penyakit[]>([]);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [history, setHistory] = useState<CatalogHistoryEntry<PenyakitFilters>[]>(() =>
+    readCatalogHistory<PenyakitFilters>(HISTORY_KEY),
+  );
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performSearch = (
+    penyakitValue: string,
+    tanamanValue: string,
+    kategoriValue: string,
+  ) => {
     setHasSearched(true);
       
       const scored = PENYAKIT_CATALOG.map(item => {
         let score = 0;
         let isMatch = true;
         
-        const qPenyakit = penyakitInput.trim().toLowerCase();
+        const qPenyakit = penyakitValue.trim().toLowerCase();
         if (qPenyakit) {
             if (item.nama.toLowerCase() === qPenyakit) {
                 score += 15;
@@ -32,16 +50,16 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             }
         }
         
-        if (tanamanInput !== 'Semua') {
-            if (item.tanaman.some(t => t === tanamanInput || t.includes(tanamanInput))) {
+        if (tanamanValue !== 'Semua') {
+            if (item.tanaman.some(t => t === tanamanValue || t.includes(tanamanValue))) {
                 score += 10;
             } else {
                 isMatch = false;
             }
         }
 
-        if (kategoriInput !== 'Semua') {
-            if (item.kategori.toLowerCase() === kategoriInput.toLowerCase()) {
+        if (kategoriValue !== 'Semua') {
+            if (item.kategori.toLowerCase() === kategoriValue.toLowerCase()) {
                 score += 5;
             } else {
                 isMatch = false;
@@ -55,6 +73,34 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
       filtered.sort((a, b) => b.score - a.score);
 
     setResults(filtered);
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    performSearch(penyakitInput, tanamanInput, kategoriInput);
+    const filters = {
+      penyakit: penyakitInput,
+      tanaman: tanamanInput,
+      kategori: kategoriInput,
+    };
+    setHistory((current) => {
+      const next = upsertCatalogHistory(
+        current,
+        filters,
+        [penyakitInput || 'Semua penyakit', tanamanInput, kategoriInput]
+          .filter((value) => value && value !== 'Semua')
+          .join(' · '),
+      );
+      writeCatalogHistory(HISTORY_KEY, next);
+      return next;
+    });
+  };
+
+  const handleHistorySelect = (entry: CatalogHistoryEntry<PenyakitFilters>) => {
+    setPenyakitInput(entry.filters.penyakit);
+    setTanamanInput(entry.filters.tanaman);
+    setKategoriInput(entry.filters.kategori);
+    performSearch(entry.filters.penyakit, entry.filters.tanaman, entry.filters.kategori);
   };
 
   const availablePenyakit = tanamanInput === 'Semua' 
@@ -102,6 +148,14 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
       />
 
       <div className="flex w-full flex-col gap-5">
+      <CatalogHistory
+        entries={history}
+        onSelect={handleHistorySelect}
+        onClear={() => {
+          setHistory([]);
+          writeCatalogHistory(HISTORY_KEY, []);
+        }}
+      />
       <section className="rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6] p-4 sm:p-6">
         <h2 className="mb-4 font-display text-base font-semibold text-[#26352D]">
           Filter hama dan penyakit
@@ -127,7 +181,10 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
             />
           </div>
           <div className="flex flex-col w-full">
-            <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Nama Hama / Penyakit Spesifik</label>
+            <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">
+              Nama hama / penyakit spesifik
+              <HelpTip label="Identifikasi penyakit" text="Hasil berasal dari kecocokan nama dan gejala katalog, bukan diagnosis laboratorium atau pengamatan langsung di lahan." />
+            </label>
             <Select 
               options={dynamicPenyakitOptions} 
               value={penyakitInput} 
@@ -251,13 +308,11 @@ export function CariPenyakitView({ navigate }: { navigate?: (view: string) => vo
               })}
             </div>
           ) : (
-            <div className="p-12 bg-[#FEFEFA] border-2 border-dashed border-[#0A0A0A] text-center flex flex-col items-center justify-center gap-4 rounded">
-              <span className="material-symbols-outlined text-5xl text-[#5C5C5C]">search_off</span>
-              <div>
-                <p className="text-base font-bold text-[#0A0A0A]">Tidak ada referensi ditemukan</p>
-                <p className="text-xs text-[#5C5C5C] mt-1">Coba ubah filter tanaman atau kategori organisme.</p>
-              </div>
-            </div>
+            <EmptyState
+              icon="search_off"
+              title="Belum ada referensi yang cocok"
+              message="Ubah tanaman, kategori, atau nama penyakit lalu coba kembali."
+            />
           )}
         </div>
       )}
