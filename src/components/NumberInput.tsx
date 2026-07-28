@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { parseLocalizedNumberInput } from '../utils/numberInput';
 
 interface NumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
   value: number;
@@ -24,38 +25,15 @@ export function NumberInput({ value, onNumberChange, allowDecimals = false, clas
   }, [value, allowDecimals]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let rawValue = e.target.value;
-    
-    if (rawValue === '') {
-      setDisplayValue('');
-      onNumberChange(0);
-      return;
-    }
-
-    if (allowDecimals) {
-      // allow numbers and comma
-      rawValue = rawValue.replace(/[^0-9,]/g, '');
-      setDisplayValue(rawValue);
-      const floatVal = parseFloat(rawValue.replace(',', '.'));
-      if (!isNaN(floatVal)) {
-        onNumberChange(floatVal);
-      }
-    } else {
-      rawValue = rawValue.replace(/\./g, '').replace(/[^0-9]/g, '');
-      const num = parseInt(rawValue, 10);
-      if (!isNaN(num)) {
-        setDisplayValue(new Intl.NumberFormat('id-ID').format(num));
-        onNumberChange(num);
-      } else {
-        setDisplayValue('');
-        onNumberChange(0);
-      }
-    }
+    const parsed = parseLocalizedNumberInput(e.target.value, allowDecimals);
+    setDisplayValue(parsed.displayValue);
+    onNumberChange(parsed.value ?? 0);
   };
 
   return (
     <input
       type="text"
+      inputMode={allowDecimals ? 'decimal' : 'numeric'}
       value={displayValue}
       onChange={handleChange}
       className={className}

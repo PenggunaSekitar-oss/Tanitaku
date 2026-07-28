@@ -2,7 +2,6 @@ import { PageHeader } from '../components/PageHeader';
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import { useTaniOps } from '../context/TaniOpsContext';
-import { NumberInput } from '../components/NumberInput';
 import { AgriNotificationWidget } from '../components/AgriNotificationWidget';
 import { ConfirmModal } from '../components/ConfirmModal';
 
@@ -15,7 +14,6 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
   const { clearAllData } = useTaniOps();
   const [farmName, setFarmName] = useState<string>('');
   const [managerName, setManagerName] = useState<string>('');
-  const [interval, setInterval] = useState<number>(15);
 
   // Modal konfirmasi state
   const [modalConfig, setModalConfig] = useState<{
@@ -41,22 +39,20 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
     if (savedFarm) setFarmName(savedFarm);
     const savedManager = localStorage.getItem('tanita_manager_name');
     if (savedManager) setManagerName(savedManager);
-    const savedInterval = localStorage.getItem('tanita_autosave_interval');
-    if (savedInterval) setInterval(Number(savedInterval) || 15);
+    localStorage.removeItem('tanita_autosave_interval');
   }, []);
 
   const handleSave = () => {
     setModalConfig({
       isOpen: true,
       title: 'Simpan Pengaturan Profil',
-      message: 'Apakah Anda yakin ingin menyimpan perubahan profil kebun, nama manajer, dan preferensi interval autosave ini?',
+      message: 'Apakah Anda yakin ingin menyimpan perubahan profil kebun dan nama manajer?',
       confirmText: 'SIMPAN SEKARANG',
       confirmVariant: 'primary',
       icon: 'save',
       onConfirm: () => {
         localStorage.setItem('tanita_farm_name', farmName);
         localStorage.setItem('tanita_manager_name', managerName);
-        localStorage.setItem('tanita_autosave_interval', interval.toString());
         showToast('Pengaturan sistem berhasil disimpan', 'success');
         setModalConfig((prev) => ({ ...prev, isOpen: false }));
       },
@@ -67,17 +63,15 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
     setModalConfig({
       isOpen: true,
       title: 'Reset Pengaturan Profil',
-      message: 'Apakah Anda yakin ingin mengembalikan profil kebun dan preferensi autosave ke setelan awal default?',
+      message: 'Apakah Anda yakin ingin mengembalikan profil kebun ke setelan awal default?',
       confirmText: 'RESET SETELAN',
       confirmVariant: 'warning',
       icon: 'restart_alt',
       onConfirm: () => {
         setFarmName('');
         setManagerName('');
-        setInterval(15);
         localStorage.removeItem('tanita_farm_name');
         localStorage.removeItem('tanita_manager_name');
-        localStorage.removeItem('tanita_autosave_interval');
         showToast('Pengaturan dikembalikan ke default', 'info');
         setModalConfig((prev) => ({ ...prev, isOpen: false }));
       },
@@ -109,8 +103,7 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
       confirmVariant: 'danger',
       icon: 'lock',
       onConfirm: () => {
-        localStorage.removeItem('tanita_access_granted');
-        localStorage.removeItem('tanita_redeem_code');
+        localStorage.removeItem('tanita_access_code_hash');
         showToast('Akses dikunci kembali. Halaman akan dimuat ulang...', 'info');
         setModalConfig((prev) => ({ ...prev, isOpen: false }));
         setTimeout(() => {
@@ -200,29 +193,17 @@ export function PengaturanView({ navigate }: PengaturanViewProps) {
             </div>
 
             <div className="flex flex-col gap-3">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#5C5C5C] mb-1.5">
-                  Interval Autosave (Menit)
-                </label>
-                <NumberInput 
-                  value={interval} 
-                  onNumberChange={setInterval} 
-                  className="w-full bg-white border-2 border-[#0A0A0A] p-2.5 text-xs text-[#0A0A0A] rounded font-mono" 
-                  placeholder="15" 
-                />
-              </div>
-
-              <div className="pt-2 border-t border-[#0A0A0A]/20 flex items-center justify-between">
-                <span className="text-xs font-bold text-[#0A0A0A]">Autosave Otomatis</span>
+              <div className="pt-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-[#0A0A0A]">Penyimpanan Otomatis</span>
                 <span className="text-[10px] font-mono font-bold bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
-                  AKTIF ({interval} mnt)
+                  LANGSUNG AKTIF
                 </span>
               </div>
             </div>
           </div>
 
           <p className="text-xs text-[#5C5C5C]">
-            Data jurnal, biaya, dan panen tersimpan otomatis ke penyimpanan lokal browser.
+            Setiap perubahan jurnal, biaya, dan tanaman langsung disimpan ke penyimpanan lokal browser tanpa menunggu interval.
           </p>
         </div>
 

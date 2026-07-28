@@ -2,9 +2,9 @@ export function calculateHST(tanggalTanam: string): number {
   if (!tanggalTanam) return 0;
   const parts = tanggalTanam.split('-');
   if (parts.length !== 3) return 0;
-  const year = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10) - 1;
-  const day = parseInt(parts[2], 10);
+  const year = parseInt(parts[0] ?? '', 10);
+  const month = parseInt(parts[1] ?? '', 10) - 1;
+  const day = parseInt(parts[2] ?? '', 10);
   if (isNaN(year) || isNaN(month) || isNaN(day)) return 0;
 
   // Use local midnight to avoid timezone conversion offsets
@@ -20,7 +20,7 @@ export function calculateHST(tanggalTanam: string): number {
 }
 
 export function determineFaseTanaman(hst: number): string {
-  if (hst === 0) return "Belum Tanam";
+  if (hst === 0) return "Hari Tanam";
   if (hst <= 14) return "Vegetatif Awal";
   if (hst <= 35) return "Vegetatif Aktif";
   if (hst <= 55) return "Pembungaan";
@@ -47,10 +47,10 @@ export function getRecommendations(hst: number): { pupuk: string; pestisida: str
   if (hst === 0) {
     return {
       pupuk: "Pupuk dasar (Organik/Kompos, SP-36)",
-      pestisida: "Insektisida preventif untuk hama tanah",
-      perawatan: "Persiapan lahan dan pembuatan bedengan",
+      pestisida: "Pantau hama tanah; gunakan produk hanya jika diperlukan",
+      perawatan: "Penyiraman awal dan pemeriksaan adaptasi tanaman",
       hama: "Uret, Orong-orong, Semut",
-      tips: "Pastikan kelembapan tanah cukup sebelum tanam"
+      tips: "Jaga kelembapan dan hindari genangan pada hari tanam"
     };
   }
   if (hst <= 14) {

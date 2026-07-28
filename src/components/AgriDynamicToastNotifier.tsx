@@ -1,6 +1,11 @@
 import React, { useEffect, useRef } from 'react';
 import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
+import {
+  differenceInCalendarDays,
+  formatLocalDate,
+  getNextScheduledDate,
+} from '../utils/localDate';
 
 interface AgriDynamicToastNotifierProps {
   navigate?: (view: string) => void;
@@ -55,16 +60,6 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
             actionLabel: 'Lihat Pemantauan',
             onAction: () => navigate && navigate('pemantauan'),
           });
-        } else {
-          showAgriToast({
-            title: 'Perubahan Status Tanaman',
-            badgeText: currentStatus.toUpperCase(),
-            type: 'info',
-            category: 'umum',
-            icon: 'published_with_changes',
-            message: `Status tanaman "${t.komoditas}" di ${namaBlok} diperbarui menjadi ${currentStatus}.`,
-            duration: 6000,
-          });
         }
       }
 
@@ -82,26 +77,17 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = formatLocalDate(today);
 
     pemupukan.forEach((item) => {
       if (!item.tanggalAplikasi) return;
 
-      const parts = item.tanggalAplikasi.split('-');
-      if (parts.length !== 3) return;
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10);
-      const day = parseInt(parts[2], 10);
+      const appDate = getNextScheduledDate(item.tanggalAplikasi, item.intervalHari, today);
+      if (!appDate) return;
+      const scheduledDate = formatLocalDate(appDate);
+      const diffDays = differenceInCalendarDays(appDate, today);
 
-      if (isNaN(year) || isNaN(month) || isNaN(day)) return;
-
-      const appDate = new Date(year, month - 1, day);
-      appDate.setHours(0, 0, 0, 0);
-
-      const diffTime = appDate.getTime() - today.getTime();
-      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-
-      const notifKey = `pnotif-${item.id}-${item.tanggalAplikasi}-${diffDays}-${todayStr}`;
+      const notifKey = `pnotif-${item.id}-${scheduledDate}-${diffDays}-${todayStr}`;
 
       if (notifiedPemupukanKeysRef.current.has(notifKey)) return;
 
@@ -112,7 +98,7 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
       if (diffDays === 0) {
         notifiedPemupukanKeysRef.current.add(notifKey);
         showAgriToast({
-          id: `pemupukan-${item.id}-0d`,
+          id: `pemupukan-${item.id}-${scheduledDate}-0d`,
           title: 'Jadwal Pemupukan Hari Ini!',
           badgeText: 'HARI INI',
           type: 'warning',
@@ -128,13 +114,13 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
       else if (diffDays > 0 && diffDays <= 3) {
         notifiedPemupukanKeysRef.current.add(notifKey);
         showAgriToast({
-          id: `pemupukan-${item.id}-${diffDays}d`,
+          id: `pemupukan-${item.id}-${scheduledDate}-${diffDays}d`,
           title: 'Pengingat Jadwal Pemupukan',
           badgeText: `${diffDays} HARI LAGI`,
           type: 'info',
           category: 'pemupukan',
           icon: 'schedule',
-          message: `Jadwal ${item.jenisPupuk} (${item.kategori}) di ${namaBlok} tinggal ${diffDays} hari lagi (${item.tanggalAplikasi}).\nPersiapkan stok pupuk & alat kocor.`,
+          message: `Jadwal ${item.jenisPupuk} (${item.kategori}) di ${namaBlok} tinggal ${diffDays} hari lagi (${scheduledDate}).\nPersiapkan stok pupuk & alat kocor.`,
           duration: 8000,
           actionLabel: 'Lihat Jadwal',
           onAction: () => navigate && navigate('pemupukan'),
@@ -144,13 +130,13 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
       else if (diffDays < 0 && Math.abs(diffDays) <= 7) {
         notifiedPemupukanKeysRef.current.add(notifKey);
         showAgriToast({
-          id: `pemupukan-${item.id}-overdue`,
+          id: `pemupukan-${item.id}-${scheduledDate}-overdue`,
           title: 'Jadwal Pemupukan Terlewat!',
           badgeText: `TERLEWAT ${Math.abs(diffDays)} HARI`,
           type: 'error',
           category: 'pemupukan',
           icon: 'warning',
-          message: `Jadwal ${item.jenisPupuk} di ${namaBlok} terlewat ${Math.abs(diffDays)} hari (${item.tanggalAplikasi}).\nSegera lakukan pemupukan agar nutrisi tanaman terjaga.`,
+          message: `Jadwal ${item.jenisPupuk} di ${namaBlok} terlewat ${Math.abs(diffDays)} hari (${scheduledDate}).\nSegera lakukan pemupukan agar nutrisi tanaman terjaga.`,
           duration: 9000,
           actionLabel: 'Kelola Jadwal',
           onAction: () => navigate && navigate('pemupukan'),

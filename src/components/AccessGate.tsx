@@ -4,13 +4,22 @@ interface AccessGateProps {
   children: React.ReactNode;
 }
 
-// Secret valid codes (TNT27AGS is the confidential master key)
-const VALID_CODES = [
-  'TNT27AGS',
-  'TANITA2026',
-  'TANITA-PRO',
-  'TANITA-VIP'
+// Offline access codes cannot provide server-grade authorization. Keeping only
+// digests prevents the raw activation codes from being shipped in the bundle.
+const VALID_CODE_HASHES = [
+  '802c1a85c1eb04d132e8f12c3ebd10ece869a764bdd930244ade2b8712d25aa5',
+  '8a91c9007231752a91ce51701f262581e45e8d8506ac8f9dda07bc72eb307fe5',
+  '9e05b273466a570954e7e97f580456c62050902a6032276ec7251636ae55d9fa',
+  '871c58f635b5313f3d0d1fc5cf3281b28bf2c3fc23a7f524bcb4f3139988e655',
 ];
+
+async function sha256(value: string): Promise<string> {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
+}
 
 export function AccessGate({ children }: AccessGateProps) {
   const [isUnlocked, setIsUnlocked] = useState<boolean>(false);
@@ -19,15 +28,18 @@ export function AccessGate({ children }: AccessGateProps) {
   const [successMsg, setSuccessMsg] = useState<string>('');
   const [showHintModal, setShowHintModal] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isVerifying, setIsVerifying] = useState<boolean>(false);
 
   useEffect(() => {
-    const savedUnlocked = localStorage.getItem('tanita_access_granted');
-    if (savedUnlocked === 'true') {
+    const savedCodeHash = localStorage.getItem('tanita_access_code_hash');
+    if (savedCodeHash && VALID_CODE_HASHES.includes(savedCodeHash)) {
       setIsUnlocked(true);
     }
+    localStorage.removeItem('tanita_access_granted');
+    localStorage.removeItem('tanita_redeem_code');
   }, []);
 
-  const handleVerifyCode = () => {
+  const handleVerifyCode = async () => {
     const code = inputCode.trim().toUpperCase().replace(/\s+/g, '');
     
     if (!code) {
@@ -36,25 +48,31 @@ export function AccessGate({ children }: AccessGateProps) {
       return;
     }
 
-    if (VALID_CODES.includes(code)) {
-      setErrorMsg('');
-      setSuccessMsg('Kode Akses Valid! Membuka sistem TANITA Operations...');
-      
-      setTimeout(() => {
-        localStorage.setItem('tanita_access_granted', 'true');
-        localStorage.setItem('tanita_redeem_code', 'VERIFIED');
+    setIsVerifying(true);
+    try {
+      const codeHash = await sha256(code);
+      if (VALID_CODE_HASHES.includes(codeHash)) {
+        setErrorMsg('');
+        setSuccessMsg('Kode akses valid. Membuka TANITA Operations...');
+        localStorage.setItem('tanita_access_code_hash', codeHash);
         setIsUnlocked(true);
+        setInputCode('');
         setSuccessMsg('');
-      }, 600);
-    } else {
+        return;
+      }
+
       setSuccessMsg('');
       setErrorMsg('Kode Akses tidak valid. Silakan periksa kembali.');
+    } catch {
+      setSuccessMsg('');
+      setErrorMsg('Verifikasi lokal tidak tersedia pada browser ini.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
   const handleLock = () => {
-    localStorage.removeItem('tanita_access_granted');
-    localStorage.removeItem('tanita_redeem_code');
+    localStorage.removeItem('tanita_access_code_hash');
     setIsUnlocked(false);
     setInputCode('');
     setErrorMsg('');
@@ -86,7 +104,7 @@ export function AccessGate({ children }: AccessGateProps) {
 
             <div className="inline-flex items-center gap-1.5 bg-slate-100 text-slate-800 border border-slate-200 font-display font-extrabold text-[11px] px-3 py-1 rounded-full uppercase tracking-wider">
               <span className="material-symbols-outlined text-xs font-extrabold text-[#154734]">verified_user</span>
-              <span>Sistem Akses Terproteksi</span>
+              <span>Kunci Akses Perangkat</span>
             </div>
 
             <div className="space-y-1 mt-1">
@@ -94,7 +112,7 @@ export function AccessGate({ children }: AccessGateProps) {
                 Redeem Kode Akses
               </h1>
               <p className="text-xs sm:text-sm font-display font-semibold text-slate-600 leading-relaxed max-w-xs mx-auto">
-                Masukkan kode lisensi resmi untuk membuka akses penuh operasional TANITA.
+                Masukkan kode aktivasi untuk membuka aplikasi pada perangkat ini.
               </p>
             </div>
           </div>
@@ -166,9 +184,10 @@ export function AccessGate({ children }: AccessGateProps) {
             {/* Primary Action Button */}
             <button
               type="submit"
+              disabled={isVerifying}
               className="w-full h-12 bg-slate-950 hover:bg-slate-900 active:scale-[0.99] text-white font-display font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-2xs hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 border border-slate-800"
             >
-              <span>Verifikasi & Buka Akses</span>
+              <span>{isVerifying ? 'Memverifikasi…' : 'Verifikasi & Buka Akses'}</span>
               <span className="material-symbols-outlined text-xl font-bold">arrow_forward</span>
             </button>
           </form>
@@ -187,7 +206,7 @@ export function AccessGate({ children }: AccessGateProps) {
 
           {/* Footer Info */}
           <div className="text-center text-[11px] font-display font-semibold text-slate-400 pt-1 border-t border-slate-100">
-            © 2026 TANITA &middot; Operations Access Control
+            © 2026 TANITA &middot; Kunci Aktivasi Lokal
           </div>
 
         </div>
@@ -275,4 +294,3 @@ export function AccessGate({ children }: AccessGateProps) {
 
   return <>{children}</>;
 }
-

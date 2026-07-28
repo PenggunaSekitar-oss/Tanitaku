@@ -15,7 +15,6 @@ const getIconForKomoditas = (komoditas: string) => {
 };
 
 export function CariBibitView() {
-  const [lokasi, setLokasi] = useState('');
   const [komoditas, setKomoditas] = useState('');
   const [ketinggian, setKetinggian] = useState('Rendah');
   const [cuaca, setCuaca] = useState('Semua');
@@ -26,7 +25,6 @@ export function CariBibitView() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleReset = () => {
-    setLokasi('');
     setKomoditas('');
     setKetinggian('Rendah');
     setCuaca('Semua');
@@ -189,19 +187,9 @@ export function CariBibitView() {
       </div>
       
       <div className="p-4 sm:p-6 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
-        <h2 className="font-display font-extrabold uppercase tracking-wider mb-4 text-white bg-[#154734] px-3 py-1 rounded border-2 border-[#0A0A0A] inline-block text-xs">Filter Lokasi &amp; Komoditas</h2>
+        <h2 className="font-display font-extrabold uppercase tracking-wider mb-4 text-white bg-[#154734] px-3 py-1 rounded border-2 border-[#0A0A0A] inline-block text-xs">Filter Komoditas &amp; Kondisi Lahan</h2>
         
-        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
-          <div className="flex flex-col">
-            <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Lokasi Daerah (Cth: Jeneponto)</label>
-            <input 
-              type="text" 
-              value={lokasi} 
-              onChange={e => setLokasi(e.target.value)} 
-              className="w-full bg-white border-2 border-[#0A0A0A] px-4 py-2.5 min-h-[48px] text-sm text-[#0A0A0A] rounded focus:outline-none" 
-              placeholder="Masukkan nama daerah..." 
-            />
-          </div>
+        <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           <div className="flex flex-col">
             <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Komoditas (Cth: Cabai Rawit)</label>
             <input 
@@ -221,7 +209,7 @@ export function CariBibitView() {
               className="w-full"
             />
           </div>
-          <div className="flex flex-col md:col-span-3 lg:col-span-1">
+          <div className="flex flex-col">
             <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Kondisi Musim (M)</label>
             <Select 
               options={CUACA_OPTIONS} 
@@ -230,7 +218,7 @@ export function CariBibitView() {
               className="w-full"
             />
           </div>
-          <div className="md:col-span-3 lg:col-span-4 pt-2 flex flex-col sm:flex-row gap-3">
+          <div className="md:col-span-3 pt-2 flex flex-col sm:flex-row gap-3">
             <button type="submit" disabled={isSearching} className="flex-1 bg-[#154734] text-white font-extrabold min-h-[52px] rounded border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] hover:bg-[#0e3023] transition disabled:opacity-70 flex items-center justify-center gap-2">
               {isSearching ? <span className="material-symbols-outlined animate-spin">progress_activity</span> : null}
               {isSearching ? "MEMPROSES..." : "CARI REKOMENDASI BIBIT"}

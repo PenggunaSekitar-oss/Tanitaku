@@ -88,11 +88,9 @@ export function CariPupukView() {
         }
       }
 
-      if (searchParams.tanaman) {
-         if (p.keterangan.toLowerCase().includes(searchParams.tanaman.toLowerCase())) {
-             score += 5;
-         }
-      }
+      // Nama tanaman dipakai sebagai konteks tampilan. Katalog belum memiliki
+      // relasi komoditas eksplisit, jadi aplikasi tidak berpura-pura memfilter
+      // kompatibilitas tanaman yang tidak tersedia di data.
 
       return { ...p, score, isMatch };
     });
@@ -106,7 +104,7 @@ export function CariPupukView() {
     <div className="flex flex-col gap-6 w-full pb-12">
       <PageHeader
         title="Cari Pupuk & Nutrisi"
-        subtitle="Rekomendasi jenis pupuk presisi berdasarkan kandungan hara, organ sasaran, dan umur HST tanaman Anda."
+        subtitle="Penyaringan pupuk berdasarkan organ sasaran dan umur HST; nama tanaman digunakan sebagai konteks, bukan filter kompatibilitas."
       />
 
       {/* DATABASE READY COUNTER BADGE */}
@@ -183,7 +181,7 @@ export function CariPupukView() {
 
       <form onSubmit={handleSearch} className="p-6 flex flex-col md:flex-row gap-4 items-end bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded">
         <div className="w-full md:flex-1">
-          <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1">Jenis Tanaman</label>
+          <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1">Nama Tanaman (Konteks)</label>
           <div className="relative">
             <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#5C5C5C]">grass</span>
             <input 
@@ -194,6 +192,7 @@ export function CariPupukView() {
               className="w-full bg-white border-2 border-[#0A0A0A] pl-12 pr-4 py-3 text-sm text-[#0A0A0A] rounded focus:outline-none"
               placeholder="Contoh: Sawi, Cabai, Tomat..."
             />
+            <span className="text-[10px] text-[#5C5C5C] mt-1 block">Hasil utama difilter oleh HST dan fungsi pupuk.</span>
           </div>
         </div>
         <div className="w-full md:w-48">
@@ -233,7 +232,8 @@ export function CariPupukView() {
       {hasSearched && (
         <div className="flex items-center justify-between border-b-2 border-[#0A0A0A] pb-2">
           <h2 className="font-display font-extrabold text-lg uppercase text-[#0A0A0A]">
-            Rekomendasi untuk <span className="text-[#154734] capitalize">{searchParams.tanaman}</span> umur <span className="bg-[#154734] text-white font-bold px-2 py-0.5 rounded border border-[#0A0A0A]">{searchParams.hst} HST</span>
+            Pupuk untuk fase <span className="bg-[#154734] text-white font-bold px-2 py-0.5 rounded border border-[#0A0A0A]">{searchParams.hst} HST</span>
+            <span className="text-[#154734] capitalize"> · konteks {searchParams.tanaman}</span>
           </h2>
           <button onClick={resetSearch} className="text-xs font-bold text-[#C43C2C] hover:underline uppercase">
             Reset Pencarian

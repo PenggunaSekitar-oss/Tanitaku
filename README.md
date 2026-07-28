@@ -1,20 +1,31 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Tanita Operations
 
-# Run and deploy your AI Studio app
+Aplikasi operasional pertanian berbasis React dan Vite. Data kebun, tanaman,
+aktivitas, jadwal, serta keuangan disimpan secara lokal pada perangkat pengguna.
 
-This contains everything you need to run your app locally.
+## Menjalankan secara lokal
 
-View your app in AI Studio: https://ai.studio/apps/f1e9abd6-5026-4a6c-9737-e94c7a72f3a9
+Prasyarat: Node.js 20 atau versi LTS yang lebih baru.
 
-## Run Locally
+```bash
+npm ci
+npm run dev
+```
 
-**Prerequisites:**  Node.js
+Aplikasi tersedia di `http://localhost:3000`.
 
+## Pemeriksaan kualitas
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+```bash
+npm test
+npm run lint
+npm run build
+npm audit --omit=dev
+```
+
+## Catatan keamanan
+
+Gerbang akses aplikasi hanya melindungi penggunaan normal pada browser lokal.
+Gerbang ini bukan autentikasi server dan tidak boleh dipakai untuk melindungi data
+rahasia. Untuk kontrol akun atau lisensi yang kuat, gunakan autentikasi dan
+otorisasi di backend.

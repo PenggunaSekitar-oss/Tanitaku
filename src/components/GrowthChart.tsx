@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   ResponsiveContainer,
   ComposedChart,
-  Line,
   Area,
   XAxis,
   YAxis,
@@ -40,35 +39,12 @@ export function GrowthChart({ tanamanList }: GrowthChartProps) {
   // Generate chart data merged with actual plant HSTs
   const currentPlant = activeTanaman.find(t => t.id === selectedCropId) || activeTanaman[0];
 
-  // Map benchmark with current plant progress points
-  const chartData = BENCHMARK_GROWTH_DATA.map(item => {
-    const dataPoint: any = {
-      hst: item.hst,
-      targetPct: item.targetPct,
-      fase: item.fase,
-      deskripsi: item.deskripsi
-    };
-
-    // Calculate actual percentage for active plants
-    activeTanaman.forEach(t => {
-      const actualHst = calculateHST(t.tanggalTanam);
-      // Map plant actual progress point
-      if (item.hst <= Math.min(90, Math.max(0, actualHst))) {
-        // Linear interpolation of target to reflect current growth progression
-        const calcPct = Math.min(100, Math.round((item.hst / 90) * 100));
-        dataPoint[t.komoditas] = calcPct;
-      }
-    });
-
-    return dataPoint;
-  });
+  const chartData = BENCHMARK_GROWTH_DATA;
 
   // Calculate stats for current active plant selection
   const actualHstCurrent = currentPlant ? calculateHST(currentPlant.tanggalTanam) : 0;
   const currentFase = currentPlant ? determineFaseTanaman(actualHstCurrent) : 'Vegetatif';
   const progressPctCurrent = Math.min(100, Math.round((actualHstCurrent / 90) * 100));
-  const targetPctAtHst = Math.min(100, Math.round((actualHstCurrent / 90) * 100));
-  const variance = progressPctCurrent - targetPctAtHst;
 
   return (
     <div className="neo-card p-3.5 sm:p-5 md:p-6 bg-surface flex flex-col gap-4 sm:gap-5 border-2 border-black shadow-[4px_4px_0px_0px_#000] overflow-hidden max-w-full">
@@ -79,14 +55,14 @@ export function GrowthChart({ tanamanList }: GrowthChartProps) {
             <span className="text-[10px] font-bold uppercase tracking-wider bg-action text-on-action px-2 py-0.5 rounded neo-border-thin shadow-[1.5px_1.5px_0px_0px_#000] shrink-0">
               RECHARTS ANALYTICS
             </span>
-            <span className="text-[11px] text-on-surface-muted font-mono truncate">Real-Time vs Target Benchmark</span>
+            <span className="text-[11px] text-on-surface-muted font-mono truncate">Simulasi Umur vs Benchmark</span>
           </div>
           <h3 className="font-brutal font-black text-base sm:text-lg md:text-xl text-on-surface uppercase tracking-wider flex items-center gap-2 break-words">
             <span className="material-symbols-outlined text-action shrink-0">show_chart</span>
             <span className="break-words">Grafik Progres Pertumbuhan Tanaman</span>
           </h3>
           <p className="text-xs text-on-surface-muted mt-0.5 break-words">
-            Membandingkan laju perkembangan umur tanaman (HST) terhadap kurva target rata-rata standar.
+            Menampilkan posisi umur tanaman pada kurva contoh 90 hari. Grafik ini bukan pengukuran pertumbuhan aktual.
           </p>
         </div>
 
@@ -150,17 +126,17 @@ export function GrowthChart({ tanamanList }: GrowthChartProps) {
           </div>
 
           <div className="p-2 sm:p-3 bg-surface-high rounded-xl border border-outline flex flex-col justify-between min-w-0">
-            <span className="text-[10px] font-bold text-on-surface-muted uppercase truncate">Status vs Target</span>
+            <span className="text-[10px] font-bold text-on-surface-muted uppercase truncate">Data Observasi</span>
             <div className="flex items-center gap-1 mt-1 min-w-0">
-              <span className={`material-symbols-outlined text-base sm:text-lg shrink-0 ${variance >= 0 ? 'text-success' : 'text-danger'}`}>
-                {variance >= 0 ? 'trending_up' : 'trending_down'}
+              <span className="material-symbols-outlined text-base sm:text-lg shrink-0 text-warning">
+                info
               </span>
               <span className="font-bold text-xs sm:text-sm text-on-surface truncate">
-                {variance >= 0 ? 'Sesuai Target' : 'Perlu Pacuan'}
+                Belum Tersedia
               </span>
             </div>
             <span className="text-[10px] text-on-surface-muted mt-0.5 truncate">
-              {variance >= 0 ? 'Pertumbuhan Normal' : 'Aplikasi Pupuk Kocor'}
+              Catat pengukuran lapangan untuk data aktual
             </span>
           </div>
         </div>
@@ -200,26 +176,6 @@ export function GrowthChart({ tanamanList }: GrowthChartProps) {
               strokeWidth={3}
               strokeDasharray="4 4"
             />
-
-            {/* Active Plant Lines */}
-            {activeTanaman.map((t, idx) => {
-              if (selectedCropId !== 'semua' && t.id !== selectedCropId) return null;
-              const colors = ['#22c55e', '#ef4444', '#a855f7', '#f97316'];
-              const strokeColor = colors[idx % colors.length];
-
-              return (
-                <Line
-                  key={t.id}
-                  type="monotone"
-                  dataKey={t.komoditas}
-                  name={`Aktual: ${t.komoditas}`}
-                  stroke={strokeColor}
-                  strokeWidth={4}
-                  dot={{ r: 5, strokeWidth: 2, fill: '#ffffff', stroke: strokeColor }}
-                  activeDot={{ r: 8, strokeWidth: 3 }}
-                />
-              );
-            })}
 
             {/* Reference Line for Current HST */}
             {currentPlant && (

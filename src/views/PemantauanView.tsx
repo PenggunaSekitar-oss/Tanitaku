@@ -7,6 +7,7 @@ import { Accordion } from '../components/Accordion';
 import { calculateHST, determineFaseTanaman, getRecommendations, calculateLuasLahan } from '../utils/calculations';
 import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
+import { formatLocalDate } from '../utils/localDate';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { GrowthChart } from '../components/GrowthChart';
 
@@ -147,7 +148,7 @@ export function PemantauanView() {
   const handleDeleteBlok = (id: string) => {
     setDeleteId(id);
     setDeleteType('blok');
-    setDeleteMessage('Yakin ingin menghapus blok lahan ini? Data tanaman yang terkait mungkin terdampak.');
+    setDeleteMessage('Yakin ingin menghapus blok lahan ini? Tanaman, jadwal, log aktivitas, dan data keuangan yang terkait juga akan dihapus.');
     setDeleteConfirmOpen(true);
   };
 
@@ -195,6 +196,10 @@ export function PemantauanView() {
   const handleAddTanaman = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTanaman.blokId || !formTanaman.komoditas || !formTanaman.tanggalTanam) return;
+    if (formTanaman.tanggalTanam > formatLocalDate()) {
+      showToast('Tanggal tanam tidak boleh berada di masa depan.', 'error');
+      return;
+    }
     
     if (editingTanamanId) {
       updateTanaman(editingTanamanId, formTanaman);

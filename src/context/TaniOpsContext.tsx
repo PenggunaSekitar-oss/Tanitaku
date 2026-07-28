@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { formatLocalDate } from '../utils/localDate';
+import { useToast } from './ToastContext';
 
 export type BlokLahan = { 
   id: string; 
@@ -32,6 +34,8 @@ export type Pemupukan = { id: string; blokId: string; kategori: string; jenisPup
 export type Keuangan = { 
   id: string; 
   blokId: string; 
+  tanamanId?: string;
+  transactionDate?: string;
   biayaTetap: number; 
   namaBenih?: string; 
   jumlahBenih?: number; 
@@ -91,7 +95,7 @@ const TaniOpsContext = createContext<TaniOpsContextType | undefined>(undefined);
 const getRecentDateStr = (daysAgo: number) => {
   const d = new Date();
   d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split('T')[0];
+  return formatLocalDate(d);
 };
 
 const DEFAULT_BLOK_LAHAN: BlokLahan[] = [];
@@ -101,50 +105,92 @@ const DEFAULT_PEMUPUKAN: Pemupukan[] = [];
 const DEFAULT_KEUANGAN: Keuangan[] = [];
 
 export function TaniOpsProvider({ children }: { children: ReactNode }) {
-  const safeGetItem = <T,>(key: string, defaultValue: T): T => {
+  const { showToast } = useToast();
+  const backupInvalidPayload = (key: string, payload: string) => {
     try {
-      const saved = localStorage.getItem(key);
-      return saved ? JSON.parse(saved) : defaultValue;
-    } catch {
-      return defaultValue;
+      localStorage.setItem(`taniops_recovery_${key}_${Date.now()}`, payload);
+    } catch (error) {
+      console.error(`Gagal mencadangkan data rusak untuk ${key}`, error);
     }
   };
 
-  const safeSetItem = (key: string, value: any) => {
+  const safeGetArray = <T,>(
+    key: string,
+    validator: (item: unknown) => item is T,
+  ): T[] => {
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem(key);
+      if (!saved) return [];
+      const parsed: unknown = JSON.parse(saved);
+      if (!Array.isArray(parsed)) {
+        backupInvalidPayload(key, saved);
+        return [];
+      }
+
+      const validItems = parsed.filter(validator);
+      if (validItems.length !== parsed.length) backupInvalidPayload(key, saved);
+      return validItems;
+    } catch (error) {
+      if (saved) backupInvalidPayload(key, saved);
+      console.error(`Gagal membaca ${key} dari penyimpanan browser`, error);
+      return [];
+    }
+  };
+
+  const safeSetItem = (key: string, value: unknown): boolean => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
+      return true;
     } catch (e) {
-      // Ignore quota or security errors in sandbox environments
+      console.error(`Gagal menyimpan ${key} ke penyimpanan browser`, e);
+      window.dispatchEvent(new CustomEvent('taniops-storage-error', { detail: { key } }));
+      return false;
     }
   };
 
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null;
+  const hasStringId = (value: unknown): value is { id: string } =>
+    isRecord(value) && typeof value.id === 'string';
+  const hasStringIdAndBlock = (value: unknown): value is { id: string; blokId: string } =>
+    isRecord(value) && typeof value.id === 'string' && typeof value.blokId === 'string';
+
   const [blokLahan, setBlokLahan] = useState<BlokLahan[]>(() => {
-    const raw = safeGetItem<BlokLahan[]>('taniops_blokLahan', []);
+    const raw = safeGetArray<BlokLahan>('taniops_blokLahan', (item): item is BlokLahan => hasStringId(item));
     return raw.filter((item) => !item.id.includes('demo'));
   });
   const [tanaman, setTanaman] = useState<Tanaman[]>(() => {
-    const raw = safeGetItem<Tanaman[]>('taniops_tanaman', []);
+    const raw = safeGetArray<Tanaman>('taniops_tanaman', (item): item is Tanaman => hasStringIdAndBlock(item));
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [logAktivitas, setLogAktivitas] = useState<LogAktivitas[]>(() => {
-    const raw = safeGetItem<LogAktivitas[]>('taniops_logAktivitas', []);
+    const raw = safeGetArray<LogAktivitas>('taniops_logAktivitas', (item): item is LogAktivitas => hasStringIdAndBlock(item));
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [pemupukan, setPemupukan] = useState<Pemupukan[]>(() => {
-    const raw = safeGetItem<Pemupukan[]>('taniops_pemupukan', []);
+    const raw = safeGetArray<Pemupukan>('taniops_pemupukan', (item): item is Pemupukan => hasStringIdAndBlock(item));
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [keuangan, setKeuangan] = useState<Keuangan[]>(() => {
-    const raw = safeGetItem<Keuangan[]>('taniops_keuangan', []);
+    const raw = safeGetArray<Keuangan>('taniops_keuangan', (item): item is Keuangan => hasStringIdAndBlock(item));
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
+
+  React.useEffect(() => {
+    const handleStorageError = () => {
+      showToast('Penyimpanan browser penuh atau diblokir. Perubahan terbaru mungkin belum tersimpan.', 'error');
+    };
+    window.addEventListener('taniops-storage-error', handleStorageError);
+    return () => window.removeEventListener('taniops-storage-error', handleStorageError);
+  }, [showToast]);
 
   const loadDemoData = () => {
     clearAllData();
   };
 
   const clearAllData = () => {
-    localStorage.setItem('taniops_initialized', 'true');
+    safeSetItem('taniops_initialized', true);
     safeSetItem('taniops_blokLahan', []);
     safeSetItem('taniops_tanaman', []);
     safeSetItem('taniops_logAktivitas', []);
@@ -159,7 +205,8 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
 
   // Clean demo data on mount and mark as initialized
   React.useEffect(() => {
-    localStorage.setItem('taniops_initialized', 'true');
+    safeSetItem('taniops_initialized', true);
+    safeSetItem('taniops_schema_version', 2);
     safeSetItem('taniops_blokLahan', blokLahan);
     safeSetItem('taniops_tanaman', tanaman);
     safeSetItem('taniops_logAktivitas', logAktivitas);
@@ -187,11 +234,18 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
     safeSetItem('taniops_keuangan', keuangan);
   }, [keuangan]);
 
-  const generateId = () => Math.random().toString(36).substring(2, 9);
+  const generateId = () =>
+    globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   const addBlokLahan = (b: Omit<BlokLahan, 'id'>) => setBlokLahan(prev => [...prev, { ...b, id: generateId() }]);
   const updateBlokLahan = (id: string, b: Partial<BlokLahan>) => setBlokLahan(prev => prev.map(item => item.id === id ? { ...item, ...b } : item));
-  const deleteBlokLahan = (id: string) => setBlokLahan(prev => prev.filter(item => item.id !== id));
+  const deleteBlokLahan = (id: string) => {
+    setBlokLahan(prev => prev.filter(item => item.id !== id));
+    setTanaman(prev => prev.filter(item => item.blokId !== id));
+    setLogAktivitas(prev => prev.filter(item => item.blokId !== id));
+    setPemupukan(prev => prev.filter(item => item.blokId !== id));
+    setKeuangan(prev => prev.filter(item => item.blokId !== id));
+  };
 
   const addTanaman = (t: Omit<Tanaman, 'id'>) => setTanaman(prev => [...prev, { ...t, id: generateId() }]);
   const updateTanaman = (id: string, t: Partial<Tanaman>) => setTanaman(prev => prev.map(item => item.id === id ? { ...item, ...t } : item));

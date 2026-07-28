@@ -29,9 +29,7 @@ export function KocorView() {
       return `${sdm} sdm (${sdt} sdt) atau ~${tutup} tutup botol`;
     }
     if (unit === 'gram') {
-      const sdt = (val / 5).toFixed(1).replace(/\.0$/, '');
-      const sdm = (val / 15).toFixed(1).replace(/\.0$/, '');
-      return `${sdm} sdm (${sdt} sdt)`;
+      return 'Gunakan timbangan digital. Gram tidak boleh dikonversi ke sendok tanpa data densitas produk.';
     }
     if (unit === 'liter') {
       const gelas = (val * 1000 / 220).toFixed(1).replace(/\.0$/, '');
@@ -105,6 +103,7 @@ export function KocorView() {
                   <input
                     type="number"
                     min="0"
+                    max={satuan === 'liter' ? 1 : 1000}
                     step="0.1"
                     placeholder="Contoh: 2"
                     value={dosis}
@@ -127,6 +126,9 @@ export function KocorView() {
                   />
                 </div>
               </div>
+              <p className="text-[11px] text-on-surface-muted">
+                Ikuti dosis pada label produk. Kalkulator hanya mengalikan dosis per liter dengan volume air.
+              </p>
             </div>
 
             {/* Input Total Volume Air */}
@@ -274,4 +276,3 @@ export function KocorView() {
 </div>
   );
 }
-

@@ -1,6 +1,6 @@
 import { PageHeader } from '../components/PageHeader';
 import React, { useState, useEffect } from "react";
-import { motion } from "motion/react";
+import { motion, type Variants } from "motion/react";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { BmkgWeatherWidget } from "../components/BmkgWeatherWidget";
 import { GrowthChart } from "../components/GrowthChart";
@@ -11,6 +11,7 @@ import {
   calculateLuasLahan,
   getRecommendations,
 } from "../utils/calculations";
+import { formatLocalDate, getNextScheduledDate } from "../utils/localDate";
 
 // Helper for currency formatting
 const formatRp = (num: number) => {
@@ -234,7 +235,7 @@ function TanamanCardDropdown({
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      const targetHama = rec.hama.split(',')[0].trim();
+                      const targetHama = rec.hama.split(',')[0]?.trim() || rec.hama;
                       localStorage.setItem('targetPestisida', targetHama);
                       navigate('cari-pestisida');
                     }}
@@ -338,7 +339,6 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
   const { blokLahan, tanaman, updateTanaman, pemupukan, keuangan, logAktivitas } = useTaniOps();
 
   // Computations
-  const totalPopulasi = tanaman.reduce((acc, curr) => acc + curr.jumlahTanaman, 0);
   const tanamanAktif = tanaman.filter(t => t.status !== 'Panen');
   const totalPopulasiAktif = tanamanAktif.reduce((acc, curr) => acc + curr.jumlahTanaman, 0);
 
@@ -354,9 +354,9 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
     0
   );
 
-  const kepadatan = totalLuasLahan > 0 ? (totalPopulasi / totalLuasLahan).toFixed(1) : "0";
+  const kepadatan = totalLuasLahan > 0 ? (totalPopulasiAktif / totalLuasLahan).toFixed(1) : "0";
 
-  const totalBiaya = keuangan.reduce(
+  const totalBiayaKeuangan = keuangan.reduce(
     (acc, k) =>
       acc +
       ((k.biayaTetap || 0) +
@@ -366,6 +366,8 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
         (k.biayaLain || 0)),
     0
   );
+  const totalBiayaLog = logAktivitas.reduce((acc, log) => acc + (log.biaya || 0), 0);
+  const totalBiaya = totalBiayaKeuangan + totalBiayaLog;
 
   const totalPendapatan = keuangan.reduce(
     (acc, k) => acc + (k.targetHasil || 0) * (k.hargaJual || 0),
@@ -374,7 +376,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
 
   const laba = totalPendapatan - totalBiaya;
   const roi = totalBiaya > 0 ? ((laba / totalBiaya) * 100).toFixed(1) : "0";
-  const biayaPerTanaman = totalPopulasi > 0 ? (totalBiaya / totalPopulasi) : 0;
+  const biayaPerTanaman = totalPopulasiAktif > 0 ? (totalBiaya / totalPopulasiAktif) : 0;
 
   // Cost breakdowns
   const totalBiayaBenih = keuangan.reduce((a, k) => a + (k.biayaBenih || 0), 0);
@@ -387,64 +389,63 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
     ? tanaman 
     : tanaman.filter(t => t.blokId === activeTabBlock);
 
-  // Health / Performance Score calculation based on real data
-  const panenCount = tanaman.filter(t => t.status === 'Panen').length;
-  
-  const calculateRealHealthScore = () => {
+  // Data completeness score; this is not a crop-health measurement.
+  const calculateDataCompletenessScore = () => {
     if (blokLahan.length === 0 && tanaman.length === 0) return { score: "0.0", label: "BELUM ADA DATA" };
 
-    // 1. Land Area Efficiency (Average efisiensiLahan across blocks, default 75%)
-    const avgLandEfficiency = blokLahan.length > 0
-      ? blokLahan.reduce((sum, b) => sum + (b.efisiensiLahan || 75), 0) / blokLahan.length
-      : 75;
+    const validBlocks = blokLahan.filter((block) =>
+      block.nama.trim() && calculateLuasLahan(
+        block.jumlahBedengan,
+        block.panjangBedengan,
+        block.lebarBedengan,
+        block.jarakAntarBedengan,
+        block.luasManualM2,
+      ) > 0
+    ).length;
+    const blockScore = blokLahan.length > 0 ? (validBlocks / blokLahan.length) * 100 : 0;
 
-    // 2. Crop Health & Panen Ratio
-    let cropScore = 80;
-    if (tanaman.length > 0) {
-      const panenRatio = panenCount / tanaman.length;
-      const activeTanaman = tanaman.filter(t => t.status !== 'Panen');
-      const avgHstProgress = activeTanaman.length > 0
-        ? activeTanaman.reduce((acc, t) => {
-            const hst = calculateHST(t.tanggalTanam);
-            return acc + Math.min(100, (hst / 90) * 100);
-          }, 0) / activeTanaman.length
-        : 100;
-      cropScore = (panenRatio * 100 * 0.4) + (avgHstProgress * 0.6);
-    }
+    const validPlants = tanaman.filter((plant) =>
+      plant.komoditas.trim() &&
+      plant.tanggalTanam &&
+      blokLahan.some((block) => block.id === plant.blokId)
+    ).length;
+    const cropScore = tanaman.length > 0 ? (validPlants / tanaman.length) * 100 : 0;
 
-    // 3. Maintenance & Log Activity Completeness
-    let maintenanceScore = 70;
-    if (logAktivitas.length > 0 || pemupukan.length > 0) {
-      const logPerBlokRatio = Math.min(1, logAktivitas.length / Math.max(1, blokLahan.length * 2));
-      const fertRatio = Math.min(1, pemupukan.length / Math.max(1, blokLahan.length));
-      maintenanceScore = Math.min(100, 60 + (logPerBlokRatio * 25) + (fertRatio * 15));
-    }
+    const expectedActivityCount = Math.max(1, blokLahan.length * 2);
+    const maintenanceScore = Math.min(100, ((logAktivitas.length + pemupukan.length) / expectedActivityCount) * 100);
 
-    // 4. Financial Health / Margin Ratio
-    let financialScore = 75;
-    if (totalBiaya > 0) {
-      const profitMarginRatio = (totalPendapatan - totalBiaya) / totalBiaya;
-      if (profitMarginRatio > 0.5) financialScore = 95;
-      else if (profitMarginRatio > 0) financialScore = 85;
-      else financialScore = 60;
-    }
+    const validFinance = keuangan.filter((record) =>
+      record.transactionDate &&
+      blokLahan.some((block) => block.id === record.blokId)
+    ).length;
+    const financialScore = keuangan.length > 0 ? (validFinance / keuangan.length) * 100 : 0;
 
-    const finalVal = (avgLandEfficiency * 0.30) + (cropScore * 0.35) + (maintenanceScore * 0.20) + (financialScore * 0.15);
+    const finalVal = (blockScore + cropScore + maintenanceScore + financialScore) / 4;
     const scoreStr = Math.min(100, Math.max(0, finalVal)).toFixed(1);
     
-    let label = "OPTIMAL";
+    let label = "LENGKAP";
     const num = parseFloat(scoreStr);
-    if (num >= 85) label = "OPTIMAL";
-    else if (num >= 70) label = "SANGAT BAIK";
+    if (num >= 85) label = "LENGKAP";
+    else if (num >= 70) label = "BAIK";
     else if (num >= 50) label = "CUKUP";
-    else label = "PERLU PERHATIAN";
+    else label = "PERLU DILENGKAPI";
 
     return { score: scoreStr, label };
   };
 
-  const { score: healthScore, label: healthScoreLabel } = calculateRealHealthScore();
+  const { score: healthScore, label: healthScoreLabel } = calculateDataCompletenessScore();
 
-  const bentoContainer = {
+  const upcomingPemupukan = [...pemupukan]
+    .map((item) => ({
+      item,
+      nextDate: getNextScheduledDate(item.tanggalAplikasi, item.intervalHari),
+    }))
+    .sort((a, b) => (a.nextDate?.getTime() ?? Number.MAX_SAFE_INTEGER) - (b.nextDate?.getTime() ?? Number.MAX_SAFE_INTEGER));
+  const latestLogs = [...logAktivitas].sort((a, b) =>
+    b.tanggal.localeCompare(a.tanggal) || b.id.localeCompare(a.id)
+  );
+
+  const bentoContainer: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
@@ -455,7 +456,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
     },
   };
 
-  const bentoItem = {
+  const bentoItem: Variants = {
     hidden: { opacity: 0, y: 8 },
     show: { 
       opacity: 1, 
@@ -484,7 +485,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
         <SectionTitle 
           icon="analytics" 
           title="Metrik Utama & Performa Lahan" 
-          subtitle="Ikhtisar skor kesehatan lahan, jumlah populasi tanaman aktif, proyeksi margin keuntungan, luas area tanam, dan indikator perawatan."
+          subtitle="Ikhtisar kelengkapan data operasional, populasi aktif, proyeksi margin, luas area tanam, dan catatan perawatan."
         />
         <div 
           className="p-5 sm:p-7 rounded-2xl shadow-md border border-[#004953] flex flex-col lg:flex-row items-center gap-6 lg:gap-8"
@@ -494,7 +495,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
           {/* Skor Performa Lahan */}
           <div className="flex flex-col items-center justify-center text-center shrink-0 w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-white/15 pb-6 lg:pb-0 lg:pr-8">
             <span className="text-xs font-extrabold uppercase tracking-widest text-white/80 mb-2">
-              Skor Performa Lahan
+              Kelengkapan Data Operasional
             </span>
             <div className="relative w-40 h-40 flex items-center justify-center my-1">
               <svg className="w-full h-full transform -rotate-90" viewBox="0 0 200 200">
@@ -564,7 +565,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white my-1 font-display">
                 {pemupukan.length} <span className="text-xs font-semibold text-white/80">Jadwal</span>
               </span>
-              <span className="text-[11px] sm:text-xs text-white/80 font-semibold truncate">{pemupukan.length > 0 ? pemupukan[0].jenisPupuk : "Sistem Rutin"}</span>
+              <span className="text-[11px] sm:text-xs text-white/80 font-semibold truncate">{upcomingPemupukan[0]?.item.jenisPupuk || "Belum ada agenda"}</span>
             </div>
           </div>
         </div>
@@ -821,7 +822,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3.5">
-                      {pemupukan.slice(0, 4).map((p) => {
+                      {upcomingPemupukan.slice(0, 4).map(({ item: p, nextDate }) => {
                         const blok = blokLahan.find((b) => b.id === p.blokId);
                         const isPestisida = p.kategori === "Pestisida";
 
@@ -853,10 +854,10 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
 
                             <div className="text-left sm:text-right shrink-0 w-full sm:w-auto flex sm:flex-col justify-between items-center sm:items-end pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-200/60">
                               <span className="text-xs font-semibold bg-[#154734]/10 text-[#154734] border border-[#154734]/30 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-lg inline-block whitespace-nowrap">
-                                {p.tanggalAplikasi}
+                                {nextDate ? formatLocalDate(nextDate) : 'Tanggal tidak valid'}
                               </span>
                               <span className="text-[10px] text-slate-500 block font-medium whitespace-nowrap sm:mt-1">
-                                Setiap {p.intervalHari} Hari
+                                {p.intervalHari > 0 ? `Setiap ${p.intervalHari} Hari` : 'Satu Kali'}
                               </span>
                             </div>
                           </div>
@@ -900,7 +901,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3.5">
-                      {logAktivitas.slice(0, 4).map((l) => {
+                      {latestLogs.slice(0, 4).map((l) => {
                         const blok = blokLahan.find((b) => b.id === l.blokId);
 
                         return (

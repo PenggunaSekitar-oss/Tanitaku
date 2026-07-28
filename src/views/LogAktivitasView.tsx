@@ -7,6 +7,8 @@ import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ReportPdfModal } from '../components/ReportPdfModal';
+import { createCsv } from '../utils/csv';
+import { formatLocalDate } from '../utils/localDate';
 
 const kategoriOptions = [
   { value: "Persiapan Lahan", label: "Persiapan Lahan" },
@@ -23,7 +25,7 @@ const kategoriOptions = [
 export function LogAktivitasView() {
   const { blokLahan, logAktivitas, addLogAktivitas, updateLogAktivitas, deleteLogAktivitas } = useTaniOps();
   const { showToast } = useToast();
-  const initialForm = { tanggal: '', blokId: '', kategori: 'Persiapan Lahan', deskripsi: '', biaya: 0, petugas: '' };
+  const initialForm = { tanggal: formatLocalDate(), blokId: '', kategori: 'Persiapan Lahan', deskripsi: '', biaya: 0, petugas: '' };
   const [form, setForm] = useState(initialForm);
   const [filterKategori, setFilterKategori] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -35,6 +37,10 @@ export function LogAktivitasView() {
   const handleAddLog = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.tanggal || !form.blokId || !form.deskripsi) return;
+    if (form.tanggal > formatLocalDate()) {
+      showToast('Tanggal aktivitas tidak boleh berada di masa depan.', 'error');
+      return;
+    }
     if (editingId) {
       updateLogAktivitas(editingId, form);
       showToast('Aktivitas berhasil diupdate', 'success');
@@ -71,12 +77,12 @@ export function LogAktivitasView() {
 
   const handleExportCSV = () => {
     if (logAktivitas.length === 0) return;
-    const header = "Tanggal,Blok,Kategori,Deskripsi,Biaya,Petugas\n";
     const rows = logAktivitas.map(l => {
       const b = blokLahan.find(b => b.id === l.blokId);
-      return `${l.tanggal},"${b?.nama || ''}","${l.kategori}","${l.deskripsi}",${l.biaya},"${l.petugas}"`;
-    }).join("\n");
-    const csvUrl = URL.createObjectURL(new Blob([header + rows], { type: 'text/csv' }));
+      return [l.tanggal, b?.nama || '', l.kategori, l.deskripsi, l.biaya, l.petugas];
+    });
+    const csv = createCsv(['Tanggal', 'Blok', 'Kategori', 'Deskripsi', 'Biaya', 'Petugas'], rows);
+    const csvUrl = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = csvUrl;
     a.download = 'log_aktivitas.csv';

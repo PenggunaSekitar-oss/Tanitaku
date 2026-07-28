@@ -7,6 +7,7 @@ import { calculateActualFertilizerDose, calculateLuasLahan } from '../utils/calc
 import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
+import { formatLocalDate } from '../utils/localDate';
 
 export function PemupukanView() {
   const { blokLahan, pemupukan, addPemupukan, updatePemupukan, deletePemupukan } = useTaniOps();
@@ -21,7 +22,7 @@ export function PemupukanView() {
     tujuan: '', 
     dosisPerHektar: 0, 
     literAirPerHektar: 0, 
-    tanggalAplikasi: new Date().toISOString().split('T')[0], 
+    tanggalAplikasi: formatLocalDate(),
     intervalHari: 0, 
     catatan: '' 
   };

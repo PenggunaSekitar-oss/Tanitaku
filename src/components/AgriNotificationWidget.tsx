@@ -3,6 +3,7 @@ import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast, getManagerGreeting } from '../context/ToastContext';
 import { calculateHST } from '../utils/calculations';
 import { Select } from './Select';
+import { formatLocalDate } from '../utils/localDate';
 
 interface AgriNotificationWidgetProps {
   weatherDesc?: string;
@@ -147,6 +148,14 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
 
   // Trigger Toast Notification for Watering
   const handleTriggerWateringToast = () => {
+    if (!enableWateringToast) {
+      showToast('Pengingat penyiraman sedang dinonaktifkan.', 'info');
+      return;
+    }
+    if (blokLahan.length === 0) {
+      showToast('Tambahkan blok lahan sebelum mencatat penyiraman.', 'error');
+      return;
+    }
     const targetBlok = blokLahan[0]?.nama || 'Lahan Budidaya';
     const firstPlant = activeTanaman[0]?.komoditas ? activeTanaman[0].komoditas.toLowerCase() : 'tanaman';
     const timeLabel = selectedTimeOfDay === 'pagi' ? 'Pagi' : selectedTimeOfDay === 'siang' ? 'Siang' : 'Sore';
@@ -171,6 +180,14 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
 
   // Trigger Toast Notification for Fertilizing
   const handleTriggerFertilizerToast = (alertItem?: any) => {
+    if (!enableFertilizerToast) {
+      showToast('Pengingat pemupukan sedang dinonaktifkan.', 'info');
+      return;
+    }
+    if (blokLahan.length === 0) {
+      showToast('Tambahkan blok lahan sebelum mencatat pemupukan.', 'error');
+      return;
+    }
     const item = alertItem || fertilizerAlerts[0] || {
       komoditas: activeTanaman[0]?.komoditas || 'Cabai Merah',
       blokNama: blokLahan[0]?.nama || 'Lahan A',
@@ -197,12 +214,16 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
 
   // Log Penyiraman
   const handleLogPenyiraman = (blokNama: string) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatLocalDate();
     const blok = blokLahan.find(b => b.nama === blokNama) || blokLahan[0];
+    if (!blok) {
+      showToast('Blok lahan tidak ditemukan. Aktivitas tidak disimpan.', 'error');
+      return;
+    }
     addLogAktivitas({
       tanggal: today,
-      blokId: blok?.id || 'b1',
-      kategori: 'Penyiraman',
+      blokId: blok.id,
+      kategori: 'Irigasi',
       deskripsi: `Penyiraman ${selectedTimeOfDay.toUpperCase()} (${penyiramanFreq}) sesuai rekomendasi cuaca`,
       biaya: 0,
       petugas: 'Petani Operasional'
@@ -212,11 +233,15 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
 
   // Log Pemupukan
   const handleLogPemupukan = (blokNama: string, susulanTitle: string) => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatLocalDate();
     const blok = blokLahan.find(b => b.nama === blokNama) || blokLahan[0];
+    if (!blok) {
+      showToast('Blok lahan tidak ditemukan. Aktivitas tidak disimpan.', 'error');
+      return;
+    }
     addLogAktivitas({
       tanggal: today,
-      blokId: blok?.id || 'b1',
+      blokId: blok.id,
       kategori: 'Pemupukan',
       deskripsi: `Aplikasi ${susulanTitle} sesuai panduan HST`,
       biaya: 0,
@@ -238,7 +263,7 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
               Konfigurasi Toast Notifikasi Tani
             </h2>
             <p className="text-xs text-on-surface-muted font-medium mt-0.5">
-              Otomatisasi pengingat penyiraman (2x–3x/hari sesuai cuaca BMKG) &amp; pemupukan presisi (HST).
+              Simulator manual penyiraman dan panduan HST. Kondisi cuaca dapat diuji sebelum mencatat aktivitas.
             </p>
           </div>
         </div>
@@ -293,8 +318,8 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-[#0288D1] text-2xl">water_drop</span>
             <div>
-              <span className="font-bold text-xs sm:text-sm text-on-surface block">Toast Penyiraman Otomatis</span>
-              <span className="text-[11px] text-on-surface-muted">Notifikasi 2x/3x sehari menyesuaikan suhu cuaca</span>
+              <span className="font-bold text-xs sm:text-sm text-on-surface block">Aktifkan Pengingat Penyiraman</span>
+              <span className="text-[11px] text-on-surface-muted">Mengaktifkan simulasi dan pencatatan penyiraman</span>
             </div>
           </div>
           <input
@@ -309,8 +334,8 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
           <div className="flex items-center gap-2.5">
             <span className="material-symbols-outlined text-[#154734] text-2xl">compost</span>
             <div>
-              <span className="font-bold text-xs sm:text-sm text-on-surface block">Toast Pemupukan HST Otomatis</span>
-              <span className="text-[11px] text-on-surface-muted">Notifikasi susulan I-V sesuai umur tanaman (HST)</span>
+              <span className="font-bold text-xs sm:text-sm text-on-surface block">Aktifkan Pengingat Pemupukan</span>
+              <span className="text-[11px] text-on-surface-muted">Mengaktifkan simulasi panduan berbasis HST</span>
             </div>
           </div>
           <input
@@ -374,7 +399,7 @@ export function AgriNotificationWidget({ weatherDesc = 'Cerah', temperature = 31
                   { value: 'sore', label: 'Sore (16:30)' },
                 ]}
                 value={selectedTimeOfDay}
-                onChange={setSelectedTimeOfDay}
+                onChange={(value) => setSelectedTimeOfDay(value as 'pagi' | 'siang' | 'sore')}
                 className="w-36 text-xs font-bold"
               />
             </div>

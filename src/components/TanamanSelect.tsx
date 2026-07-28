@@ -15,7 +15,7 @@ export function TanamanSelect({ value, onChange, placeholder = '-- Pilih / Ketik
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
+    function handleClickOutside(event: Event) {
       if (ref.current && !ref.current.contains(event.target as Node)) {
         setIsOpen(false);
       }
@@ -65,6 +65,18 @@ export function TanamanSelect({ value, onChange, placeholder = '-- Pilih / Ketik
       <div 
         className="w-full flex items-center justify-between min-h-[48px] px-3.5 py-2 rounded-[8px_3px_8px_3px] bg-surface-high neo-border-thin cursor-pointer hover:bg-surface transition-colors"
         onClick={() => setIsOpen(!isOpen)}
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setIsOpen((open) => !open);
+          } else if (event.key === 'Escape') {
+            setIsOpen(false);
+          }
+        }}
       >
         <div className="flex items-center gap-2.5 min-w-0 flex-1">
           <span className="material-symbols-outlined text-[20px] text-primary shrink-0">
@@ -158,7 +170,7 @@ export function TanamanSelect({ value, onChange, placeholder = '-- Pilih / Ketik
           </div>
 
           {/* Categorized Options List */}
-          <div className="overflow-y-auto flex-1 p-1.5 space-y-3 text-xs" style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}>
+          <div role="listbox" className="overflow-y-auto flex-1 p-1.5 space-y-3 text-xs" style={{ touchAction: "pan-y", WebkitOverflowScrolling: "touch" }}>
             {filteredOptions.length === 0 ? (
               <div className="p-6 text-center text-on-surface-muted">
                 <span className="material-symbols-outlined text-3xl block mb-1">eco</span>
@@ -184,6 +196,15 @@ export function TanamanSelect({ value, onChange, placeholder = '-- Pilih / Ketik
                           <div
                             key={opt.value}
                             onClick={() => handleSelect(opt.label)}
+                            role="option"
+                            aria-selected={isSelected}
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault();
+                                handleSelect(opt.label);
+                              }
+                            }}
                             className={`p-2 rounded cursor-pointer transition-colors flex items-center justify-between gap-2 border ${
                               isSelected
                                 ? 'bg-primary/20 border-primary font-black text-on-surface'

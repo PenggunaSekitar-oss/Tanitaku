@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Keuangan, LogAktivitas, BlokLahan, Tanaman } from '../context/TaniOpsContext';
+import { getKeuanganRecordDate, matchesReportPeriod } from './reportPeriod';
 
 const formatRp = (num: number) => {
   return 'Rp ' + (num || 0).toLocaleString('id-ID');
@@ -11,6 +12,8 @@ export interface PdfReportOptions {
   namaKebun: string;
   managerName: string;
   blokFilterId?: string;
+  startDate?: string;
+  endDate?: string;
   keuangan: Keuangan[];
   logAktivitas: LogAktivitas[];
   blokLahan: BlokLahan[];
@@ -23,6 +26,8 @@ export function generateOperationalPdfReport(options: PdfReportOptions) {
     namaKebun,
     managerName,
     blokFilterId,
+    startDate,
+    endDate,
     keuangan,
     logAktivitas,
     blokLahan,
@@ -38,13 +43,20 @@ export function generateOperationalPdfReport(options: PdfReportOptions) {
   const pageHeight = doc.internal.pageSize.getHeight();
 
   // Filter by block if selected
-  const filteredKeuangan = blokFilterId && blokFilterId !== 'semua'
+  const blockFilteredKeuangan = blokFilterId && blokFilterId !== 'semua'
     ? keuangan.filter(k => k.blokId === blokFilterId)
     : keuangan;
 
-  const filteredLog = blokFilterId && blokFilterId !== 'semua'
+  const blockFilteredLog = blokFilterId && blokFilterId !== 'semua'
     ? logAktivitas.filter(l => l.blokId === blokFilterId)
     : logAktivitas;
+
+  const filteredKeuangan = blockFilteredKeuangan.filter((record) =>
+    matchesReportPeriod(getKeuanganRecordDate(record), startDate, endDate),
+  );
+  const filteredLog = blockFilteredLog.filter((record) =>
+    matchesReportPeriod(record.tanggal, startDate, endDate),
+  );
 
   // Calculate totals
   let totalBiayaBenih = 0;
@@ -70,6 +82,7 @@ export function generateOperationalPdfReport(options: PdfReportOptions) {
   });
 
   const totalLogCost = filteredLog.reduce((acc, curr) => acc + (curr.biaya || 0), 0);
+  totalBiayaOperasional += totalLogCost;
   const netProfit = totalEstimasiOmzet - totalBiayaOperasional;
   const roi = totalBiayaOperasional > 0 ? ((netProfit / totalBiayaOperasional) * 100).toFixed(1) : '0';
 
@@ -156,7 +169,7 @@ export function generateOperationalPdfReport(options: PdfReportOptions) {
   doc.text(formatRp(totalBiayaOperasional), 14 + colWidth + 4, currentY + 13);
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
-  doc.text('Benih, Pupuk, Pestisida, Dll', 14 + colWidth + 4, currentY + 18);
+  doc.text('Input Keuangan + Biaya Log', 14 + colWidth + 4, currentY + 18);
 
   // Col 3: Profit Netto
   doc.setFont('helvetica', 'bold');
@@ -218,7 +231,7 @@ export function generateOperationalPdfReport(options: PdfReportOptions) {
     formatRp(totalBiayaBenih),
     formatRp(totalBiayaPupuk),
     formatRp(totalBiayaPestisida),
-    formatRp(totalBiayaTetap + totalBiayaLain),
+      formatRp(totalBiayaTetap + totalBiayaLain + totalLogCost),
     formatRp(totalBiayaOperasional),
     formatRp(totalEstimasiOmzet),
     formatRp(netProfit),
@@ -226,7 +239,7 @@ export function generateOperationalPdfReport(options: PdfReportOptions) {
 
   autoTable(doc, {
     startY: currentY + 3,
-    head: [['No', 'Komoditas', 'Lahan', 'Benih', 'Pupuk', 'Pestisida', 'Lain/Operasi', 'Total Biaya', 'Est. Omzet', 'Est. Profit']],
+    head: [['No', 'Komoditas', 'Lahan', 'Benih', 'Pupuk', 'Pestisida', 'Lain/Log', 'Total Biaya', 'Est. Omzet', 'Est. Profit']],
     body: keuanganRows,
     theme: 'grid',
     headStyles: {

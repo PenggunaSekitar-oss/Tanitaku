@@ -11,27 +11,40 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
-        includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+        includeAssets: ['apple-touch-icon.png', 'tanita-icon.svg'],
         devOptions: {
-          enabled: true
+          enabled: false
         },
         manifest: {
           name: 'TANITA - Manajemen Pertanian',
           short_name: 'TANITA',
           description: 'Aplikasi manajemen operasional dan keuangan pertanian',
-          theme_color: '#1a1f1a', // Assuming a dark green/surface color
-          background_color: '#0d120e',
+          id: '/',
+          lang: 'id',
+          start_url: '/',
+          scope: '/',
+          theme_color: '#154734',
+          background_color: '#fefefa',
           display: 'standalone',
+          orientation: 'portrait-primary',
           icons: [
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         }
