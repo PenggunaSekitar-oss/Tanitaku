@@ -55,12 +55,20 @@ test('jadwal berulang menghitung occurrence berikutnya', () => {
   assert.equal(oneTime && formatLocalDate(oneTime), '2026-07-01');
 });
 
-test('pencarian pestisida tidak memakai fallback produk acak', () => {
+test('pencarian pestisida memakai target dan tidak gugur ketika tanaman diisi', () => {
   const noMatch = searchPesticides(PESTISIDA_CATALOG, 'Virus Kuning', '');
   assert.equal(noMatch.length, 0);
 
+  const targetOnly = searchPesticides(PESTISIDA_CATALOG, 'Ulat Grayak', '');
+  const withCropContext = searchPesticides(PESTISIDA_CATALOG, 'Ulat Grayak', 'Cabai');
+  assert.ok(targetOnly.length > 0);
+  assert.deepEqual(
+    new Set(withCropContext.map((item) => item.nama)),
+    new Set(targetOnly.map((item) => item.nama)),
+  );
+
   const cropOnly = searchPesticides(PESTISIDA_CATALOG, '', 'Apel');
-  assert.ok(cropOnly.length < PESTISIDA_CATALOG.length);
+  assert.equal(cropOnly.length, 0);
 });
 
 test('periode laporan dibentuk dinamis dan memfilter tanggal', () => {

@@ -17,11 +17,6 @@ export function BannerCarousel() {
             sederhana.
           </p>
         </div>
-        <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-white/15 pt-4 text-[11px] font-semibold text-[#D7E1DA]">
-          <span>Data tersimpan lokal</span>
-          <span>Sumber cuaca BMKG</span>
-          <span>Tanpa data contoh</span>
-        </div>
       </div>
       <div className="order-1 min-h-[210px] overflow-hidden md:order-2 md:min-h-full">
         <img
