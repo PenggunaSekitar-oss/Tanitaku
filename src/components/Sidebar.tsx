@@ -59,8 +59,7 @@ export function Sidebar({
           isOpen ? 'translate-x-0' : 'translate-x-full'
         } md:relative md:inset-y-0 md:left-0 md:right-auto md:w-[248px] md:translate-x-0 md:border-l-0 md:border-r`}
       >
-        <div className="flex h-[72px] shrink-0 items-center justify-between border-b border-[#DFDED7] px-5">
-          <BrandLockup />
+        <div className="flex h-[72px] shrink-0 items-center justify-end border-b border-[#DFDED7] px-4 md:hidden">
           <button
             type="button"
             onClick={onClose}
@@ -113,6 +112,10 @@ export function Sidebar({
             </div>
           ))}
         </nav>
+
+        <div className="flex shrink-0 items-center justify-center border-t border-[#DFDED7] px-5 py-5">
+          <BrandLockup />
+        </div>
       </aside>
     </>
   );
