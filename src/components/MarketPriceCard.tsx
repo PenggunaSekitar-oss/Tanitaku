@@ -6,6 +6,7 @@ import {
   saveMarketPrice,
 } from '../utils/marketPrice';
 import { formatLocalDate } from '../utils/localDate';
+import { IS_DEMO_MODE } from '../config/runtime';
 
 interface MarketPriceCardProps {
   catalog: MarketCatalog;
@@ -103,7 +104,7 @@ export function MarketPriceCard({
         </p>
       )}
 
-      {editing ? (
+      {!IS_DEMO_MODE && (editing ? (
         <div className="mt-3 grid gap-2 border-t border-[#D8D5CC] pt-3">
           <label className="text-[11px] font-bold text-[#45534B]">
             Harga/kemasan di lokasi Anda
@@ -161,7 +162,7 @@ export function MarketPriceCard({
         >
           Perbarui harga lokal
         </button>
-      )}
+      ))}
       {feedback && (
         <p
           role="status"
