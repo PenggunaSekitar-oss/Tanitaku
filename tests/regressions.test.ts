@@ -483,6 +483,24 @@ test('interaksi tombol memiliki hover, tekan, fokus, dan status nonaktif global'
   assert.match(styles, /button:disabled,[\s\S]*opacity: 0\.55/);
 });
 
+test('motion UI tetap profesional dan menghormati preferensi aksesibilitas', () => {
+  const styles = readFileSync(resolve('src/index.css'), 'utf8');
+  const app = readFileSync(resolve('src/App.tsx'), 'utf8');
+  const dashboard = readFileSync(resolve('src/views/DashboardView.tsx'), 'utf8');
+  const modal = readFileSync(resolve('src/components/ConfirmModal.tsx'), 'utf8');
+  const chart = readFileSync(resolve('src/components/GrowthChart.tsx'), 'utf8');
+
+  assert.match(styles, /cubic-bezier\(0\.16, 1, 0\.3, 1\)/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
+  assert.match(styles, /\.motion-stagger > \*/);
+  assert.match(styles, /\.tanita-skeleton > \*/);
+  assert.doesNotMatch(styles, /(?:linear|radial|conic)-gradient/);
+  assert.match(app, /filter: 'blur\(5px\)'/);
+  assert.match(dashboard, /<AnimatedNumber/);
+  assert.match(modal, /<AnimatePresence>/);
+  assert.match(chart, /animationDuration=\{850\}/);
+});
+
 test('katalog hama tidak memakai lagi foto spesies yang salah dan menampilkan audit gambar', () => {
   const view = readFileSync(resolve('src/views/JenisHamaView.tsx'), 'utf8');
   for (const wrongImage of [
