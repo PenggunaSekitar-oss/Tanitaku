@@ -52,6 +52,87 @@ export function getNextScheduledDate(
   return addLocalDays(startDate, completedIntervals * intervalDays);
 }
 
+export type ScheduleReminderStatus = 'upcoming' | 'due' | 'overdue' | 'completed' | 'none';
+
+export interface ScheduleReminderState {
+  occurrenceDate: Date | null;
+  nextDate: Date | null;
+  diffDays: number | null;
+  status: ScheduleReminderStatus;
+}
+
+export function getScheduleReminderState(
+  startDateValue: string,
+  intervalDays: number,
+  completedDates: string[] = [],
+  referenceDate = new Date(),
+): ScheduleReminderState {
+  const startDate = parseLocalDate(startDateValue);
+  if (!startDate || Number.isNaN(referenceDate.getTime())) {
+    return { occurrenceDate: null, nextDate: null, diffDays: null, status: 'none' };
+  }
+
+  const today = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate(),
+  );
+  const completed = new Set(completedDates.filter((value) => parseLocalDate(value)));
+  const interval = Number.isFinite(intervalDays) ? Math.floor(intervalDays) : 0;
+  const startDiff = differenceInCalendarDays(startDate, today);
+
+  if (startDiff > 0) {
+    return {
+      occurrenceDate: startDate,
+      nextDate: startDate,
+      diffDays: startDiff,
+      status: 'upcoming',
+    };
+  }
+
+  if (interval <= 0) {
+    const key = formatLocalDate(startDate);
+    if (completed.has(key)) {
+      return {
+        occurrenceDate: startDate,
+        nextDate: null,
+        diffDays: differenceInCalendarDays(startDate, today),
+        status: 'completed',
+      };
+    }
+    const diffDays = differenceInCalendarDays(startDate, today);
+    return {
+      occurrenceDate: startDate,
+      nextDate: null,
+      diffDays,
+      status: diffDays === 0 ? 'due' : 'overdue',
+    };
+  }
+
+  const elapsedDays = Math.max(0, differenceInCalendarDays(today, startDate));
+  const elapsedIntervals = Math.floor(elapsedDays / interval);
+  const latestOccurrence = addLocalDays(startDate, elapsedIntervals * interval);
+  const latestKey = formatLocalDate(latestOccurrence);
+
+  if (!completed.has(latestKey)) {
+    const diffDays = differenceInCalendarDays(latestOccurrence, today);
+    return {
+      occurrenceDate: latestOccurrence,
+      nextDate: addLocalDays(latestOccurrence, interval),
+      diffDays,
+      status: diffDays === 0 ? 'due' : 'overdue',
+    };
+  }
+
+  const nextDate = addLocalDays(latestOccurrence, interval);
+  return {
+    occurrenceDate: nextDate,
+    nextDate,
+    diffDays: differenceInCalendarDays(nextDate, today),
+    status: 'upcoming',
+  };
+}
+
 export function isDateInRange(value: string, startDate?: string, endDate?: string): boolean {
   if (!value) return false;
   if (startDate && value < startDate) return false;
