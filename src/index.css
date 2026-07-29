@@ -51,6 +51,9 @@
   --radius-control: 0.75rem;
   --radius-card: 1rem;
   --shadow-card: 0 2px 8px rgba(24, 35, 29, 0.055);
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-duration-fast: 180ms;
+  --motion-duration-base: 420ms;
 }
 
 * {
@@ -121,13 +124,101 @@ h4 {
   border-radius: 1rem;
   background: var(--surface-color);
   box-shadow: 0 1px 2px rgba(24, 35, 29, 0.035);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    transform var(--motion-duration-base) var(--motion-ease-out),
+    border-color 220ms ease,
+    box-shadow var(--motion-duration-base) var(--motion-ease-out);
 }
 
 .neo-card:hover,
 .neo-card-small:hover {
   border-color: #BCC3BC;
   box-shadow: 0 4px 12px rgba(24, 35, 29, 0.05);
+}
+
+@keyframes tanita-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+    filter: blur(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes tanita-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.motion-page {
+  transform-origin: 50% 0;
+}
+
+.motion-surface {
+  will-change: transform;
+}
+
+.motion-stagger > * {
+  opacity: 0;
+  animation: tanita-reveal 560ms var(--motion-ease-out) forwards;
+}
+
+.motion-stagger > :nth-child(1) {
+  animation-delay: 80ms;
+}
+
+.motion-stagger > :nth-child(2) {
+  animation-delay: 125ms;
+}
+
+.motion-stagger > :nth-child(3) {
+  animation-delay: 170ms;
+}
+
+.motion-stagger > :nth-child(4) {
+  animation-delay: 215ms;
+}
+
+.motion-stagger > :nth-child(5) {
+  animation-delay: 260ms;
+}
+
+.motion-stagger > :nth-child(6) {
+  animation-delay: 305ms;
+}
+
+.motion-stagger > :nth-child(n + 7) {
+  animation-delay: 350ms;
+}
+
+.tanita-skeleton > * {
+  animation: tanita-skeleton-pulse 1.25s ease-in-out infinite;
+}
+
+.tanita-skeleton > :nth-child(2) {
+  animation-delay: 100ms;
+}
+
+.tanita-skeleton > :nth-child(3) {
+  animation-delay: 200ms;
+}
+
+@media (hover: hover) {
+  .neo-card:hover,
+  .neo-card-small:hover {
+    transform: translateY(-2px);
+  }
 }
 
 .neo-btn {
