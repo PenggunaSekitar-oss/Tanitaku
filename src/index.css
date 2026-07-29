@@ -455,3 +455,8 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+/* Mutation controls are explicitly tagged by editable modules. The context
+   independently rejects writes, so this is presentation rather than security. */
+.demo-readonly .demo-mutation {
+  display: none !important;
+}
