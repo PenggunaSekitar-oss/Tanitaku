@@ -43,6 +43,10 @@ import {
   BIBIT_CATALOG,
   getBibitMarketMetadata,
 } from '../src/data/bibitData';
+import {
+  formatAccessCode,
+  normalizeAccessCode,
+} from '../src/components/AccessGate';
 
 test('input desimal menerima titik dan koma tanpa mengubah besaran', () => {
   assert.equal(parseLocalizedNumberInput('0.5', true).value, 0.5);
@@ -56,6 +60,14 @@ test('input bilangan bulat tetap mendukung pemisah ribuan Indonesia', () => {
   const result = parseLocalizedNumberInput('1.250.000', false);
   assert.equal(result.value, 1_250_000);
   assert.equal(result.displayValue, '1.250.000');
+});
+
+test('format aktivasi memisahkan kode tanpa mengubah nilai yang diverifikasi', () => {
+  assert.equal(formatAccessCode('tanita2026'), 'TANI TA20 26');
+  assert.equal(normalizeAccessCode(formatAccessCode('tanita2026')), 'TANITA2026');
+  assert.equal(formatAccessCode('tanita-pro'), 'TANITA-PRO');
+  assert.equal(normalizeAccessCode(formatAccessCode('tanita-pro')), 'TANITA-PRO');
+  assert.equal(normalizeAccessCode(' tani@ta 2026 '), 'TANITA2026');
 });
 
 test('tanggal kalender memakai WITA, bukan tanggal UTC', () => {
