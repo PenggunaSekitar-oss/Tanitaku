@@ -1,6 +1,6 @@
 import { PageHeader } from '../components/PageHeader';
 import React, { useState } from 'react';
-import { useTaniOps } from '../context/TaniOpsContext';
+import { useTaniOps, type LogAktivitas } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import { EmptyState } from '../components/EmptyState';
 import { Select } from '../components/Select';
@@ -23,9 +23,24 @@ const kategoriOptions = [
 ];
 
 export function LogAktivitasView() {
-  const { blokLahan, logAktivitas, addLogAktivitas, updateLogAktivitas, deleteLogAktivitas } = useTaniOps();
+  const {
+    blokLahan,
+    logAktivitas,
+    keuangan,
+    addLogAktivitas,
+    updateLogAktivitas,
+    deleteLogAktivitas,
+  } = useTaniOps();
   const { showToast } = useToast();
-  const initialForm = { tanggal: formatLocalDate(), blokId: '', kategori: 'Persiapan Lahan', deskripsi: '', biaya: 0, petugas: '' };
+  const initialForm = {
+    tanggal: formatLocalDate(),
+    blokId: '',
+    kategori: 'Persiapan Lahan',
+    deskripsi: '',
+    biaya: 0,
+    petugas: '',
+    biayaSudahDiKeuangan: false,
+  };
   const [form, setForm] = useState(initialForm);
   const [filterKategori, setFilterKategori] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -33,6 +48,19 @@ export function LogAktivitasView() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteMessage, setDeleteMessage] = useState('');
   const [pdfModalOpen, setPdfModalOpen] = useState(false);
+
+  const hasPotentialFinanceMatch = form.biaya > 0 && keuangan.some((record) => {
+    if (record.blokId !== form.blokId || record.transactionDate !== form.tanggal) return false;
+    const components = [
+      record.biayaTetap,
+      record.biayaBenih,
+      record.biayaPupuk,
+      record.biayaPestisida,
+      record.biayaLain,
+    ];
+    const total = components.reduce((sum, value) => sum + (value || 0), 0);
+    return components.some((value) => value === form.biaya) || total === form.biaya;
+  });
 
   const handleAddLog = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,14 +74,27 @@ export function LogAktivitasView() {
       showToast('Aktivitas berhasil diupdate', 'success');
     } else {
       addLogAktivitas(form);
-      showToast('Aktivitas berhasil dicatat', 'success');
+      showToast(
+        form.biayaSudahDiKeuangan
+          ? 'Aktivitas dicatat; biaya dikecualikan dari rekap karena sudah dicatat di Keuangan.'
+          : 'Aktivitas berhasil dicatat',
+        'success',
+      );
     }
     setForm(initialForm);
     setEditingId(null);
   };
 
-  const handleEdit = (l: any) => {
-    setForm(l);
+  const handleEdit = (l: LogAktivitas) => {
+    setForm({
+      tanggal: l.tanggal,
+      blokId: l.blokId,
+      kategori: l.kategori,
+      deskripsi: l.deskripsi,
+      biaya: l.biaya,
+      petugas: l.petugas,
+      biayaSudahDiKeuangan: l.biayaSudahDiKeuangan === true,
+    });
     setEditingId(l.id);
   };
 
@@ -79,15 +120,25 @@ export function LogAktivitasView() {
     if (logAktivitas.length === 0) return;
     const rows = logAktivitas.map(l => {
       const b = blokLahan.find(b => b.id === l.blokId);
-      return [l.tanggal, b?.nama || '', l.kategori, l.deskripsi, l.biaya, l.petugas];
+      return [
+        l.tanggal,
+        b?.nama || '',
+        l.kategori,
+        l.deskripsi,
+        l.biaya,
+        l.biayaSudahDiKeuangan ? 'Sudah dicatat di Keuangan' : 'Masuk rekap',
+        l.petugas,
+      ];
     });
-    const csv = createCsv(['Tanggal', 'Blok', 'Kategori', 'Deskripsi', 'Biaya', 'Petugas'], rows);
+    const csv = createCsv(['Tanggal', 'Blok', 'Kategori', 'Deskripsi', 'Biaya', 'Status Rekap', 'Petugas'], rows);
     const csvUrl = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     const a = document.createElement('a');
     a.href = csvUrl;
     a.download = 'log_aktivitas.csv';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(csvUrl);
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(csvUrl), 1_000);
   };
 
   const filteredLogs = filterKategori ? logAktivitas.filter(l => l.kategori === filterKategori) : logAktivitas;
@@ -200,6 +251,34 @@ export function LogAktivitasView() {
                 />
               </div>
             </div>
+            {form.biaya > 0 && (
+              <div className="space-y-2">
+                {hasPotentialFinanceMatch && (
+                  <p role="status" className="rounded-lg border border-[#C58A3A] bg-[#FFF8E8] p-2.5 text-[10px] font-medium leading-relaxed text-[#654819]">
+                    Ada nominal identik pada blok dan tanggal yang sama di Keuangan. Periksa apakah ini transaksi yang sama; TANITA tidak menganggapnya duplikat secara otomatis.
+                  </p>
+                )}
+                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#C8C5BC] bg-[#F6F5EF] p-3">
+                  <input
+                    type="checkbox"
+                    checked={form.biayaSudahDiKeuangan}
+                    onChange={(event) => setForm({
+                      ...form,
+                      biayaSudahDiKeuangan: event.target.checked,
+                    })}
+                    className="mt-0.5 size-4 accent-[#154734]"
+                  />
+                  <span>
+                    <span className="block text-xs font-bold text-[#26352D]">
+                      Biaya ini sudah dicatat di menu Keuangan
+                    </span>
+                    <span className="mt-0.5 block text-[10px] leading-relaxed text-[#6B746E]">
+                      Aktifkan agar biaya jurnal tidak dijumlahkan dua kali pada profit dan laporan.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            )}
 
             <button 
               type="submit" 
@@ -287,6 +366,11 @@ export function LogAktivitasView() {
                         )}
                         {l.biaya > 0 && (
                           <span><span className="font-bold text-[#0A0A0A]">Biaya:</span> Rp {l.biaya.toLocaleString('id-ID')}</span>
+                        )}
+                        {l.biaya > 0 && l.biayaSudahDiKeuangan && (
+                          <span className="font-sans font-semibold text-[#79501F]">
+                            Tidak dijumlahkan ulang · sudah di Keuangan
+                          </span>
                         )}
                       </div>
                     </div>
