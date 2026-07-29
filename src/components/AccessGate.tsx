@@ -13,6 +13,47 @@ const VALID_CODE_HASHES = [
   '9e05b273466a570954e7e97f580456c62050902a6032276ec7251636ae55d9fa',
   '871c58f635b5313f3d0d1fc5cf3281b28bf2c3fc23a7f524bcb4f3139988e655',
 ];
+const ACCESS_ACTIVATED_AT_KEY = 'tanita_access_activated_at';
+const ACCESS_ATTEMPTS_KEY = 'tanita_access_attempts';
+const ACCESS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+const ACCESS_MAX_ATTEMPTS = 5;
+const ACCESS_LOCK_MS = 5 * 60 * 1000;
+
+type AccessAttemptState = {
+  failures: number;
+  lockedUntil: number;
+};
+
+function readAttemptState(): AccessAttemptState {
+  try {
+    const parsed: unknown = JSON.parse(localStorage.getItem(ACCESS_ATTEMPTS_KEY) || '{}');
+    if (typeof parsed !== 'object' || parsed === null) return { failures: 0, lockedUntil: 0 };
+    const value = parsed as Record<string, unknown>;
+    return {
+      failures: Number.isFinite(Number(value.failures)) ? Math.max(0, Number(value.failures)) : 0,
+      lockedUntil: Number.isFinite(Number(value.lockedUntil)) ? Math.max(0, Number(value.lockedUntil)) : 0,
+    };
+  } catch {
+    return { failures: 0, lockedUntil: 0 };
+  }
+}
+
+function recordFailedAttempt(now = Date.now()): AccessAttemptState {
+  const current = readAttemptState();
+  const failures = current.lockedUntil > 0 && current.lockedUntil <= now
+    ? 1
+    : current.failures + 1;
+  const next = {
+    failures,
+    lockedUntil: failures >= ACCESS_MAX_ATTEMPTS ? now + ACCESS_LOCK_MS : 0,
+  };
+  try {
+    localStorage.setItem(ACCESS_ATTEMPTS_KEY, JSON.stringify(next));
+  } catch {
+    // The current session still receives clear error feedback.
+  }
+  return next;
+}
 
 async function sha256(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
@@ -84,8 +125,21 @@ export function AccessGate({ children }: AccessGateProps) {
   useEffect(() => {
     try {
       const savedCodeHash = localStorage.getItem('tanita_access_code_hash');
-      if (savedCodeHash && VALID_CODE_HASHES.includes(savedCodeHash)) {
+      const activatedAt = Number(localStorage.getItem(ACCESS_ACTIVATED_AT_KEY));
+      const now = Date.now();
+      const accessIsFresh = Number.isFinite(activatedAt) &&
+        activatedAt > 0 &&
+        activatedAt <= now + 5 * 60 * 1000 &&
+        now - activatedAt <= ACCESS_MAX_AGE_MS;
+      if (savedCodeHash && VALID_CODE_HASHES.includes(savedCodeHash) && accessIsFresh) {
         setIsUnlocked(true);
+      } else if (savedCodeHash && VALID_CODE_HASHES.includes(savedCodeHash) && !activatedAt) {
+        // Migrate access granted by older versions without interrupting users.
+        localStorage.setItem(ACCESS_ACTIVATED_AT_KEY, String(now));
+        setIsUnlocked(true);
+      } else {
+        localStorage.removeItem('tanita_access_code_hash');
+        localStorage.removeItem(ACCESS_ACTIVATED_AT_KEY);
       }
       localStorage.removeItem('tanita_access_granted');
       localStorage.removeItem('tanita_redeem_code');
@@ -108,6 +162,13 @@ export function AccessGate({ children }: AccessGateProps) {
       return;
     }
 
+    const attemptState = readAttemptState();
+    if (attemptState.lockedUntil > Date.now()) {
+      const remainingMinutes = Math.max(1, Math.ceil((attemptState.lockedUntil - Date.now()) / 60_000));
+      showError(`Terlalu banyak percobaan. Coba kembali sekitar ${remainingMinutes} menit lagi.`);
+      return;
+    }
+
     setIsVerifying(true);
     setErrorMsg('');
     try {
@@ -117,11 +178,18 @@ export function AccessGate({ children }: AccessGateProps) {
       ]);
 
       if (!VALID_CODE_HASHES.includes(codeHash)) {
-        showError('Kode tidak dikenali. Periksa kembali setiap karakter atau hubungi pengelola.');
+        const nextAttempt = recordFailedAttempt();
+        showError(
+          nextAttempt.lockedUntil > Date.now()
+            ? 'Batas percobaan tercapai. Verifikasi dikunci selama 5 menit.'
+            : `Kode tidak dikenali. Tersisa ${Math.max(0, ACCESS_MAX_ATTEMPTS - nextAttempt.failures)} percobaan sebelum jeda keamanan.`,
+        );
         return;
       }
 
       localStorage.setItem('tanita_access_code_hash', codeHash);
+      localStorage.setItem(ACCESS_ACTIVATED_AT_KEY, String(Date.now()));
+      localStorage.removeItem(ACCESS_ATTEMPTS_KEY);
       setSuccessMsg('Kode valid. Menyiapkan ruang kerja kebun…');
       setIsActivating(true);
       await new Promise((resolve) => window.setTimeout(resolve, 700));
