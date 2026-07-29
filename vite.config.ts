@@ -1,10 +1,12 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig, loadEnv} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const isDemoMode = env.VITE_DEMO_MODE === 'true';
   return {
     plugins: [
       react(),
@@ -36,9 +38,11 @@ export default defineConfig(() => {
           ],
         },
         manifest: {
-          name: 'TANITA - Manajemen Pertanian',
-          short_name: 'TANITA',
-          description: 'Aplikasi manajemen operasional dan keuangan pertanian',
+          name: isDemoMode ? 'TANITA Demo - Hanya Baca' : 'TANITA - Manajemen Pertanian',
+          short_name: isDemoMode ? 'TANITA Demo' : 'TANITA',
+          description: isDemoMode
+            ? 'Demo hanya baca aplikasi manajemen pertanian TANITA'
+            : 'Aplikasi manajemen operasional dan keuangan pertanian',
           id: '/',
           lang: 'id',
           start_url: '/',
