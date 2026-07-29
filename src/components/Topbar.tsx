@@ -60,7 +60,7 @@ export function Topbar({ onOpenSidebar, currentView }: TopbarProps) {
   } = useToast();
 
   return (
-    <header className="relative z-[999] flex h-[72px] shrink-0 items-center justify-between border-b border-[#D9D8D1] bg-[#FBFAF6] px-4 sm:px-6">
+    <header className="relative z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-[#D9D8D1] bg-[#FBFAF6] px-4 sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <div className="md:hidden">
           <BrandLockup compact />
