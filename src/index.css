@@ -185,6 +185,72 @@ h4 {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
+@keyframes access-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes access-error-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  35% {
+    transform: translateX(-4px);
+  }
+  70% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes access-success-pop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes access-help-reveal {
+  from {
+    transform: translateY(-4px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.access-spinner {
+  animation: access-spin 700ms linear infinite;
+}
+
+.access-code-error {
+  animation: access-error-nudge 220ms ease-out;
+}
+
+.access-success-icon {
+  animation: access-success-pop 240ms ease-out;
+}
+
+.access-help-panel {
+  animation: access-help-reveal 160ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .access-spinner,
+  .access-code-error,
+  .access-success-icon,
+  .access-help-panel {
+    animation: none;
+  }
+}
+
 button {
   touch-action: manipulation;
 }
