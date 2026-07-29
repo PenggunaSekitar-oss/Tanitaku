@@ -103,7 +103,7 @@ export default function App() {
         <AccessGate>
           {!IS_DEMO_MODE && <AgriDynamicToastNotifier navigate={navigateTo} />}
           <PwaUpdatePrompt />
-          <div className={`app-shell flex h-screen overflow-hidden bg-[#F2F1EC] text-[#1C211D] font-sans selection:bg-[#24533F] selection:text-white ${IS_DEMO_MODE ? 'demo-readonly' : ''}`}>
+          <div className={`app-shell flex h-screen w-full min-w-0 max-w-full overflow-hidden bg-[#F2F1EC] text-[#1C211D] font-sans selection:bg-[#24533F] selection:text-white ${IS_DEMO_MODE ? 'demo-readonly' : ''}`}>
             <Sidebar currentView={currentView} onNavigate={navigateTo} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <div className="relative flex min-w-0 flex-1 flex-col bg-[#F2F1EC]">
               <Topbar
@@ -113,7 +113,7 @@ export default function App() {
               />
               {IS_DEMO_MODE && <DemoModeBanner />}
               <div className="flex-1 overflow-y-auto flex flex-col justify-between">
-                <main className="app-content mx-auto w-full max-w-[1440px] flex-1 p-4 sm:p-6 lg:p-8 xl:px-10">
+                <main className="app-content mx-auto w-full min-w-0 max-w-[1440px] flex-1 overflow-x-clip p-4 sm:p-6 lg:p-8 xl:px-10">
                   <Breadcrumbs currentView={currentView} onNavigate={navigateTo} />
                   <AnimatePresence mode="wait">
                     <motion.div
