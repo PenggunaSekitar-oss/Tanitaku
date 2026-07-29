@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 
 export interface AgriToastOptions {
   id?: string;
@@ -222,58 +223,65 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       
       <div className="pointer-events-none fixed bottom-20 right-4 z-[9999] flex w-[calc(100vw-2rem)] max-w-sm flex-col gap-2 md:bottom-5">
-        {toasts.map((toast) => {
-          const accent =
-            toast.type === 'error'
-              ? 'bg-[#A34335]'
-              : toast.type === 'warning'
-                ? 'bg-[#A56E24]'
-                : toast.type === 'success'
-                  ? 'bg-[#2D684E]'
-                  : 'bg-[#718078]';
+        <AnimatePresence initial={false}>
+          {toasts.map((toast) => {
+            const accent =
+              toast.type === 'error'
+                ? 'bg-[#A34335]'
+                : toast.type === 'warning'
+                  ? 'bg-[#A56E24]'
+                  : toast.type === 'success'
+                    ? 'bg-[#2D684E]'
+                    : 'bg-[#718078]';
 
-          return (
-            <div
-              key={toast.id}
-              className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-[#D8D5CC] bg-[#FBFAF6] p-3.5 shadow-[0_12px_28px_rgba(20,31,25,0.12)] animate-in slide-in-from-bottom-2 duration-200"
-            >
-              <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${accent}`} aria-hidden="true" />
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-xs font-semibold text-[#26352D]">{toast.title}</p>
-                  {toast.badgeText && (
-                    <span className="rounded-md bg-[#ECEDE8] px-1.5 py-0.5 text-[10px] font-semibold text-[#68736C]">
-                      {toast.badgeText}
-                    </span>
+            return (
+              <motion.div
+                layout
+                key={toast.id}
+                initial={{ opacity: 0, y: 20, scale: 0.97, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, x: 18, scale: 0.98, filter: 'blur(2px)' }}
+                transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+                className="pointer-events-auto flex w-full items-start gap-3 rounded-xl border border-[#D8D5CC] bg-[#FBFAF6] p-3.5 shadow-[0_12px_28px_rgba(20,31,25,0.12)]"
+              >
+                <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${accent}`} aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-xs font-semibold text-[#26352D]">{toast.title}</p>
+                    {toast.badgeText && (
+                      <span className="rounded-md bg-[#ECEDE8] px-1.5 py-0.5 text-[10px] font-semibold text-[#68736C]">
+                        {toast.badgeText}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 whitespace-pre-line text-xs font-medium leading-relaxed text-[#5F6963]">
+                    {toast.message}
+                  </p>
+                  {toast.actionLabel && toast.onAction && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        toast.onAction!();
+                        removeToast(toast.id!);
+                      }}
+                      className="mt-2 rounded-lg bg-[#24533F] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1B4031]"
+                    >
+                      {toast.actionLabel}
+                    </button>
                   )}
                 </div>
-                <p className="mt-1 text-xs font-medium leading-relaxed text-[#5F6963] whitespace-pre-line">
-                  {toast.message}
-                </p>
-                {toast.actionLabel && toast.onAction && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      toast.onAction!();
-                      removeToast(toast.id!);
-                    }}
-                    className="mt-2 rounded-lg bg-[#24533F] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1B4031]"
-                  >
-                    {toast.actionLabel}
-                  </button>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => removeToast(toast.id!)}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#7A837D] transition hover:bg-[#EEECE6] hover:text-[#26352D]"
-                aria-label="Tutup notifikasi"
-              >
-                <span className="material-symbols-outlined text-[17px]">close</span>
-              </button>
-            </div>
-          );
-        })}
+                <button
+                  type="button"
+                  onClick={() => removeToast(toast.id!)}
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#7A837D] transition hover:bg-[#EEECE6] hover:text-[#26352D]"
+                  aria-label="Tutup notifikasi"
+                >
+                  <span className="material-symbols-outlined text-[17px]">close</span>
+                </button>
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
       </div>
     </ToastContext.Provider>
   );
