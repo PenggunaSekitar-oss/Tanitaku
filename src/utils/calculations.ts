@@ -37,11 +37,28 @@ export function calculateLuasLahan(
   const manualArea = asNonNegativeNumber(luasManualM2 ?? 0);
   if (manualArea > 0) return manualArea;
 
-  return (
-    asNonNegativeNumber(jumlahBedengan) *
-    asNonNegativeNumber(panjangBedengan) *
-    (asNonNegativeNumber(lebarBedengan) + asNonNegativeNumber(jarakAntarBedengan))
-  );
+  const beds = Math.floor(asNonNegativeNumber(jumlahBedengan));
+  const length = asNonNegativeNumber(panjangBedengan);
+  const width = asNonNegativeNumber(lebarBedengan);
+  const gap = asNonNegativeNumber(jarakAntarBedengan);
+  if (beds === 0 || length === 0 || width === 0) return 0;
+
+  // "Jarak antarbedengan" only exists between beds, therefore N beds have
+  // N - 1 internal gaps. Perimeter paths, when present, should be recorded as
+  // part of the manual/gross area instead of silently adding one extra gap.
+  return length * ((beds * width) + (Math.max(0, beds - 1) * gap));
+}
+
+export function calculatePlantPopulation(
+  effectiveAreaM2: number,
+  plantSpacingCm: number,
+  rowSpacingCm: number,
+): number {
+  const area = asNonNegativeNumber(effectiveAreaM2);
+  const plantSpacingM = asNonNegativeNumber(plantSpacingCm) / 100;
+  const rowSpacingM = asNonNegativeNumber(rowSpacingCm) / 100;
+  if (area === 0 || plantSpacingM === 0 || rowSpacingM === 0) return 0;
+  return Math.floor(area / (plantSpacingM * rowSpacingM));
 }
 
 export function calculateEffectiveLuasLahan(
