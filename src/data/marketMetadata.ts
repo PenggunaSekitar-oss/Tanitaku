@@ -69,7 +69,7 @@ export function buildMarketMetadata(
     commonPack: inferCommonPack(catalog, price),
     price,
     region: 'Referensi nasional',
-    observedAt: 'Belum diperbarui lokal',
+    observedAt: 'Referensi statis · verifikasi hari ini',
     source: 'Estimasi katalog',
   };
 }
