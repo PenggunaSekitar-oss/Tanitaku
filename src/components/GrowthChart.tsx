@@ -59,7 +59,7 @@ export function GrowthChart({ tanamanList }: GrowthChartProps) {
 
   return (
     <section className="overflow-hidden rounded-2xl border border-[#D8D5CC] bg-[#FBFAF6]">
-      <div className="grid grid-cols-3 border-b border-[#E2DFD7]">
+      <div className="motion-stagger grid grid-cols-3 border-b border-[#E2DFD7]">
         {[
           ['Tanaman aktif', activePlants.length],
           ['Umur median', `${medianAge} HST`],
@@ -116,7 +116,16 @@ export function GrowthChart({ tanamanList }: GrowthChartProps) {
                   fontSize: 11,
                 }}
               />
-              <Bar dataKey="hst" name="Umur tanaman" radius={[0, 6, 6, 0]} maxBarSize={20}>
+              <Bar
+                dataKey="hst"
+                name="Umur tanaman"
+                radius={[0, 6, 6, 0]}
+                maxBarSize={20}
+                isAnimationActive
+                animationBegin={120}
+                animationDuration={850}
+                animationEasing="ease-out"
+              >
                 {visiblePlants.map((plant, index) => (
                   <Cell
                     key={plant.id}
