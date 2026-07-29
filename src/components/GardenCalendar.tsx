@@ -8,11 +8,12 @@ interface GardenCalendarProps {
   schedules: Pemupukan[];
   blocks: BlokLahan[];
   onEdit: (schedule: Pemupukan) => void;
+  readOnly?: boolean;
 }
 
 const WEEKDAYS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
 
-export function GardenCalendar({ schedules, blocks, onEdit }: GardenCalendarProps) {
+export function GardenCalendar({ schedules, blocks, onEdit, readOnly = false }: GardenCalendarProps) {
   const [cursor, setCursor] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);
@@ -137,8 +138,9 @@ export function GardenCalendar({ schedules, blocks, onEdit }: GardenCalendarProp
                         key={`${day.key}-${schedule.id}`}
                         type="button"
                         onClick={() => onEdit(schedule)}
+                        disabled={readOnly}
                         title={`${schedule.jenisPupuk} · ${block?.nama ?? 'Lahan'}`}
-                        className={`block w-full truncate rounded-md border-l-2 px-1.5 py-1 text-left text-[10px] font-semibold ${
+                        className={`block w-full truncate rounded-md border-l-2 px-1.5 py-1 text-left text-[10px] font-semibold disabled:cursor-default ${
                           pesticide
                             ? 'border-[#B65B4A] bg-[#FAEFEC] text-[#7A352B]'
                             : 'border-[#3D7457] bg-[#EDF4EF] text-[#2B5A41]'
