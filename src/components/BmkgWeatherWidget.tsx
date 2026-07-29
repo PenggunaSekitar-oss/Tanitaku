@@ -220,7 +220,7 @@ export function BmkgWeatherWidget() {
     [data],
   );
   const advisories = useMemo(
-    () => getWeatherAdvisories(data?.forecasts ?? []),
+    () => getWeatherAdvisories(data?.forecasts ?? [], new Date(), data?.analysisAt),
     [data],
   );
   const freshness = getWeatherFreshness(data?.analysisAt ?? null);
