@@ -257,6 +257,7 @@ export function getWeatherFreshness(
 export function getWeatherAdvisories(
   forecasts: BmkgForecast[],
   now = new Date(),
+  analysisAt?: string | null,
 ): WeatherAdvisory[] {
   if (forecasts.length === 0) {
     return [{
@@ -267,12 +268,36 @@ export function getWeatherAdvisories(
     }];
   }
 
+  const latestAnalysisAt = analysisAt ?? forecasts
+    .map((forecast) => forecast.analysisAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((left, right) => new Date(right).getTime() - new Date(left).getTime())[0] ?? null;
+  const freshness = getWeatherFreshness(latestAnalysisAt, now);
+  if (freshness.isStale) {
+    return [{
+      level: 'medium',
+      title: 'Data belum layak untuk keputusan',
+      message: `${freshness.label}. Perbarui data BMKG dan periksa kondisi langsung sebelum menjadwalkan pekerjaan lapangan.`,
+      icon: 'history',
+    }];
+  }
+
   const windowEnd = now.getTime() + 6 * 60 * 60 * 1000;
   const relevant = forecasts.filter((forecast) => {
     const forecastTime = new Date(forecast.forecastAt).getTime();
-    return forecastTime >= now.getTime() - 90 * 60 * 1000 && forecastTime <= windowEnd;
+    return Number.isFinite(forecastTime) &&
+      forecastTime >= now.getTime() - 90 * 60 * 1000 &&
+      forecastTime <= windowEnd;
   });
-  const windowForecasts = relevant.length > 0 ? relevant : forecasts.slice(0, 2);
+  if (relevant.length === 0) {
+    return [{
+      level: 'medium',
+      title: 'Slot enam jam belum tersedia',
+      message: 'Prakiraan yang tersimpan tidak mencakup waktu operasional terdekat. Jangan menarik kesimpulan aman dari slot di luar jendela ini.',
+      icon: 'schedule',
+    }];
+  }
+  const windowForecasts = relevant;
 
   const hasRain = windowForecasts.some((forecast) =>
     /hujan|petir/i.test(forecast.description) ||
