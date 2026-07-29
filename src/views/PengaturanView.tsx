@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { PageHeader } from '../components/PageHeader';
 import { useTaniOps } from '../context/TaniOpsContext';
@@ -114,7 +114,10 @@ export function PengaturanView() {
     pemupukan,
     keuangan,
     clearAllData,
+    createBackup,
+    restoreBackup,
   } = useTaniOps();
+  const restoreInputRef = useRef<HTMLInputElement>(null);
 
   const [farmName, setFarmName] = useState('');
   const [managerName, setManagerName] = useState('');
@@ -256,10 +259,63 @@ export function PengaturanView() {
       icon: 'lock',
       onConfirm: () => {
         localStorage.removeItem('tanita_access_code_hash');
+        localStorage.removeItem('tanita_access_activated_at');
         closeModal();
         window.location.reload();
       },
     });
+  };
+
+  const handleDownloadBackup = () => {
+    try {
+      const backup = createBackup();
+      const url = URL.createObjectURL(new Blob([backup], { type: 'application/json' }));
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `tanita-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+      showToast('Cadangan lengkap TANITA berhasil diunduh.', 'success');
+    } catch {
+      showToast('Cadangan tidak dapat dibuat pada browser ini.', 'error');
+    }
+  };
+
+  const handleRestoreFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Ukuran cadangan melebihi batas 10 MB.', 'error');
+      return;
+    }
+
+    try {
+      const payload = await file.text();
+      setModalConfig({
+        isOpen: true,
+        title: 'Pulihkan cadangan',
+        message: 'Data pada perangkat ini akan diganti dengan isi cadangan yang dipilih. Buat cadangan terbaru terlebih dahulu bila masih diperlukan.',
+        confirmText: 'Pulihkan data',
+        confirmVariant: 'warning',
+        icon: 'settings_backup_restore',
+        onConfirm: () => {
+          const result = restoreBackup(payload);
+          if (!result.success) {
+            showToast(result.message, 'error');
+            closeModal();
+            return;
+          }
+          showToast(result.message, 'success');
+          closeModal();
+          window.setTimeout(() => window.location.reload(), 700);
+        },
+      });
+    } catch {
+      showToast('File cadangan tidak dapat dibaca.', 'error');
+    }
   };
 
   return (
@@ -338,7 +394,7 @@ export function PengaturanView() {
             <ToggleRow
               id="notify-fertilizer"
               title="Pengingat pemupukan"
-              description="Ingatkan jadwal hari ini, tiga hari ke depan, atau yang baru terlewat."
+              description="Ingatkan jadwal hari ini, tiga hari ke depan, atau yang terlewat saat TANITA sedang dibuka."
               checked={notifyFertilizer}
               onChange={setNotifyFertilizer}
             />
@@ -369,8 +425,34 @@ export function PengaturanView() {
             </span>
             <p className="text-xs font-medium leading-relaxed text-[#69716B]">
               Perubahan disimpan langsung di penyimpanan browser. TANITA belum melakukan
-              sinkronisasi akun atau pencadangan cloud.
+              sinkronisasi akun atau pencadangan cloud. Tab lain pada browser yang sama
+              diselaraskan otomatis.
             </p>
+          </div>
+          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={handleDownloadBackup}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#24533F] px-4 text-sm font-semibold text-white transition hover:bg-[#1B4031]"
+            >
+              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">download</span>
+              Unduh cadangan
+            </button>
+            <button
+              type="button"
+              onClick={() => restoreInputRef.current?.click()}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[#BFC4BE] bg-white px-4 text-sm font-semibold text-[#27352D] transition hover:border-[#86928A] hover:bg-[#F4F3EE]"
+            >
+              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">upload</span>
+              Pulihkan cadangan
+            </button>
+            <input
+              ref={restoreInputRef}
+              type="file"
+              accept="application/json,.json"
+              onChange={handleRestoreFile}
+              className="sr-only"
+            />
           </div>
         </SettingsCard>
 
@@ -381,8 +463,9 @@ export function PengaturanView() {
           className="xl:col-span-5"
         >
           <p className="text-sm font-medium leading-relaxed text-[#5F6962]">
-            Perangkat ini sedang memiliki sesi akses aktif. Mengunci sesi tidak menghapus data
-            operasional.
+            Perangkat ini memiliki kunci lokal aktif selama maksimal 30 hari. Kunci ini
+            mencegah akses kasual pada browser, tetapi bukan autentikasi akun atau lisensi
+            berbasis server. Mengunci sesi tidak menghapus data operasional.
           </p>
           <button
             type="button"
