@@ -25,12 +25,36 @@ export type Tanaman = {
   metodeTanam: string; 
   barisTanaman: number;
   jarakTanam: number;
+  jarakBaris: number;
   jumlahTanaman: number;
   catatan: string;
   status?: 'Aktif' | 'Panen';
 };
-export type LogAktivitas = { id: string; tanggal: string; blokId: string; kategori: string; deskripsi: string; biaya: number; petugas: string };
-export type Pemupukan = { id: string; blokId: string; kategori: string; jenisPupuk: string; metodeAplikasi: string; satuanDosis: string; tujuan: string; dosisPerHektar: number; literAirPerHektar?: number; tanggalAplikasi: string; intervalHari: number; catatan: string };
+export type LogAktivitas = {
+  id: string;
+  tanggal: string;
+  blokId: string;
+  kategori: string;
+  deskripsi: string;
+  biaya: number;
+  petugas: string;
+  biayaSudahDiKeuangan?: boolean;
+};
+export type Pemupukan = {
+  id: string;
+  blokId: string;
+  kategori: string;
+  jenisPupuk: string;
+  metodeAplikasi: string;
+  satuanDosis: string;
+  tujuan: string;
+  dosisPerHektar: number;
+  literAirPerHektar?: number;
+  tanggalAplikasi: string;
+  intervalHari: number;
+  catatan: string;
+  completedDates?: string[];
+};
 export type Keuangan = { 
   id: string; 
   blokId: string; 
@@ -70,6 +94,11 @@ interface State {
   keuangan: Keuangan[];
 }
 
+export interface RestoreResult {
+  success: boolean;
+  message: string;
+}
+
 interface TaniOpsContextType extends State {
   addBlokLahan: (b: Omit<BlokLahan, 'id'>) => void;
   updateBlokLahan: (id: string, b: Partial<BlokLahan>) => void;
@@ -88,6 +117,8 @@ interface TaniOpsContextType extends State {
   deleteKeuangan: (id: string) => void;
   clearAllData: () => void;
   loadDemoData: () => void;
+  createBackup: () => string;
+  restoreBackup: (payload: string) => RestoreResult;
 }
 
 const TaniOpsContext = createContext<TaniOpsContextType | undefined>(undefined);
@@ -103,6 +134,19 @@ const DEFAULT_TANAMAN: Tanaman[] = [];
 const DEFAULT_LOG: LogAktivitas[] = [];
 const DEFAULT_PEMUPUKAN: Pemupukan[] = [];
 const DEFAULT_KEUANGAN: Keuangan[] = [];
+const BACKUP_PREFERENCE_KEYS = [
+  'tanita_farm_name',
+  'tanita_manager_name',
+  'tanita_notify_crop_status',
+  'tanita_notify_fertilizer',
+  'bmkg_selected_region',
+  'tanita_market_price_overrides_v1',
+  'tanita_notifications_history',
+  'tanita_history_bibit',
+  'tanita_history_pupuk',
+  'tanita_history_pestisida',
+  'tanita_history_penyakit',
+] as const;
 
 export function TaniOpsProvider({ children }: { children: ReactNode }) {
   const { showToast } = useToast();
@@ -201,6 +245,9 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       metodeTanam: asText(value.metodeTanam),
       barisTanaman: asNumber(value.barisTanaman),
       jarakTanam: asNumber(value.jarakTanam),
+      jarakBaris: value.jarakBaris == null
+        ? asNumber(value.jarakTanam)
+        : asNumber(value.jarakBaris),
       jumlahTanaman: asNumber(value.jumlahTanaman),
       catatan: asText(value.catatan),
       status: value.status === 'Panen' ? 'Panen' : 'Aktif',
@@ -217,6 +264,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       deskripsi: asText(value.deskripsi),
       biaya: asNumber(value.biaya),
       petugas: asText(value.petugas),
+      biayaSudahDiKeuangan: value.biayaSudahDiKeuangan === true,
     };
   };
 
@@ -236,6 +284,9 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       tanggalAplikasi: asText(value.tanggalAplikasi),
       intervalHari: asNumber(value.intervalHari),
       catatan: asText(value.catatan),
+      completedDates: Array.isArray(value.completedDates)
+        ? [...new Set(value.completedDates.filter((date): date is string => typeof date === 'string'))]
+        : [],
     };
   };
 
@@ -306,6 +357,68 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('taniops-storage-error', handleStorageError);
   }, [showToast]);
 
+  React.useEffect(() => {
+    const parseExternalArray = <T,>(
+      rawValue: string | null,
+      normalize: (item: unknown) => T | null,
+    ): T[] | null => {
+      if (rawValue === null) return [];
+      try {
+        const parsed: unknown = JSON.parse(rawValue);
+        if (!Array.isArray(parsed)) return null;
+        const normalized = parsed
+          .map(normalize)
+          .filter((item): item is T => item !== null);
+        return normalized.length === parsed.length ? normalized : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const handleExternalStorage = (event: StorageEvent) => {
+      if (!event.key?.startsWith('taniops_')) return;
+      let applied = false;
+      if (event.key === 'taniops_blokLahan') {
+        const next = parseExternalArray(event.newValue, normalizeBlokLahan);
+        if (next) {
+          setBlokLahan(next);
+          applied = true;
+        }
+      } else if (event.key === 'taniops_tanaman') {
+        const next = parseExternalArray(event.newValue, normalizeTanaman);
+        if (next) {
+          setTanaman(next);
+          applied = true;
+        }
+      } else if (event.key === 'taniops_logAktivitas') {
+        const next = parseExternalArray(event.newValue, normalizeLogAktivitas);
+        if (next) {
+          setLogAktivitas(next);
+          applied = true;
+        }
+      } else if (event.key === 'taniops_pemupukan') {
+        const next = parseExternalArray(event.newValue, normalizePemupukan);
+        if (next) {
+          setPemupukan(next);
+          applied = true;
+        }
+      } else if (event.key === 'taniops_keuangan') {
+        const next = parseExternalArray(event.newValue, normalizeKeuangan);
+        if (next) {
+          setKeuangan(next);
+          applied = true;
+        }
+      }
+
+      if (applied) {
+        window.dispatchEvent(new CustomEvent('taniops-storage-synced'));
+      }
+    };
+
+    window.addEventListener('storage', handleExternalStorage);
+    return () => window.removeEventListener('storage', handleExternalStorage);
+  }, []);
+
   const loadDemoData = () => {
     clearAllData();
   };
@@ -327,7 +440,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   // Clean demo data on mount and mark as initialized
   React.useEffect(() => {
     safeSetItem('taniops_initialized', true);
-    safeSetItem('taniops_schema_version', 2);
+    safeSetItem('taniops_schema_version', 3);
     safeSetItem('taniops_blokLahan', blokLahan);
     safeSetItem('taniops_tanaman', tanaman);
     safeSetItem('taniops_logAktivitas', logAktivitas);
@@ -370,7 +483,14 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
 
   const addTanaman = (t: Omit<Tanaman, 'id'>) => setTanaman(prev => [...prev, { ...t, id: generateId() }]);
   const updateTanaman = (id: string, t: Partial<Tanaman>) => setTanaman(prev => prev.map(item => item.id === id ? { ...item, ...t } : item));
-  const deleteTanaman = (id: string) => setTanaman(prev => prev.filter(item => item.id !== id));
+  const deleteTanaman = (id: string) => {
+    setTanaman(prev => prev.filter(item => item.id !== id));
+    // Financial history is retained, but the deleted crop must not leave a
+    // dangling relation that looks like a valid active season.
+    setKeuangan(prev => prev.map(item =>
+      item.tanamanId === id ? { ...item, tanamanId: undefined } : item
+    ));
+  };
 
   const addLogAktivitas = (l: Omit<LogAktivitas, 'id'>) => setLogAktivitas(prev => [...prev, { ...l, id: generateId() }]);
   const updateLogAktivitas = (id: string, l: Partial<LogAktivitas>) => setLogAktivitas(prev => prev.map(item => item.id === id ? { ...item, ...l } : item));
@@ -384,6 +504,155 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   const updateKeuangan = (id: string, k: Partial<Keuangan>) => setKeuangan(prev => prev.map(item => item.id === id ? { ...item, ...k } : item));
   const deleteKeuangan = (id: string) => setKeuangan(prev => prev.filter(item => item.id !== id));
 
+  const createBackup = (): string => {
+    const preferences: Record<string, string> = {};
+    for (const key of BACKUP_PREFERENCE_KEYS) {
+      try {
+        const value = localStorage.getItem(key);
+        if (value !== null) preferences[key] = value;
+      } catch {
+        // Operational data remains exportable when a preference cannot be read.
+      }
+    }
+    return JSON.stringify({
+      app: 'TANITA',
+      schemaVersion: 3,
+      exportedAt: new Date().toISOString(),
+      data: { blokLahan, tanaman, logAktivitas, pemupukan, keuangan },
+      preferences,
+    }, null, 2);
+  };
+
+  const restoreBackup = (payload: string): RestoreResult => {
+    try {
+      const parsed: unknown = JSON.parse(payload);
+      if (!isRecord(parsed) || parsed.app !== 'TANITA' || !isRecord(parsed.data)) {
+        return { success: false, message: 'File bukan cadangan TANITA yang valid.' };
+      }
+      const schemaVersion = Number(parsed.schemaVersion);
+      if (
+        !Number.isInteger(schemaVersion) ||
+        schemaVersion < 1 ||
+        schemaVersion > 3
+      ) {
+        return {
+          success: false,
+          message: 'Versi cadangan belum didukung oleh TANITA pada perangkat ini.',
+        };
+      }
+      const data = parsed.data;
+      const normalizeStrict = <T,>(
+        value: unknown,
+        normalize: (item: unknown) => T | null,
+      ): T[] | null => {
+        if (!Array.isArray(value)) return null;
+        const normalized = value
+          .map(normalize)
+          .filter((item): item is T => item !== null);
+        return normalized.length === value.length ? normalized : null;
+      };
+
+      const nextBlocks = normalizeStrict(data.blokLahan, normalizeBlokLahan);
+      const nextPlants = normalizeStrict(data.tanaman, normalizeTanaman);
+      const nextLogs = normalizeStrict(data.logAktivitas, normalizeLogAktivitas);
+      const nextSchedules = normalizeStrict(data.pemupukan, normalizePemupukan);
+      const nextFinance = normalizeStrict(data.keuangan, normalizeKeuangan);
+      if (!nextBlocks || !nextPlants || !nextLogs || !nextSchedules || !nextFinance) {
+        return { success: false, message: 'Isi cadangan rusak atau memiliki struktur yang tidak didukung.' };
+      }
+
+      const hasUniqueIds = (items: { id: string }[]) =>
+        new Set(items.map((item) => item.id)).size === items.length;
+      if (![nextBlocks, nextPlants, nextLogs, nextSchedules, nextFinance].every(hasUniqueIds)) {
+        return { success: false, message: 'Cadangan memiliki ID ganda dan tidak dipulihkan.' };
+      }
+
+      const blockIds = new Set(nextBlocks.map((item) => item.id));
+      const plantIds = new Set(nextPlants.map((item) => item.id));
+      const hasInvalidBlockReference = [
+        ...nextPlants,
+        ...nextLogs,
+        ...nextSchedules,
+        ...nextFinance.filter((item) => item.blokId !== 'overall'),
+      ].some((item) => !blockIds.has(item.blokId));
+      const hasInvalidPlantReference = nextFinance.some(
+        (item) => item.tanamanId && !plantIds.has(item.tanamanId),
+      );
+      if (hasInvalidBlockReference || hasInvalidPlantReference) {
+        return { success: false, message: 'Cadangan memiliki relasi blok atau tanaman yang tidak valid.' };
+      }
+
+      const preferences = new Map<string, string | null>();
+      if (isRecord(parsed.preferences)) {
+        for (const key of BACKUP_PREFERENCE_KEYS) {
+          const value = parsed.preferences[key];
+          if (value !== undefined && typeof value !== 'string') {
+            return {
+              success: false,
+              message: `Preferensi “${key}” pada cadangan tidak valid.`,
+            };
+          }
+          preferences.set(key, typeof value === 'string' ? value : null);
+        }
+      }
+
+      const savedAt = new Date().toISOString();
+      const writes = new Map<string, string | null>([
+        ['taniops_blokLahan', JSON.stringify(nextBlocks)],
+        ['taniops_tanaman', JSON.stringify(nextPlants)],
+        ['taniops_logAktivitas', JSON.stringify(nextLogs)],
+        ['taniops_pemupukan', JSON.stringify(nextSchedules)],
+        ['taniops_keuangan', JSON.stringify(nextFinance)],
+        ['taniops_schema_version', JSON.stringify(3)],
+        ['tanita_last_saved_at', savedAt],
+        ...preferences,
+      ]);
+      const previousValues = new Map<string, string | null>();
+      try {
+        for (const [key, value] of writes) {
+          previousValues.set(key, localStorage.getItem(key));
+          if (value === null) localStorage.removeItem(key);
+          else localStorage.setItem(key, value);
+        }
+      } catch {
+        for (const [key, previousValue] of previousValues) {
+          try {
+            if (previousValue === null) localStorage.removeItem(key);
+            else localStorage.setItem(key, previousValue);
+          } catch {
+            // Continue rollback attempts for the remaining keys.
+          }
+        }
+        window.dispatchEvent(new CustomEvent('taniops-storage-error', {
+          detail: { key: 'restore' },
+        }));
+        return {
+          success: false,
+          message: 'Cadangan tidak dipulihkan karena penyimpanan browser penuh atau diblokir.',
+        };
+      }
+
+      setBlokLahan(nextBlocks);
+      setTanaman(nextPlants);
+      setLogAktivitas(nextLogs);
+      setPemupukan(nextSchedules);
+      setKeuangan(nextFinance);
+
+      window.dispatchEvent(new CustomEvent('taniops-storage-saved', {
+        detail: { key: 'restore', savedAt },
+      }));
+      if (preferences.size > 0) {
+        window.dispatchEvent(new Event('tanita-settings-updated'));
+      }
+      return {
+        success: true,
+        message: `Cadangan dipulihkan: ${nextBlocks.length} blok, ${nextPlants.length} musim tanam, dan ${nextLogs.length} jurnal.`,
+      };
+    } catch {
+      return { success: false, message: 'File cadangan tidak dapat dibaca.' };
+    }
+  };
+
   return (
     <TaniOpsContext.Provider value={{
       blokLahan, tanaman, logAktivitas, pemupukan, keuangan,
@@ -392,7 +661,8 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       addLogAktivitas, updateLogAktivitas, deleteLogAktivitas,
       addPemupukan, updatePemupukan, deletePemupukan,
       addKeuangan, updateKeuangan, deleteKeuangan,
-      clearAllData, loadDemoData
+      clearAllData, loadDemoData,
+      createBackup, restoreBackup,
     }}>
       {children}
     </TaniOpsContext.Provider>
