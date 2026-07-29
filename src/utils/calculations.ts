@@ -27,6 +27,44 @@ export function calculateActualFertilizerDose(dosisPerHa: number, luasM2: number
   return asNonNegativeNumber(dosisPerHa) * (asNonNegativeNumber(luasM2) / 10_000);
 }
 
+export type ApplicationInputBasis = 'blok' | 'bedengan' | 'hektar';
+
+export function calculatePerHectareRate(
+  amount: number,
+  basis: ApplicationInputBasis,
+  effectiveAreaM2: number,
+  bedCount: number,
+): number {
+  const safeAmount = asNonNegativeNumber(amount);
+  if (basis === 'hektar') return safeAmount;
+
+  const areaRatio = asNonNegativeNumber(effectiveAreaM2) / 10_000;
+  if (areaRatio === 0) return 0;
+
+  if (basis === 'bedengan') {
+    const beds = Math.floor(asNonNegativeNumber(bedCount));
+    return beds > 0 ? (safeAmount * beds) / areaRatio : 0;
+  }
+
+  return safeAmount / areaRatio;
+}
+
+export function calculateApplicationAmountSummary(
+  ratePerHectare: number,
+  effectiveAreaM2: number,
+  bedCount: number,
+): { totalForBlock: number; perBed: number } {
+  const totalForBlock = calculateActualFertilizerDose(
+    ratePerHectare,
+    effectiveAreaM2,
+  );
+  const beds = Math.floor(asNonNegativeNumber(bedCount));
+  return {
+    totalForBlock,
+    perBed: beds > 0 ? totalForBlock / beds : 0,
+  };
+}
+
 export function calculateLuasLahan(
   jumlahBedengan: number,
   panjangBedengan: number,
