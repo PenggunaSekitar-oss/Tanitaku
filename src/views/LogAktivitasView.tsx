@@ -24,6 +24,7 @@ const kategoriOptions = [
 
 export function LogAktivitasView() {
   const {
+    isReadOnly,
     blokLahan,
     logAktivitas,
     keuangan,
@@ -184,7 +185,7 @@ export function LogAktivitasView() {
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="col-span-1 p-4 sm:p-5 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col gap-4">
+        <div className="demo-mutation col-span-1 p-4 sm:p-5 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col gap-4">
           <h2 className="font-display font-black uppercase text-base text-[#0A0A0A] border-b-2 border-[#0A0A0A] pb-2 flex items-center gap-2">
             <span className="material-symbols-outlined text-[#154734]">history_edu</span>
             {editingId ? 'Edit Aktivitas' : 'Catat Aktivitas Baru'}
@@ -300,7 +301,7 @@ export function LogAktivitasView() {
           </form>
         </div>
         
-        <div className="col-span-1 lg:col-span-2">
+        <div className={isReadOnly ? 'col-span-1 lg:col-span-3' : 'col-span-1 lg:col-span-2'}>
           {logAktivitas.length === 0 ? (
             <EmptyState icon="history_edu" title="Belum Ada Aktivitas Tercatat" message="Gunakan form di samping untuk mulai mencatat pekerjaan harian, pemeliharaan, atau panen." />
           ) : (
@@ -338,7 +339,7 @@ export function LogAktivitasView() {
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="demo-mutation flex items-center gap-1 shrink-0">
                           <button 
                             onClick={() => handleEdit(l)} 
                             className="p-1 bg-white border border-[#0A0A0A] rounded text-[#0A0A0A] hover:bg-[#154734] hover:text-white transition cursor-pointer"
