@@ -118,11 +118,19 @@ export default function App() {
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentView}
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.15, ease: 'easeOut' }}
-                      className="w-full h-full"
+                      initial={{ opacity: 0, y: 14, filter: 'blur(5px)' }}
+                      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                      exit={{
+                        opacity: 0,
+                        y: -6,
+                        filter: 'blur(2px)',
+                        transition: { duration: 0.18, ease: 'easeOut' },
+                      }}
+                      transition={{
+                        duration: 0.48,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className="motion-page h-full w-full"
                     >
                       <Suspense
                         fallback={<ModuleSkeleton />}
