@@ -4,7 +4,13 @@ import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import { EmptyState } from '../components/EmptyState';
 import { Accordion } from '../components/Accordion';
-import { calculateHST, determineFaseTanaman, getRecommendations, calculateLuasLahan } from '../utils/calculations';
+import {
+  calculateHST,
+  calculateLuasLahan,
+  calculatePlantPopulation,
+  determineFaseTanaman,
+  getRecommendations,
+} from '../utils/calculations';
 import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { formatLocalDate } from '../utils/localDate';
@@ -30,7 +36,18 @@ export function PemantauanView() {
     jarakUnit: 'm' as 'm' | 'cm', 
     catatan: '' 
   };
-  const initialFormTanaman = { blokId: '', komoditas: '', varietas: '', tanggalTanam: '', metodeTanam: '', barisTanaman: 0, jarakTanam: 0, jumlahTanaman: 0, catatan: '' };
+  const initialFormTanaman = {
+    blokId: '',
+    komoditas: '',
+    varietas: '',
+    tanggalTanam: '',
+    metodeTanam: '',
+    barisTanaman: 0,
+    jarakTanam: 0,
+    jarakBaris: 0,
+    jumlahTanaman: 0,
+    catatan: '',
+  };
 
   const [formBlok, setFormBlok] = useState(initialFormBlok);
   const [formTanaman, setFormTanaman] = useState(initialFormTanaman);
@@ -101,7 +118,12 @@ export function PemantauanView() {
       if (formBlok.jumlahBedengan <= 0 || formBlok.panjangBedengan <= 0) return;
       const lMeter = formBlok.lebarUnit === 'cm' ? formBlok.lebarBedengan / 100 : formBlok.lebarBedengan;
       const jMeter = formBlok.jarakUnit === 'cm' ? formBlok.jarakAntarBedengan / 100 : formBlok.jarakAntarBedengan;
-      const grossM2 = formBlok.jumlahBedengan * formBlok.panjangBedengan * (lMeter + jMeter);
+      const grossM2 = calculateLuasLahan(
+        formBlok.jumlahBedengan,
+        formBlok.panjangBedengan,
+        lMeter,
+        jMeter,
+      );
 
       dataToSave = {
         ...dataToSave,
@@ -152,22 +174,27 @@ export function PemantauanView() {
     setDeleteConfirmOpen(true);
   };
 
-  const calculatePopulasi = (blokId: string, barisTanaman: number, jarakTanamCm: number) => {
+  const calculatePopulasi = (
+    blokId: string,
+    barisTanaman: number,
+    jarakTanamCm: number,
+    jarakBarisCm: number,
+  ) => {
     if (!blokId || barisTanaman <= 0 || jarakTanamCm <= 0) return 0;
     const blok = blokLahan.find(b => b.id === blokId);
     if (!blok) return 0;
 
     const jarakTanamMeter = jarakTanamCm / 100;
-    const jarakTanamM2 = jarakTanamMeter * jarakTanamMeter;
+    const safeRowSpacingCm = jarakBarisCm > 0 ? jarakBarisCm : jarakTanamCm;
 
     if (blok.tipeInput === 'hektar' && blok.luasHektar && blok.luasHektar > 0) {
       const efisiensiDec = (blok.efisiensiLahan || 80) / 100;
       const luasEfektifM2 = blok.luasHektar * 10000 * efisiensiDec;
-      return Math.floor(luasEfektifM2 / jarakTanamM2);
+      return calculatePlantPopulation(luasEfektifM2, jarakTanamCm, safeRowSpacingCm);
     } else if (blok.tipeInput === 'are' && blok.luasAre && blok.luasAre > 0) {
       const efisiensiDec = (blok.efisiensiLahan || 80) / 100;
       const luasEfektifM2 = blok.luasAre * 100 * efisiensiDec;
-      return Math.floor(luasEfektifM2 / jarakTanamM2);
+      return calculatePlantPopulation(luasEfektifM2, jarakTanamCm, safeRowSpacingCm);
     }
 
     const pBedengan = blok.panjangBedengan || 0;
@@ -179,7 +206,11 @@ export function PemantauanView() {
     }
 
     if (blok.luasManualM2 && blok.luasManualM2 > 0) {
-      return Math.floor((blok.luasManualM2 * 0.8) / jarakTanamM2);
+      return calculatePlantPopulation(
+        blok.luasManualM2 * 0.8,
+        jarakTanamCm,
+        safeRowSpacingCm,
+      );
     }
 
     return 0;
@@ -187,8 +218,13 @@ export function PemantauanView() {
 
   const handleTanamanChange = (field: string, value: any) => {
     const updated = { ...formTanaman, [field]: value };
-    if (['blokId', 'barisTanaman', 'jarakTanam'].includes(field)) {
-      updated.jumlahTanaman = calculatePopulasi(updated.blokId, updated.barisTanaman, updated.jarakTanam);
+    if (['blokId', 'barisTanaman', 'jarakTanam', 'jarakBaris'].includes(field)) {
+      updated.jumlahTanaman = calculatePopulasi(
+        updated.blokId,
+        updated.barisTanaman,
+        updated.jarakTanam,
+        updated.jarakBaris,
+      );
     }
     setFormTanaman(updated);
   };
@@ -329,7 +365,7 @@ export function PemantauanView() {
                       <span>1. Satuan Hektar (10.000 m²)</span>
                     </div>
                     <div className="bg-[#154734]/10 text-[#154734] font-mono p-2 rounded text-xs font-bold border border-[#154734]/20">
-                      Populasi = (Luas Ha × 10.000 × Efisiensi) ÷ Jarak Tanam (m²)
+                      Populasi = (Luas Ha × 10.000 × Efisiensi) ÷ (Jarak Tanam × Jarak Baris)
                     </div>
                     <p className="text-[11px] text-slate-600 leading-snug">
                       <strong>Faktor Efisiensi Lahan:</strong> Jika lahan menggunakan parit/jalan perawatan, luas efektif penanaman umumnya <strong>70% – 80%</strong> (0,7 – 0,8).
@@ -343,7 +379,7 @@ export function PemantauanView() {
                       <span>2. Satuan Are (100 m²)</span>
                     </div>
                     <div className="bg-[#154734]/10 text-[#154734] font-mono p-2 rounded text-xs font-bold border border-[#154734]/20">
-                      Populasi = (Luas Are × 100 × Efisiensi) ÷ Jarak Tanam (m²)
+                      Populasi = (Luas Are × 100 × Efisiensi) ÷ (Jarak Tanam × Jarak Baris)
                     </div>
                     <p className="text-[11px] text-slate-600 leading-snug">
                       Memudahkan estimasi cepat untuk skala lahan menengah / lokal.
@@ -853,6 +889,17 @@ export function PemantauanView() {
                   <label className="block text-sm font-bold text-on-surface-muted mb-1">Jarak Tanam (cm)</label>
                   <NumberInput value={formTanaman.jarakTanam} onNumberChange={v => handleTanamanChange('jarakTanam', v)} className="w-full bg-surface-high neo-border-thin px-4 py-2.5 min-h-[48px] text-[15px] text-on-surface rounded-[8px_3px_8px_3px] focus:outline-none focus:ring-0" placeholder="Contoh: 50" min="1" required />
                 </div>
+                <div>
+                  <label className="block text-sm font-bold text-on-surface-muted mb-1">Jarak Antar Baris (cm)</label>
+                  <NumberInput
+                    value={formTanaman.jarakBaris}
+                    onNumberChange={v => handleTanamanChange('jarakBaris', v)}
+                    className="w-full bg-surface-high neo-border-thin px-4 py-2.5 min-h-[48px] text-[15px] text-on-surface rounded-[8px_3px_8px_3px] focus:outline-none focus:ring-0"
+                    placeholder="Contoh: 60"
+                    min="1"
+                    required
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
@@ -924,7 +971,7 @@ export function PemantauanView() {
                             <span className="bg-[#154734] text-white font-extrabold text-xs font-mono px-2 py-0.5 rounded border border-[#0A0A0A] shadow-[1px_1px_0px_0px_#0A0A0A] inline-block uppercase">{blok?.nama || 'Unknown Blok'}</span>
                             <span className="text-xs font-mono text-on-surface-muted">Populasi: {new Intl.NumberFormat('id-ID').format(t.jumlahTanaman)}</span>
                             <span className="text-xs font-mono text-on-surface-muted border-l border-outline pl-2">
-                              {t.barisTanaman} Baris | {t.jarakTanam} cm
+                              {t.barisTanaman} Baris | {t.jarakTanam} × {t.jarakBaris || t.jarakTanam} cm
                             </span>
                           </div>
                           <h3 className="font-display font-bold text-xl text-on-surface">{t.komoditas} <span className="text-on-surface-muted font-normal text-base">({t.varietas})</span></h3>
