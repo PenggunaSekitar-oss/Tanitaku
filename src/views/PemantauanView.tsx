@@ -1,5 +1,5 @@
 import { PageHeader } from '../components/PageHeader';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import { EmptyState } from '../components/EmptyState';
@@ -17,10 +17,14 @@ import { formatLocalDate } from '../utils/localDate';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { GrowthChart } from '../components/GrowthChart';
 
-export function PemantauanView() {
+export function PemantauanView({ initialTab = 'blok' }: { initialTab?: 'blok' | 'tanaman' }) {
   const { isReadOnly, blokLahan, tanaman, addBlokLahan, updateBlokLahan, deleteBlokLahan, addTanaman, updateTanaman, deleteTanaman } = useTaniOps();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'blok' | 'tanaman'>('blok');
+  const [activeTab, setActiveTab] = useState<'blok' | 'tanaman'>(initialTab);
+
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
   
   const initialFormBlok = { 
     nama: '', 

@@ -15,7 +15,7 @@ const NAV_ITEMS = [
 
 export function MobileBottomNav({ currentView, onNavigate }: MobileBottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around gap-1 border-t border-[#D9D8D1] bg-[#FBFAF6] px-2 py-1.5 md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-30 flex items-center justify-around gap-1 border-t border-[#D9D8D1] bg-[#FBFAF6] px-2 pb-[max(0.375rem,env(safe-area-inset-bottom))] pt-1.5 md:hidden">
       {NAV_ITEMS.map((item) => {
         const isActive = currentView === item.id;
         return (

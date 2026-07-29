@@ -509,6 +509,43 @@ test('interaksi tombol memiliki hover, tekan, fokus, dan status nonaktif global'
   assert.match(styles, /button:disabled,[\s\S]*opacity: 0\.55/);
 });
 
+test('first-run menuntun pengguna tanpa menampilkan KPI nol sebagai konten utama', () => {
+  const dashboard = readFileSync(resolve('src/views/DashboardView.tsx'), 'utf8');
+  const checklist = readFileSync(resolve('src/components/FirstRunChecklist.tsx'), 'utf8');
+
+  assert.match(dashboard, /showOnboarding/);
+  assert.match(dashboard, /hasOperationalData && <motion\.div/);
+  assert.match(dashboard, /Tambahkan blok lahan/);
+  assert.match(dashboard, /Catat tanaman/);
+  assert.match(dashboard, /Buat jadwal perawatan/);
+  assert.match(checklist, /role="progressbar"/);
+});
+
+test('jadwal kosong menyediakan jalur langsung untuk membuat blok', () => {
+  const app = readFileSync(resolve('src/App.tsx'), 'utf8');
+  const maintenance = readFileSync(resolve('src/views/PemupukanView.tsx'), 'utf8');
+
+  assert.match(maintenance, /Buat blok lahan terlebih dahulu/);
+  assert.match(maintenance, /navigate\('pemantauan'\)/);
+  assert.match(maintenance, /disabled=\{blokLahan\.length === 0 && !isReadOnly\}/);
+  assert.match(app, /<PemupukanView navigate=\{navigateTo\}/);
+});
+
+test('navigasi dan aksesibilitas dasar konsisten pada desktop serta mobile', () => {
+  const app = readFileSync(resolve('src/App.tsx'), 'utf8');
+  const breadcrumbs = readFileSync(resolve('src/components/Breadcrumbs.tsx'), 'utf8');
+  const bottomNav = readFileSync(resolve('src/components/MobileBottomNav.tsx'), 'utf8');
+  const calendar = readFileSync(resolve('src/components/GardenCalendar.tsx'), 'utf8');
+
+  assert.match(app, /href="#main-content"/);
+  assert.match(app, /id="main-content"/);
+  assert.match(app, /h-\[100dvh\]/);
+  assert.match(breadcrumbs, /log: \{ section: 'Operasional'/);
+  assert.match(breadcrumbs, /pengaturan: \{ section: 'Administrasi'/);
+  assert.match(bottomNav, /safe-area-inset-bottom/);
+  assert.match(calendar, /Geser ke samping untuk melihat seluruh kalender/);
+});
+
 test('motion UI tetap profesional dan menghormati preferensi aksesibilitas', () => {
   const styles = readFileSync(resolve('src/index.css'), 'utf8');
   const app = readFileSync(resolve('src/App.tsx'), 'utf8');

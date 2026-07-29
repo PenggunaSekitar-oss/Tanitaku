@@ -227,7 +227,7 @@ function ProtectedAccessGate({ children }: AccessGateProps) {
 
   if (!isUnlocked) {
     return (
-      <div className="relative min-h-[100dvh] overflow-hidden bg-[#ECEBE5] font-sans text-[#1B2721] selection:bg-[#C9DCCE] selection:text-[#17251E]">
+      <div className="access-gate relative min-h-[100dvh] overflow-hidden bg-[#ECEBE5] font-sans text-[#1B2721] selection:bg-[#C9DCCE] selection:text-[#17251E]">
         <AccessBackdrop />
         <div className="absolute -left-16 top-16 h-36 w-36 rounded-full border border-[#24533F]/10" aria-hidden="true" />
         <div className="absolute -right-20 bottom-12 h-48 w-48 rounded-full border border-[#24533F]/10" aria-hidden="true" />

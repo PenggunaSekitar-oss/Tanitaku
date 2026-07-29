@@ -14,8 +14,8 @@ const VIEW_PATHS: Record<string, { section: string; label: string }> = {
   'cari-pestisida': { section: 'Referensi', label: 'Pestisida' },
   'cari-penyakit': { section: 'Referensi', label: 'Penyakit tanaman' },
   keuangan: { section: 'Administrasi', label: 'Keuangan' },
-  log: { section: 'Administrasi', label: 'Jurnal aktivitas' },
-  pengaturan: { section: 'Sistem', label: 'Pengaturan' },
+  log: { section: 'Operasional', label: 'Jurnal aktivitas' },
+  pengaturan: { section: 'Administrasi', label: 'Pengaturan' },
 };
 
 export function Breadcrumbs({ currentView, onNavigate }: BreadcrumbsProps) {

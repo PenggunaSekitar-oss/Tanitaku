@@ -23,6 +23,7 @@ import {
   upsertCatalogHistory,
   writeCatalogHistory,
 } from '../utils/catalogHistory';
+import { TanamanSelect } from '../components/TanamanSelect';
 
 type BibitFilters = { komoditas: string; ketinggian: string; cuaca: string };
 const HISTORY_KEY = 'tanita_history_bibit';
@@ -197,12 +198,11 @@ export function CariBibitView() {
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
           <div className="flex flex-col">
             <label className="block text-xs font-bold text-[#5C5C5C] uppercase mb-1.5">Komoditas (Cth: Cabai Rawit)</label>
-            <input 
-              type="text" 
-              value={komoditas} 
-              onChange={e => setKomoditas(e.target.value)} 
-              className="w-full bg-white border-2 border-[#0A0A0A] px-4 py-2.5 min-h-[48px] text-sm text-[#0A0A0A] rounded focus:outline-none" 
-              placeholder="Mau tanam apa?" 
+            <TanamanSelect
+              value={komoditas}
+              onChange={setKomoditas}
+              placeholder="Pilih atau cari komoditas"
+              className="w-full"
             />
           </div>
           <div className="flex flex-col">

@@ -108,7 +108,11 @@ export function GardenCalendar({ schedules, blocks, onEdit, readOnly = false }: 
         </div>
       </div>
 
-      <div className="mt-3 overflow-x-auto">
+      <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[#69746D] sm:hidden">
+        <span className="material-symbols-outlined text-[16px]" aria-hidden="true">swipe</span>
+        Geser ke samping untuk melihat seluruh kalender.
+      </p>
+      <div className="mt-2 overflow-x-auto sm:mt-3" aria-label="Kalender bulanan, dapat digeser secara horizontal">
         <div className="min-w-[700px]">
           <div className="grid grid-cols-7">
             {WEEKDAYS.map((day) => (

@@ -14,6 +14,7 @@ import {
 } from "../utils/calculations";
 import { formatLocalDate, getScheduleReminderState } from "../utils/localDate";
 import { calculateIncludedLogCost } from "../utils/finance";
+import { FirstRunChecklist } from "../components/FirstRunChecklist";
 
 // Helper for currency formatting
 const formatRp = (num: number) => {
@@ -292,8 +293,61 @@ function TanamanCardDropdown({
 export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
   const [activeTabBlock, setActiveTabBlock] = useState<string>("semua");
   const [isStatusBlokOpen, setIsStatusBlokOpen] = useState<boolean>(false);
+  const [isOnboardingDismissed, setIsOnboardingDismissed] = useState(() => {
+    try {
+      return localStorage.getItem('tanita_first_run_dismissed') === 'true';
+    } catch {
+      return false;
+    }
+  });
 
   const { isReadOnly, blokLahan, tanaman, updateTanaman, pemupukan, keuangan, logAktivitas } = useTaniOps();
+  const onboardingSteps = [
+    {
+      id: 'blok',
+      title: 'Tambahkan blok lahan',
+      description: 'Catat luas melalui bedengan, Are, atau hektare.',
+      completed: blokLahan.length > 0,
+      actionLabel: 'Tambah blok',
+      onAction: () => navigate('pemantauan'),
+    },
+    {
+      id: 'tanaman',
+      title: 'Catat tanaman',
+      description: 'Hubungkan komoditas dan tanggal tanam ke blok.',
+      completed: tanaman.length > 0,
+      actionLabel: 'Tambah tanaman',
+      onAction: () => navigate('pemantauan:tanaman'),
+    },
+    {
+      id: 'jadwal',
+      title: 'Buat jadwal perawatan',
+      description: 'Simpan pupuk atau pestisida beserta takarannya.',
+      completed: pemupukan.length > 0,
+      actionLabel: 'Buat jadwal',
+      onAction: () => navigate('pemupukan'),
+    },
+  ];
+  const onboardingComplete = onboardingSteps.every((step) => step.completed);
+  const hasOperationalData =
+    blokLahan.length > 0 ||
+    tanaman.length > 0 ||
+    pemupukan.length > 0 ||
+    keuangan.length > 0 ||
+    logAktivitas.length > 0;
+  const showOnboarding =
+    !isReadOnly &&
+    !onboardingComplete &&
+    (!isOnboardingDismissed || !hasOperationalData);
+
+  const dismissOnboarding = () => {
+    setIsOnboardingDismissed(true);
+    try {
+      localStorage.setItem('tanita_first_run_dismissed', 'true');
+    } catch {
+      // Dismissal can remain session-only when storage is unavailable.
+    }
+  };
 
   // Computations
   const tanamanAktif = tanaman.filter(t => t.status !== 'Panen');
@@ -444,17 +498,28 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
       animate="show"
       className="flex flex-col gap-6 sm:gap-8 lg:gap-10 w-full pb-20"
     >
+      {showOnboarding && (
+        <motion.div variants={bentoItem}>
+          <FirstRunChecklist
+            steps={onboardingSteps}
+            onDismiss={hasOperationalData ? dismissOnboarding : undefined}
+          />
+        </motion.div>
+      )}
+
       {/* Hero Banner Carousel */}
-      <motion.div variants={bentoItem} className="w-full">
-        <BannerCarousel />
-      </motion.div>
+      {hasOperationalData && (
+        <motion.div variants={bentoItem} className="w-full">
+          <BannerCarousel />
+        </motion.div>
+      )}
 
       {/* Section 1: Performance Score Gauge & Quick Metrics */}
-      <motion.div variants={bentoItem} className="flex flex-col gap-4">
+      {hasOperationalData && <motion.div variants={bentoItem} className="flex flex-col gap-4">
         <SectionTitle 
           icon="analytics" 
           title="Kelengkapan Catatan & Ringkasan Operasional"
-          subtitle="Kelengkapan blok, tanaman, aktivitas, dan keuangan beserta angka utama yang dihitung dari data tersimpan."
+          subtitle="Kelengkapan menilai blok, tanaman, aktivitas, dan keuangan dengan bobot setara. Estimasi laba memakai target hasil × harga jual dikurangi seluruh biaya tercatat; ROI adalah laba dibandingkan biaya."
         />
         <div 
           className="flex flex-col items-center gap-6 rounded-2xl border border-[#345749] p-5 sm:p-7 lg:flex-row lg:gap-8"
@@ -489,7 +554,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             </div>
 
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
-              <span className="text-xs font-semibold text-white/75">Estimasi laba</span>
+              <span className="text-xs font-semibold text-white/75">Estimasi laba (proyeksi)</span>
               <span className="text-lg sm:text-xl lg:text-2xl font-extrabold text-white my-1 font-display">
                 <AnimatedNumber value={laba} formatter={formatRp} />
               </span>
@@ -518,7 +583,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             </div>
           </div>
         </div>
-      </motion.div>
+      </motion.div>}
 
       {/* Section 2: BMKG forecast */}
       <motion.div variants={bentoItem} className="flex flex-col gap-4">

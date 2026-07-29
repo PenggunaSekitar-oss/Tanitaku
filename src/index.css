@@ -304,6 +304,11 @@ h4 {
 }
 
 .material-symbols-outlined {
+  display: inline-block;
+  width: 1em;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: "Material Symbols Outlined";
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
@@ -488,7 +493,14 @@ textarea {
 }
 
 .app-content [class*="text-[9px]"],
-.app-content [class*="text-[10px]"] {
+.app-content [class*="text-[10px]"],
+.app-content [class*="text-[11px]"],
+.app-shell [class*="text-[9px]"],
+.app-shell [class*="text-[10px]"],
+.app-shell [class*="text-[11px]"],
+.access-gate [class*="text-[9px]"],
+.access-gate [class*="text-[10px]"],
+.access-gate [class*="text-[11px]"] {
   font-size: 0.75rem !important;
   line-height: 1.35 !important;
 }

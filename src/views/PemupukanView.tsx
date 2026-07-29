@@ -28,7 +28,7 @@ const getDoseUnitLabel = (unit: string) => {
 const formatAmount = (value: number, maximumFractionDigits = 2) =>
   value.toLocaleString('id-ID', { maximumFractionDigits });
 
-export function PemupukanView() {
+export function PemupukanView({ navigate }: { navigate: (view: string) => void }) {
   const { isReadOnly, blokLahan, pemupukan, addPemupukan, updatePemupukan, deletePemupukan } = useTaniOps();
   const { showToast } = useToast();
   
@@ -296,7 +296,43 @@ export function PemupukanView() {
               )}
             </div>
 
-            <form onSubmit={handleAddPemupukan} className="flex flex-col gap-4 text-xs">
+            {blokLahan.length === 0 && !isReadOnly && (
+              <div
+                id="jadwal-needs-block"
+                className="mb-4 flex flex-col gap-3 rounded-xl border border-[#C5D2C9] bg-[#EEF3EF] p-4 sm:flex-row sm:items-center sm:justify-between"
+                role="status"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="material-symbols-outlined mt-0.5 text-[21px] text-[#24533F]" aria-hidden="true">
+                    info
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#26342C]">Buat blok lahan terlebih dahulu</h3>
+                    <p className="mt-1 text-xs font-medium leading-relaxed text-[#617068]">
+                      Jadwal membutuhkan luas blok untuk menghitung jumlah produk dan air secara aman.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('pemantauan')}
+                  className="flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#24533F] px-4 text-xs font-semibold text-white hover:bg-[#1B4031]"
+                >
+                  Buat blok sekarang
+                  <span className="material-symbols-outlined text-[17px]" aria-hidden="true">arrow_forward</span>
+                </button>
+              </div>
+            )}
+
+            <form
+              onSubmit={handleAddPemupukan}
+              className="flex flex-col gap-4 text-xs"
+              aria-describedby={blokLahan.length === 0 && !isReadOnly ? 'jadwal-needs-block' : undefined}
+            >
+              <fieldset
+                disabled={blokLahan.length === 0 && !isReadOnly}
+                className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0"
+              >
               
               {/* Section 1: Target Lahan & Kategori */}
               <div className="flex flex-col gap-3">
@@ -651,6 +687,7 @@ export function PemupukanView() {
                   </button>
                 )}
               </div>
+              </fieldset>
 
             </form>
           </div>

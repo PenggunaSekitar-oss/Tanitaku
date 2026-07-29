@@ -48,6 +48,7 @@ export default function App() {
     return VALID_VIEWS.has(hashView) ? hashView : 'dashboard';
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pemantauanInitialTab, setPemantauanInitialTab] = useState<'blok' | 'tanaman'>('blok');
 
   useEffect(() => {
     document.title = IS_DEMO_MODE
@@ -72,7 +73,11 @@ export default function App() {
   }, []);
 
   const navigateTo = (view: string) => {
-    const nextView = VALID_VIEWS.has(view) ? view : 'dashboard';
+    const [requestedView = 'dashboard', subview] = view.split(':');
+    const nextView = VALID_VIEWS.has(requestedView) ? requestedView : 'dashboard';
+    if (nextView === 'pemantauan') {
+      setPemantauanInitialTab(subview === 'tanaman' ? 'tanaman' : 'blok');
+    }
     if (window.location.hash !== `#/${nextView}`) {
       window.location.hash = `/${nextView}`;
     }
@@ -82,8 +87,8 @@ export default function App() {
   const renderView = () => {
     switch(currentView) {
       case 'dashboard': return <DashboardView navigate={navigateTo} />;
-      case 'pemantauan': return <PemantauanView />;
-      case 'pemupukan': return <PemupukanView />;
+      case 'pemantauan': return <PemantauanView initialTab={pemantauanInitialTab} />;
+      case 'pemupukan': return <PemupukanView navigate={navigateTo} />;
       case 'kocor': return <KocorView />;
       case 'jenis-hama': return <JenisHamaView />;
       case 'cari-bibit': return <CariBibitView />;
@@ -101,9 +106,15 @@ export default function App() {
     <ToastProvider>
       <TaniOpsProvider>
         <AccessGate>
+          <a
+            href="#main-content"
+            className="fixed left-3 top-3 z-[100] -translate-y-20 rounded-lg bg-[#173F35] px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition-transform focus:translate-y-0"
+          >
+            Lewati ke konten utama
+          </a>
           {!IS_DEMO_MODE && <AgriDynamicToastNotifier navigate={navigateTo} />}
           <PwaUpdatePrompt />
-          <div className={`app-shell flex h-screen w-full min-w-0 max-w-full overflow-hidden bg-[#F2F1EC] text-[#1C211D] font-sans selection:bg-[#24533F] selection:text-white ${IS_DEMO_MODE ? 'demo-readonly' : ''}`}>
+          <div className={`app-shell flex h-[100dvh] min-h-[100svh] w-full min-w-0 max-w-full overflow-hidden bg-[#F2F1EC] text-[#1C211D] font-sans selection:bg-[#24533F] selection:text-white ${IS_DEMO_MODE ? 'demo-readonly' : ''}`}>
             <Sidebar currentView={currentView} onNavigate={navigateTo} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
             <div className="relative flex min-w-0 flex-1 flex-col bg-[#F2F1EC]">
               <Topbar
@@ -113,7 +124,7 @@ export default function App() {
               />
               {IS_DEMO_MODE && <DemoModeBanner />}
               <div className="flex-1 overflow-y-auto flex flex-col justify-between">
-                <main className="app-content mx-auto w-full min-w-0 max-w-[1440px] flex-1 overflow-x-clip p-4 sm:p-6 lg:p-8 xl:px-10">
+                <main id="main-content" tabIndex={-1} className="app-content mx-auto w-full min-w-0 max-w-[1440px] flex-1 overflow-x-clip p-4 sm:p-6 lg:p-8 xl:px-10">
                   <Breadcrumbs currentView={currentView} onNavigate={navigateTo} />
                   <AnimatePresence mode="wait">
                     <motion.div
