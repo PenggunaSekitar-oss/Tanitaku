@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { IS_DEMO_MODE } from '../config/runtime';
 import { BrandLockup } from './BrandLockup';
 
 interface AccessGateProps {
@@ -111,7 +112,7 @@ function getDeviceLabel(): string {
   return 'Perangkat ini';
 }
 
-export function AccessGate({ children }: AccessGateProps) {
+function ProtectedAccessGate({ children }: AccessGateProps) {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [inputCode, setInputCode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -451,4 +452,9 @@ export function AccessGate({ children }: AccessGateProps) {
   }
 
   return <>{children}</>;
+}
+
+export function AccessGate({ children }: AccessGateProps) {
+  if (IS_DEMO_MODE) return <>{children}</>;
+  return <ProtectedAccessGate>{children}</ProtectedAccessGate>;
 }
