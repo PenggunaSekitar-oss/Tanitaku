@@ -61,19 +61,50 @@
 }
 
 html {
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--color-bg);
   scroll-behavior: smooth;
 }
 
 body {
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
   margin: 0;
   background: var(--color-bg);
   color: var(--color-fg);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+#root {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.app-shell,
+.app-content,
+.motion-page {
+  min-width: 0;
+  max-width: 100%;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
 }
 
 h1,
