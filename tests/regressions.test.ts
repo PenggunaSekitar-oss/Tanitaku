@@ -24,9 +24,11 @@ import {
 } from '../src/utils/weather';
 import {
   calculateActualFertilizerDose,
+  calculateApplicationAmountSummary,
   calculateEffectiveLuasLahan,
   calculateHST,
   calculateLuasLahan,
+  calculatePerHectareRate,
   calculatePlantPopulation,
 } from '../src/utils/calculations';
 import { calculateIncludedLogCost } from '../src/utils/finance';
@@ -359,6 +361,23 @@ test('perhitungan budidaya menolak tanggal dan besaran tidak valid', () => {
   assert.equal(calculateEffectiveLuasLahan(10, 20, 1, 0.5, 1_000, 80), 800);
   assert.equal(calculateEffectiveLuasLahan(10, 20, 1, 0.5, 1_000, 120), 1_000);
   assert.equal(calculatePlantPopulation(1_000, 50, 60), 3_333);
+});
+
+test('takaran per blok dan per bedengan dinormalisasi tanpa mengubah total aplikasi', () => {
+  const effectiveAreaM2 = 500;
+  const bedCount = 10;
+
+  const fromBlock = calculatePerHectareRate(10, 'blok', effectiveAreaM2, bedCount);
+  assert.equal(fromBlock, 200);
+  assert.deepEqual(
+    calculateApplicationAmountSummary(fromBlock, effectiveAreaM2, bedCount),
+    { totalForBlock: 10, perBed: 1 },
+  );
+
+  const fromBed = calculatePerHectareRate(1, 'bedengan', effectiveAreaM2, bedCount);
+  assert.equal(fromBed, 200);
+  assert.equal(calculatePerHectareRate(200, 'hektar', effectiveAreaM2, bedCount), 200);
+  assert.equal(calculatePerHectareRate(1, 'bedengan', effectiveAreaM2, 0), 0);
 });
 
 test('biaya jurnal yang sudah dicatat di Keuangan tidak dihitung dua kali', () => {
