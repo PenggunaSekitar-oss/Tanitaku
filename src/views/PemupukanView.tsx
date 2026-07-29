@@ -7,7 +7,7 @@ import { calculateActualFertilizerDose, calculateEffectiveLuasLahan } from '../u
 import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
-import { formatLocalDate } from '../utils/localDate';
+import { formatLocalDate, getScheduleReminderState } from '../utils/localDate';
 import { GardenCalendar } from '../components/GardenCalendar';
 import { HelpTip } from '../components/HelpTip';
 
@@ -25,8 +25,9 @@ export function PemupukanView() {
     dosisPerHektar: 0, 
     literAirPerHektar: 0, 
     tanggalAplikasi: formatLocalDate(),
-    intervalHari: 0, 
-    catatan: '' 
+    intervalHari: 0,
+    catatan: '',
+    completedDates: [] as string[],
   };
 
   const [form, setForm] = useState<any>(initialForm);
@@ -40,7 +41,14 @@ export function PemupukanView() {
     if (!form.blokId || !form.jenisPupuk || form.dosisPerHektar <= 0) return;
     
     if (editingId) {
-      updatePemupukan(editingId, form);
+      const existing = pemupukan.find((item) => item.id === editingId);
+      const scheduleChanged = existing &&
+        (existing.tanggalAplikasi !== form.tanggalAplikasi ||
+          existing.intervalHari !== form.intervalHari);
+      updatePemupukan(editingId, {
+        ...form,
+        completedDates: scheduleChanged ? [] : form.completedDates,
+      });
       showToast('Data Rencana Perawatan berhasil diupdate', 'success');
     } else {
       addPemupukan(form);
@@ -77,6 +85,23 @@ export function PemupukanView() {
       setDeleteConfirmOpen(false);
       setDeleteId(null);
     }
+  };
+
+  const markCurrentOccurrenceComplete = (schedule: typeof pemupukan[number]) => {
+    const reminder = getScheduleReminderState(
+      schedule.tanggalAplikasi,
+      schedule.intervalHari,
+      schedule.completedDates,
+    );
+    if (!reminder.occurrenceDate || !['due', 'overdue'].includes(reminder.status)) {
+      showToast('Belum ada jadwal yang perlu ditandai selesai.', 'info');
+      return;
+    }
+    const occurrenceKey = formatLocalDate(reminder.occurrenceDate);
+    updatePemupukan(schedule.id, {
+      completedDates: [...new Set([...(schedule.completedDates ?? []), occurrenceKey])],
+    });
+    showToast(`Realisasi ${occurrenceKey} ditandai selesai.`, 'success');
   };
 
   const filteredList = pemupukan.filter(item => {
@@ -329,6 +354,7 @@ export function PemupukanView() {
                     onNumberChange={v => setForm({...form, intervalHari: v})} 
                     className="w-full bg-surface-high border-2 border-black px-3 py-2.5 min-h-[44px] text-xs font-bold text-on-surface rounded-lg focus:outline-none focus:ring-1 focus:ring-black shadow-[2px_2px_0px_0px_#000]" 
                     placeholder="misal: 14" 
+                    min="0"
                   />
                 </div>
               </div>
@@ -423,13 +449,36 @@ export function PemupukanView() {
                         const dosisAktual = calculateActualFertilizerDose(p.dosisPerHektar, luas);
                         const airAktual = p.literAirPerHektar ? calculateActualFertilizerDose(p.literAirPerHektar, luas) : 0;
                         const isPestisida = p.kategori === 'Pestisida';
+                        const reminder = getScheduleReminderState(
+                          p.tanggalAplikasi,
+                          p.intervalHari,
+                          p.completedDates,
+                        );
+                        const occurrenceLabel = reminder.occurrenceDate
+                          ? formatLocalDate(reminder.occurrenceDate)
+                          : p.tanggalAplikasi;
 
                         return (
                           <tr key={p.id} className="hover:bg-surface-high/60 transition">
                             {/* Tanggal & Blok */}
                             <td className="p-3 align-top">
                               <span className="font-mono font-bold text-on-surface block">
-                                {p.tanggalAplikasi}
+                                {occurrenceLabel}
+                              </span>
+                              <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${
+                                reminder.status === 'overdue'
+                                  ? 'border-danger bg-danger/10 text-danger'
+                                  : reminder.status === 'due'
+                                    ? 'border-[#B77A34] bg-[#FFF4D8] text-[#79501F]'
+                                    : 'border-[#7A9B87] bg-[#EDF4EF] text-[#24533F]'
+                              }`}>
+                                {reminder.status === 'overdue'
+                                  ? `Terlewat ${Math.abs(reminder.diffDays ?? 0)} hari`
+                                  : reminder.status === 'due'
+                                    ? 'Jadwal hari ini'
+                                    : reminder.status === 'completed'
+                                      ? 'Selesai'
+                                      : 'Mendatang'}
                               </span>
                               <span className="inline-block mt-1 font-bold text-[10px] bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A] shadow-[1px_1px_0px_0px_#0A0A0A]">
                                 {blok?.nama || 'Lahan'}
@@ -489,6 +538,17 @@ export function PemupukanView() {
                             {/* Actions */}
                             <td className="p-3 align-top text-center">
                               <div className="flex items-center justify-center gap-1">
+                                {['due', 'overdue'].includes(reminder.status) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => markCurrentOccurrenceComplete(p)}
+                                    className="p-1.5 bg-surface rounded-lg border border-black hover:bg-success hover:text-white transition cursor-pointer shadow-[1px_1px_0px_0px_#000]"
+                                    title="Tandai realisasi selesai"
+                                    aria-label={`Tandai ${p.jenisPupuk} selesai`}
+                                  >
+                                    <span className="material-symbols-outlined text-[16px]">task_alt</span>
+                                  </button>
+                                )}
                                 <button 
                                   type="button"
                                   onClick={() => handleEdit(p)} 
@@ -522,6 +582,14 @@ export function PemupukanView() {
                     const dosisAktual = calculateActualFertilizerDose(p.dosisPerHektar, luas);
                     const airAktual = p.literAirPerHektar ? calculateActualFertilizerDose(p.literAirPerHektar, luas) : 0;
                     const isPestisida = p.kategori === 'Pestisida';
+                    const reminder = getScheduleReminderState(
+                      p.tanggalAplikasi,
+                      p.intervalHari,
+                      p.completedDates,
+                    );
+                    const occurrenceLabel = reminder.occurrenceDate
+                      ? formatLocalDate(reminder.occurrenceDate)
+                      : p.tanggalAplikasi;
 
                     return (
                       <div 
@@ -531,7 +599,7 @@ export function PemupukanView() {
                         <div className="flex items-center justify-between gap-2 border-b border-outline pb-2">
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-bold text-on-surface">
-                              {p.tanggalAplikasi}
+                              {occurrenceLabel}
                             </span>
                             <span className="font-bold text-[10px] bg-[#154734] text-white px-2 py-0.5 rounded border border-[#0A0A0A]">
                               {blok?.nama || 'Lahan'}
@@ -568,11 +636,37 @@ export function PemupukanView() {
                         </div>
 
                         <div className="flex items-center justify-between gap-2 pt-2 border-t border-outline/60 text-[11px]">
-                          <span className="text-on-surface-muted">
-                            Target: {p.dosisPerHektar} {p.satuanDosis}/Ha {p.literAirPerHektar ? `(${airAktual.toFixed(1)}L Air)` : ''}
-                          </span>
+                          <div>
+                            <span className="block text-on-surface-muted">
+                              Target: {p.dosisPerHektar} {p.satuanDosis}/Ha {p.literAirPerHektar ? `(${airAktual.toFixed(1)}L Air)` : ''}
+                            </span>
+                            <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${
+                              reminder.status === 'overdue'
+                                ? 'border-danger bg-danger/10 text-danger'
+                                : reminder.status === 'due'
+                                  ? 'border-[#B77A34] bg-[#FFF4D8] text-[#79501F]'
+                                  : 'border-[#7A9B87] bg-[#EDF4EF] text-[#24533F]'
+                            }`}>
+                              {reminder.status === 'overdue'
+                                ? `Terlewat ${Math.abs(reminder.diffDays ?? 0)} hari`
+                                : reminder.status === 'due'
+                                  ? 'Hari ini'
+                                  : reminder.status === 'completed'
+                                    ? 'Selesai'
+                                    : 'Mendatang'}
+                            </span>
+                          </div>
 
                           <div className="flex items-center gap-2">
+                            {['due', 'overdue'].includes(reminder.status) && (
+                              <button
+                                type="button"
+                                onClick={() => markCurrentOccurrenceComplete(p)}
+                                className="px-2.5 py-1 bg-success text-white rounded-lg border border-black font-bold transition cursor-pointer"
+                              >
+                                Selesai
+                              </button>
+                            )}
                             <button 
                               type="button"
                               onClick={() => handleEdit(p)} 
