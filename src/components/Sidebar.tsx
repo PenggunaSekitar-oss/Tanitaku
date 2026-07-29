@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { BrandLockup } from './BrandLockup';
 
 interface SidebarProps {
@@ -80,9 +81,10 @@ export function Sidebar({
                 {group.items.map((item) => {
                   const isActive = item.id === currentView;
                   return (
-                    <button
+                    <motion.button
                       key={item.id}
                       type="button"
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         onNavigate(item.id);
                         onClose();
@@ -95,17 +97,23 @@ export function Sidebar({
                       aria-current={isActive ? 'page' : undefined}
                     >
                       {isActive && (
-                        <span className="absolute left-0 h-5 w-[3px] rounded-r bg-[#24533F]" />
+                        <motion.span
+                          layoutId="sidebar-active-rail"
+                          className="absolute left-0 h-5 w-[3px] rounded-r bg-[#24533F]"
+                          transition={{ type: 'spring', stiffness: 430, damping: 34 }}
+                        />
                       )}
-                      <span
+                      <motion.span
+                        animate={{ x: isActive ? 1 : 0, scale: isActive ? 1.04 : 1 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                         className={`material-symbols-outlined text-[19px] ${
                           isActive ? 'text-[#24533F]' : 'text-[#78827C] group-hover:text-[#3D5548]'
                         }`}
                       >
                         {item.icon}
-                      </span>
+                      </motion.span>
                       <span className="truncate">{item.label}</span>
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
