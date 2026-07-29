@@ -30,6 +30,7 @@ import {
   calculateLuasLahan,
   calculatePerHectareRate,
   calculatePlantPopulation,
+  applicationMethodUsesWater,
 } from '../src/utils/calculations';
 import { calculateIncludedLogCost } from '../src/utils/finance';
 import { getScheduleOccurrences } from '../src/utils/schedule';
@@ -378,6 +379,12 @@ test('takaran per blok dan per bedengan dinormalisasi tanpa mengubah total aplik
   assert.equal(fromBed, 200);
   assert.equal(calculatePerHectareRate(200, 'hektar', effectiveAreaM2, bedCount), 200);
   assert.equal(calculatePerHectareRate(1, 'bedengan', effectiveAreaM2, 0), 0);
+});
+
+test('volume air hanya diminta untuk metode yang memakai larutan', () => {
+  assert.equal(applicationMethodUsesWater('Tabur'), false);
+  assert.equal(applicationMethodUsesWater('Kocor'), true);
+  assert.equal(applicationMethodUsesWater('Semprot'), true);
 });
 
 test('biaya jurnal yang sudah dicatat di Keuangan tidak dihitung dua kali', () => {
