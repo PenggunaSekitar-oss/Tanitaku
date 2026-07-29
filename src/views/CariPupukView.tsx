@@ -280,7 +280,7 @@ export function CariPupukView() {
               {idx === 0 && (pupuk as any).score >= 15 && (
                 <div className="absolute -top-3 -right-2 bg-[#154734] text-white font-extrabold text-[10px] px-3 py-1 rounded border border-[#0A0A0A] z-10 flex items-center gap-1">
                   <span className="material-symbols-outlined text-[14px]">star</span>
-                  KECOCOKAN FILTER TERTINGGI
+                  HASIL FILTER TERATAS
                 </div>
               )}
               <div className="p-4 border-b-2 border-[#0A0A0A] flex justify-between items-start bg-[#154734] text-white font-normal rounded-t">
@@ -301,9 +301,9 @@ export function CariPupukView() {
               </div>
               {idx === 0 && (pupuk as any).score >= 15 && (
                 <div className="bg-[#E6E6DC]/50 border-l-4 border-[#154734] p-3 m-4 mb-0 rounded text-xs border-y border-r border-[#0A0A0A]">
-                  <p className="font-bold text-[#154734] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">psychology</span> Alasan Rekomendasi</p>
+                  <p className="font-bold text-[#154734] mb-1 flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">filter_alt</span> Alasan Hasil Filter</p>
                   <p className="text-[#5C5C5C] text-xs leading-relaxed">
-                    Sangat relevan dengan kriteria pencarian usia <b>{searchParams.hst} HST</b>{searchParams.fungsi && <span>, dan sangat efektif untuk target <b>{FUNGSI_OPTIONS.find(f => f.value === searchParams.fungsi)?.label || searchParams.fungsi}</b></span>}. {pupuk.keterangan}
+                    Rentang katalog mencakup usia <b>{searchParams.hst} HST</b>{searchParams.fungsi && <span> dan deskripsinya berkaitan dengan fungsi <b>{FUNGSI_OPTIONS.find(f => f.value === searchParams.fungsi)?.label || searchParams.fungsi}</b></span>}. Ini belum membuktikan kecocokan untuk komoditas tertentu. {pupuk.keterangan}
                   </p>
                 </div>
               )}
@@ -312,29 +312,31 @@ export function CariPupukView() {
                 <div className="bg-[#E6E6DC]/40 p-3 border border-[#0A0A0A] rounded text-xs space-y-2">
                   <div className="font-extrabold text-[#154734] uppercase text-[11px] pb-1.5 border-b border-[#0A0A0A] flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-[16px]">verified</span>
-                    Penerapan Rumus Rekomendasi
+                    Ringkasan filter &amp; verifikasi
                   </div>
                   <div className="leading-relaxed">
-                    <span className="font-bold text-[#0A0A0A]">🎯 Tepat Sasaran: </span>
+                    <span className="font-bold text-[#0A0A0A]">🎯 Konteks tanaman: </span>
                     <span className="text-[#5C5C5C] font-medium">
-                      {searchParams.tanaman ? `Tanaman ${searchParams.tanaman} (${searchParams.fungsi ? FUNGSI_OPTIONS.find(f => f.value === searchParams.fungsi)?.label : 'Pertumbuhan & Hasil'})` : `Organ ${pupuk.fase.join(' / ')}`}
+                      {searchParams.tanaman
+                        ? `${searchParams.tanaman}; kompatibilitas wajib diverifikasi dari label dan kebutuhan hara.`
+                        : 'Belum ada konteks komoditas.'}
                     </span>
                   </div>
                   <div className="leading-relaxed">
-                    <span className="font-bold text-[#0A0A0A]">🧪 Tepat Jenis: </span>
-                    <span className="text-[#5C5C5C] font-medium">{pupuk.nama} ({pupuk.kandungan})</span>
+                    <span className="font-bold text-[#0A0A0A]">🧪 Kandungan: </span>
+                    <span className="text-[#5C5C5C] font-medium">{pupuk.nama} ({pupuk.kandungan}); sesuaikan dengan analisis tanah atau media.</span>
                   </div>
                   <div className="leading-relaxed">
-                    <span className="font-bold text-[#0A0A0A]">⚖️ Tepat Dosis: </span>
-                    <span className="text-[#5C5C5C] font-medium">{pupuk.dosis}</span>
+                    <span className="font-bold text-[#0A0A0A]">⚖️ Dosis referensi: </span>
+                    <span className="text-[#5C5C5C] font-medium">{pupuk.dosis}; label produk dan rekomendasi setempat tetap menjadi acuan.</span>
                   </div>
                   <div className="leading-relaxed">
-                    <span className="font-bold text-[#0A0A0A]">⏱️ Tepat Waktu: </span>
-                    <span className="text-[#5C5C5C] font-medium">Fase {pupuk.fase.join(', ')} ({pupuk.minHst} - {pupuk.maxHst} HST)</span>
+                    <span className="font-bold text-[#0A0A0A]">⏱️ Rentang katalog: </span>
+                    <span className="text-[#5C5C5C] font-medium">Fase {pupuk.fase.join(', ')} ({pupuk.minHst}–{pupuk.maxHst} HST); konfirmasi fase aktual tanaman.</span>
                   </div>
                   <div className="leading-relaxed">
-                    <span className="font-bold text-[#0A0A0A]">💦 Tepat Cara: </span>
-                    <span className="text-[#5C5C5C] font-medium">{pupuk.bentuk.toLowerCase().includes('cair') ? 'Semprot foliar daun / kocor akar' : 'Tabur melingkar sekeliling tajuk / Kocor air'}</span>
+                    <span className="font-bold text-[#0A0A0A]">💦 Cara aplikasi: </span>
+                    <span className="text-[#5C5C5C] font-medium">Ikuti metode, pelarutan, kompatibilitas campuran, dan batas aplikasi pada label produk.</span>
                   </div>
                 </div>
 
@@ -370,7 +372,7 @@ export function CariPupukView() {
                       </div>
 
                       <div>
-                        <span className="text-[10px] font-bold text-[#5C5C5C] uppercase block mb-1">Dosis Aplikasi Rekomendasi</span>
+                        <span className="text-[10px] font-bold text-[#5C5C5C] uppercase block mb-1">Referensi dosis katalog — verifikasi label</span>
                         <div className="text-xs text-[#0A0A0A] p-2.5 bg-white rounded border border-[#0A0A0A] font-mono font-bold">{pupuk.dosis}</div>
                       </div>
 
