@@ -4,6 +4,7 @@ import { motion, type Variants } from "motion/react";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { BmkgWeatherWidget } from "../components/BmkgWeatherWidget";
 import { GrowthChart } from "../components/GrowthChart";
+import { AnimatedNumber } from "../components/AnimatedNumber";
 import { useTaniOps, type BlokLahan, type Tanaman } from "../context/TaniOpsContext";
 import {
   calculateHST,
@@ -417,20 +418,21 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.02,
-        delayChildren: 0,
+        staggerChildren: 0.06,
+        delayChildren: 0.04,
       },
     },
   };
 
   const bentoItem: Variants = {
-    hidden: { opacity: 0, y: 8 },
+    hidden: { opacity: 0, y: 18, filter: "blur(5px)" },
     show: { 
       opacity: 1, 
       y: 0,
+      filter: "blur(0px)",
       transition: {
-        duration: 0.15,
-        ease: "easeOut",
+        duration: 0.52,
+        ease: [0.16, 1, 0.3, 1],
       },
     },
   };
@@ -465,7 +467,10 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               Kelengkapan catatan
             </span>
             <strong className="mt-3 font-display text-5xl font-semibold tracking-[-0.06em] text-white">
-              {Math.round(Number(healthScore))}%
+              <AnimatedNumber
+                value={Number(healthScore)}
+                formatter={(value) => `${Math.round(value)}%`}
+              />
             </strong>
             <span className="mt-2 text-xs font-semibold text-[#DDE9E2]">{healthScoreLabel}</span>
             <p className="mt-3 max-w-[210px] text-[10px] font-medium leading-relaxed text-white/60">
@@ -474,11 +479,11 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
           </div>
 
           {/* 4 Key Metrics */}
-          <div className="flex-1 w-full grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          <div className="motion-stagger grid w-full flex-1 grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
               <span className="text-xs font-semibold text-white/75">Populasi aktif</span>
               <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white my-1 font-display">
-                {totalPopulasiAktif.toLocaleString("id-ID")}
+                <AnimatedNumber value={totalPopulasiAktif} />
               </span>
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">{tanamanAktif.length} Varietas di Lahan</span>
             </div>
@@ -486,7 +491,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
               <span className="text-xs font-semibold text-white/75">Estimasi laba</span>
               <span className="text-lg sm:text-xl lg:text-2xl font-extrabold text-white my-1 font-display">
-                {formatRp(laba)}
+                <AnimatedNumber value={laba} formatter={formatRp} />
               </span>
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">ROI Proyeksi {roi}%</span>
             </div>
@@ -495,7 +500,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-xs font-semibold text-white/75">Luas bedengan</span>
               <div className="flex flex-col my-1">
                 <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-display">
-                  {totalLuasLahan.toLocaleString("id-ID")} <span className="text-xs font-semibold text-white/80">m²</span>
+                  <AnimatedNumber value={totalLuasLahan} /> <span className="text-xs font-semibold text-white/80">m²</span>
                 </span>
                 <span className="text-[11px] font-mono text-white/90 font-medium">
                   ({(totalLuasLahan / 100).toLocaleString("id-ID", { maximumFractionDigits: 2 })} Are / {(totalLuasLahan / 10000).toLocaleString("id-ID", { maximumFractionDigits: 3 })} Ha)
@@ -507,7 +512,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
               <span className="text-xs font-semibold text-white/75">Agenda perawatan</span>
               <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white my-1 font-display">
-                {pemupukan.length} <span className="text-xs font-semibold text-white/80">Jadwal</span>
+                <AnimatedNumber value={pemupukan.length} /> <span className="text-xs font-semibold text-white/80">Jadwal</span>
               </span>
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold truncate">{upcomingPemupukan[0]?.item.jenisPupuk || "Belum ada agenda"}</span>
             </div>
@@ -536,7 +541,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
             />
 
             <div className="p-5 sm:p-6 bg-[#FEFEFA] rounded-2xl border border-slate-200/80 shadow-sm">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5">
+              <div className="motion-stagger grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-5">
                 {[
                   { 
                     id: 'cari-bibit', 
