@@ -30,9 +30,9 @@ export function PemantauanView() {
     efisiensiLahan: 80,
     jumlahBedengan: 0, 
     panjangBedengan: 0, 
-    lebarBedengan: 0, 
+    lebarBedengan: 1,
     lebarUnit: 'm' as 'm' | 'cm', 
-    jarakAntarBedengan: 0, 
+    jarakAntarBedengan: 0.5,
     jarakUnit: 'm' as 'm' | 'cm', 
     catatan: '' 
   };
@@ -115,7 +115,11 @@ export function PemantauanView() {
         jarakAntarBedengan: jBedeng
       };
     } else {
-      if (formBlok.jumlahBedengan <= 0 || formBlok.panjangBedengan <= 0) return;
+      if (
+        formBlok.jumlahBedengan <= 0 ||
+        formBlok.panjangBedengan <= 0 ||
+        formBlok.lebarBedengan <= 0
+      ) return;
       const lMeter = formBlok.lebarUnit === 'cm' ? formBlok.lebarBedengan / 100 : formBlok.lebarBedengan;
       const jMeter = formBlok.jarakUnit === 'cm' ? formBlok.jarakAntarBedengan / 100 : formBlok.jarakAntarBedengan;
       const grossM2 = calculateLuasLahan(
@@ -295,11 +299,6 @@ export function PemantauanView() {
       <div className="relative z-10 flex flex-col gap-6 text-slate-900">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
           
-          {/* Recharts - Growth Progress Chart */}
-          <div>
-            <GrowthChart tanamanList={tanaman} />
-          </div>
-
           <div className="flex gap-3 border-b border-slate-200 pb-3">
             <ConfirmModal 
               isOpen={deleteConfirmOpen} 
@@ -332,7 +331,7 @@ export function PemantauanView() {
                   : 'bg-[#FEFEFA] text-slate-700 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              Manajemen Blok Lahan
+              Blok & luas lahan
             </button>
             <button
               onClick={() => setActiveTab('tanaman')}
@@ -342,13 +341,13 @@ export function PemantauanView() {
                   : 'bg-[#FEFEFA] text-slate-700 hover:bg-slate-100 border border-slate-200'
               }`}
             >
-              Data Tanaman ({tanaman.length})
+              Tanaman ({tanaman.length})
             </button>
           </div>
 
           <div className="mb-6">
             <Accordion 
-              title="Panduan & Rumus Praktis Estimasi Populasi Tanaman" 
+              title="Cara TANITA menghitung luas dan populasi (opsional)"
               icon="calculate" 
               defaultOpen={false}
             >
@@ -422,8 +421,8 @@ export function PemantauanView() {
           </div>
 
       {activeTab === 'blok' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="demo-mutation col-span-1 neo-card p-4">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+          <div className="demo-mutation neo-card p-4 lg:col-span-12">
             <h2 className="font-brutal uppercase tracking-wider mb-4 text-white font-extrabold bg-[#154734] px-3 py-1 rounded neo-border-thin shadow-[2px_2px_0px_0px_#0A0A0A] inline-block">{editingBlokId ? 'Edit Blok Lahan' : 'Tambah Blok Baru'}</h2>
             <form onSubmit={handleAddBlok} className="flex flex-col gap-4">
               <div>
@@ -435,7 +434,7 @@ export function PemantauanView() {
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#154734] mb-1.5 flex items-center gap-1">
                   <span className="material-symbols-outlined text-sm">straighten</span>
-                  <span>Pilihan Satuan / Metode Input Luas:</span>
+                  <span>Data apa yang paling mudah Anda isi?</span>
                 </label>
                 <div className="grid grid-cols-3 gap-1 p-1 bg-[#154734]/5 border-2 border-[#0A0A0A] rounded-xl shadow-[2px_2px_0px_0px_#0A0A0A]">
                   <button
@@ -448,7 +447,7 @@ export function PemantauanView() {
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm">view_stream</span>
-                    <span>Bedengan</span>
+                    <span>Jumlah bedengan</span>
                   </button>
 
                   <button
@@ -461,7 +460,7 @@ export function PemantauanView() {
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm">grid_on</span>
-                    <span>Satuan Are</span>
+                    <span>Luas dalam Are</span>
                   </button>
 
                   <button
@@ -474,7 +473,7 @@ export function PemantauanView() {
                     }`}
                   >
                     <span className="material-symbols-outlined text-sm">square_foot</span>
-                    <span>Satuan Hektar</span>
+                    <span>Luas dalam Ha</span>
                   </button>
                 </div>
               </div>
@@ -482,20 +481,24 @@ export function PemantauanView() {
               {/* Form Input Berdasarkan Bedengan */}
               {formBlok.tipeInput === 'bedengan' && (
                 <>
+                  <div className="rounded-xl border border-[#C7D3CB] bg-[#EEF3EF] p-3 text-xs font-medium leading-relaxed text-[#536159]">
+                    Isi dua data utama: jumlah dan panjang bedengan. Lebar standar 1 meter dan
+                    jarak 0,5 meter sudah disiapkan—ubah hanya jika ukuran kebun berbeda.
+                  </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label className="block text-sm font-bold text-on-surface-muted mb-1">Jumlah Bedengan</label>
-                      <NumberInput value={formBlok.jumlahBedengan} onNumberChange={v => setFormBlok({...formBlok, jumlahBedengan: v})} className="w-full bg-surface-high neo-border-thin px-4 py-2.5 min-h-[48px] text-[15px] text-on-surface rounded-[8px_3px_8px_3px] focus:outline-none focus:ring-0" placeholder="0" required min="1" />
+                      <label className="block text-sm font-bold text-on-surface-muted mb-1">Berapa bedengan?</label>
+                      <NumberInput value={formBlok.jumlahBedengan} onNumberChange={v => setFormBlok({...formBlok, jumlahBedengan: v})} className="w-full bg-surface-high neo-border-thin px-4 py-2.5 min-h-[48px] text-[15px] text-on-surface rounded-[8px_3px_8px_3px] focus:outline-none focus:ring-0" placeholder="Contoh: 20" required min="1" />
                     </div>
                     <div>
-                      <label className="block text-sm font-bold text-on-surface-muted mb-1">Panjang (m)</label>
-                      <NumberInput value={formBlok.panjangBedengan} onNumberChange={v => setFormBlok({...formBlok, panjangBedengan: v})} className="w-full bg-surface-high neo-border-thin px-4 py-2.5 min-h-[48px] text-[15px] text-on-surface rounded-[8px_3px_8px_3px] focus:outline-none focus:ring-0" placeholder="0" required min="1" />
+                      <label className="block text-sm font-bold text-on-surface-muted mb-1">Panjang satu bedengan</label>
+                      <NumberInput value={formBlok.panjangBedengan} onNumberChange={v => setFormBlok({...formBlok, panjangBedengan: v})} className="w-full bg-surface-high neo-border-thin px-4 py-2.5 min-h-[48px] text-[15px] text-on-surface rounded-[8px_3px_8px_3px] focus:outline-none focus:ring-0" placeholder="Contoh: 10 meter" required min="1" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
                       <div className="flex flex-wrap justify-between items-center gap-1 mb-1">
-                        <label className="text-sm font-bold text-on-surface-muted">Lebar Bedengan</label>
+                        <label className="text-sm font-bold text-on-surface-muted">Lebar satu bedengan</label>
                         <div className="flex items-center gap-1 bg-surface-high border border-outline rounded px-1 py-0.5">
                           <button
                             type="button"
@@ -525,7 +528,7 @@ export function PemantauanView() {
                     </div>
                     <div>
                       <div className="flex flex-wrap justify-between items-center gap-1 mb-1">
-                        <label className="text-sm font-bold text-on-surface-muted">Jarak Antar Bedengan</label>
+                        <label className="text-sm font-bold text-on-surface-muted">Jarak/parit antarbedengan</label>
                         <div className="flex items-center gap-1 bg-surface-high border border-outline rounded px-1 py-0.5">
                           <button
                             type="button"
@@ -560,7 +563,7 @@ export function PemantauanView() {
                     <div className="bg-[#154734]/10 p-3 rounded-xl border border-[#154734]/30 flex flex-col gap-1.5 text-xs text-slate-800">
                       <div className="flex items-center gap-1 font-bold text-[#154734]">
                         <span className="material-symbols-outlined text-sm">calculate</span>
-                        <span>Estimasi Luas Lahan (Otomatis):</span>
+                        <span>Luas yang akan dipakai pada Jadwal Perawatan</span>
                       </div>
                       {(() => {
                         const lMeter = formBlok.lebarUnit === 'cm' ? formBlok.lebarBedengan / 100 : formBlok.lebarBedengan;
@@ -737,7 +740,13 @@ export function PemantauanView() {
                 type="submit" 
                 disabled={
                   !formBlok.nama.trim() ||
-                  (formBlok.tipeInput === 'are' ? formBlok.luasAre <= 0 : formBlok.tipeInput === 'hektar' ? formBlok.luasHektar <= 0 : (formBlok.jumlahBedengan <= 0 || formBlok.panjangBedengan <= 0))
+                  (formBlok.tipeInput === 'are'
+                    ? formBlok.luasAre <= 0
+                    : formBlok.tipeInput === 'hektar'
+                      ? formBlok.luasHektar <= 0
+                      : formBlok.jumlahBedengan <= 0 ||
+                        formBlok.panjangBedengan <= 0 ||
+                        formBlok.lebarBedengan <= 0)
                 } 
                 className="neo-btn neo-btn-action text-on-action w-full min-h-[56px] mt-2 disabled:opacity-50 cursor-pointer"
               >
@@ -750,32 +759,25 @@ export function PemantauanView() {
               )}
             </form>
           </div>
-          <div className={isReadOnly ? 'col-span-1 lg:col-span-3' : 'col-span-1 lg:col-span-2'}>
+          <div className="lg:col-span-12">
             {blokLahan.length === 0 ? (
               <EmptyState icon="grid_view" title="Belum Ada Blok Lahan" message="Tambahkan data blok lahan di panel kiri untuk mulai memantau area budidaya." />
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {blokLahan.map(blok => {
-                  let m2 = 0;
-                  let are = 0;
-                  let ha = 0;
+                  let grossM2 = 0;
                   const efisiensi = blok.efisiensiLahan || 100;
 
                   if (blok.tipeInput === 'hektar' && blok.luasHektar) {
-                    ha = blok.luasHektar;
-                    are = ha * 100;
-                    m2 = ha * 10000;
+                    grossM2 = blok.luasHektar * 10000;
                   } else if (blok.tipeInput === 'are' && blok.luasAre) {
-                    are = blok.luasAre;
-                    ha = are / 100;
-                    m2 = are * 100;
+                    grossM2 = blok.luasAre * 100;
                   } else {
                     const lMeter = blok.lebarBedengan > 10 ? blok.lebarBedengan / 100 : blok.lebarBedengan;
                     const jMeter = blok.jarakAntarBedengan > 10 ? blok.jarakAntarBedengan / 100 : blok.jarakAntarBedengan;
-                    m2 = calculateLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, lMeter, jMeter, blok.luasManualM2);
-                    are = m2 / 100;
-                    ha = m2 / 10000;
+                    grossM2 = calculateLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, lMeter, jMeter, blok.luasManualM2);
                   }
+                  const effectiveM2 = grossM2 * (efisiensi / 100);
 
                   return (
                     <div key={blok.id} className="neo-card p-4 flex flex-col gap-3 relative group">
@@ -818,22 +820,28 @@ export function PemantauanView() {
                         <div className="bg-[#154734]/10 p-2.5 rounded-lg border border-[#154734]/20 flex flex-col gap-1.5">
                           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#154734] flex items-center gap-1">
                             <span className="material-symbols-outlined text-sm">square_foot</span>
-                            Matriks Luas Lahan:
+                            Luas efektif untuk perhitungan:
                           </span>
                           <div className="grid grid-cols-3 gap-1.5 text-center font-mono text-xs">
                             <div className="bg-white/80 p-1.5 rounded border border-[#154734]/20">
                               <span className="block text-[9px] text-slate-500 font-bold uppercase">m²</span>
-                              <span className="font-extrabold text-[#154734]">{m2.toLocaleString('id-ID', { maximumFractionDigits: 1 })}</span>
+                              <span className="font-extrabold text-[#154734]">{effectiveM2.toLocaleString('id-ID', { maximumFractionDigits: 1 })}</span>
                             </div>
                             <div className="bg-white/80 p-1.5 rounded border border-[#154734]/20">
                               <span className="block text-[9px] text-slate-500 font-bold uppercase">Are</span>
-                              <span className="font-extrabold text-[#154734]">{are.toLocaleString('id-ID', { maximumFractionDigits: 2 })}</span>
+                              <span className="font-extrabold text-[#154734]">{(effectiveM2 / 100).toLocaleString('id-ID', { maximumFractionDigits: 2 })}</span>
                             </div>
                             <div className="bg-white/80 p-1.5 rounded border border-[#154734]/20">
                               <span className="block text-[9px] text-slate-500 font-bold uppercase">Hektar (Ha)</span>
-                              <span className="font-extrabold text-[#154734]">{ha.toLocaleString('id-ID', { maximumFractionDigits: 3 })}</span>
+                              <span className="font-extrabold text-[#154734]">{(effectiveM2 / 10000).toLocaleString('id-ID', { maximumFractionDigits: 3 })}</span>
                             </div>
                           </div>
+                          {efisiensi < 100 && (
+                            <span className="text-[10px] font-medium text-[#66736C]">
+                              Dari luas total {grossM2.toLocaleString('id-ID', { maximumFractionDigits: 1 })} m²
+                              setelah dikurangi jalan/parit ({efisiensi}% efektif).
+                            </span>
+                          )}
                         </div>
 
                         {blok.catatan && (
@@ -850,7 +858,9 @@ export function PemantauanView() {
       )}
 
       {activeTab === 'tanaman' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="flex flex-col gap-6">
+          <GrowthChart tanamanList={tanaman} />
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="demo-mutation col-span-1 neo-card p-4">
             <h2 className="font-brutal uppercase tracking-wider mb-4 text-white font-extrabold bg-[#154734] px-3 py-1 rounded neo-border-thin shadow-[2px_2px_0px_0px_#0A0A0A] inline-block">{editingTanamanId ? 'Edit Data Tanam' : 'Input Data Tanam'}</h2>
             <form onSubmit={handleAddTanaman} className="flex flex-col gap-4">
@@ -1021,6 +1031,7 @@ export function PemantauanView() {
                 })}
               </div>
             )}
+          </div>
           </div>
         </div>
       )}
