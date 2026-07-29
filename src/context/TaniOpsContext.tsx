@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { formatLocalDate } from '../utils/localDate';
+import { IS_DEMO_MODE } from '../config/runtime';
+import { createDemoOperationalData } from '../data/demoOperationalData';
 import { useToast } from './ToastContext';
 
 export type BlokLahan = { 
@@ -100,6 +101,7 @@ export interface RestoreResult {
 }
 
 interface TaniOpsContextType extends State {
+  isReadOnly: boolean;
   addBlokLahan: (b: Omit<BlokLahan, 'id'>) => void;
   updateBlokLahan: (id: string, b: Partial<BlokLahan>) => void;
   deleteBlokLahan: (id: string) => void;
@@ -122,12 +124,7 @@ interface TaniOpsContextType extends State {
 }
 
 const TaniOpsContext = createContext<TaniOpsContextType | undefined>(undefined);
-
-const getRecentDateStr = (daysAgo: number) => {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return formatLocalDate(d);
-};
+const DEMO_DATA = createDemoOperationalData();
 
 const DEFAULT_BLOK_LAHAN: BlokLahan[] = [];
 const DEFAULT_TANAMAN: Tanaman[] = [];
@@ -329,27 +326,33 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   };
 
   const [blokLahan, setBlokLahan] = useState<BlokLahan[]>(() => {
+    if (IS_DEMO_MODE) return DEMO_DATA.blokLahan;
     const raw = safeGetArray<BlokLahan>('taniops_blokLahan', normalizeBlokLahan);
     return raw.filter((item) => !item.id.includes('demo'));
   });
   const [tanaman, setTanaman] = useState<Tanaman[]>(() => {
+    if (IS_DEMO_MODE) return DEMO_DATA.tanaman;
     const raw = safeGetArray<Tanaman>('taniops_tanaman', normalizeTanaman);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [logAktivitas, setLogAktivitas] = useState<LogAktivitas[]>(() => {
+    if (IS_DEMO_MODE) return DEMO_DATA.logAktivitas;
     const raw = safeGetArray<LogAktivitas>('taniops_logAktivitas', normalizeLogAktivitas);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [pemupukan, setPemupukan] = useState<Pemupukan[]>(() => {
+    if (IS_DEMO_MODE) return DEMO_DATA.pemupukan;
     const raw = safeGetArray<Pemupukan>('taniops_pemupukan', normalizePemupukan);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
   const [keuangan, setKeuangan] = useState<Keuangan[]>(() => {
+    if (IS_DEMO_MODE) return DEMO_DATA.keuangan;
     const raw = safeGetArray<Keuangan>('taniops_keuangan', normalizeKeuangan);
     return raw.filter((item) => !item.id.includes('demo') && !item.blokId.includes('demo'));
   });
 
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     const handleStorageError = () => {
       showToast('Penyimpanan browser penuh atau diblokir. Perubahan terbaru mungkin belum tersimpan.', 'error');
     };
@@ -358,6 +361,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   }, [showToast]);
 
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     const parseExternalArray = <T,>(
       rawValue: string | null,
       normalize: (item: unknown) => T | null,
@@ -420,10 +424,22 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadDemoData = () => {
+    if (IS_DEMO_MODE) {
+      setBlokLahan(DEMO_DATA.blokLahan);
+      setTanaman(DEMO_DATA.tanaman);
+      setLogAktivitas(DEMO_DATA.logAktivitas);
+      setPemupukan(DEMO_DATA.pemupukan);
+      setKeuangan(DEMO_DATA.keuangan);
+      return;
+    }
     clearAllData();
   };
 
   const clearAllData = () => {
+    if (IS_DEMO_MODE) {
+      showToast('Mode demo hanya dapat dilihat. Data contoh tidak dapat dihapus.', 'info');
+      return;
+    }
     safeSetItem('taniops_initialized', true);
     safeSetItem('taniops_blokLahan', []);
     safeSetItem('taniops_tanaman', []);
@@ -437,8 +453,9 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
     setKeuangan([]);
   };
 
-  // Clean demo data on mount and mark as initialized
+  // Mark the editable app as initialized. Demo builds never touch operational storage.
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     safeSetItem('taniops_initialized', true);
     safeSetItem('taniops_schema_version', 3);
     safeSetItem('taniops_blokLahan', blokLahan);
@@ -449,31 +466,49 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     safeSetItem('taniops_blokLahan', blokLahan);
   }, [blokLahan]);
 
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     safeSetItem('taniops_tanaman', tanaman);
   }, [tanaman]);
 
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     safeSetItem('taniops_logAktivitas', logAktivitas);
   }, [logAktivitas]);
 
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     safeSetItem('taniops_pemupukan', pemupukan);
   }, [pemupukan]);
 
   React.useEffect(() => {
+    if (IS_DEMO_MODE) return;
     safeSetItem('taniops_keuangan', keuangan);
   }, [keuangan]);
 
   const generateId = () =>
     globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-  const addBlokLahan = (b: Omit<BlokLahan, 'id'>) => setBlokLahan(prev => [...prev, { ...b, id: generateId() }]);
-  const updateBlokLahan = (id: string, b: Partial<BlokLahan>) => setBlokLahan(prev => prev.map(item => item.id === id ? { ...item, ...b } : item));
+  const rejectDemoMutation = (): boolean => {
+    if (!IS_DEMO_MODE) return false;
+    showToast('Mode demo hanya dapat dilihat. Perubahan tidak disimpan.', 'info');
+    return true;
+  };
+
+  const addBlokLahan = (b: Omit<BlokLahan, 'id'>) => {
+    if (rejectDemoMutation()) return;
+    setBlokLahan(prev => [...prev, { ...b, id: generateId() }]);
+  };
+  const updateBlokLahan = (id: string, b: Partial<BlokLahan>) => {
+    if (rejectDemoMutation()) return;
+    setBlokLahan(prev => prev.map(item => item.id === id ? { ...item, ...b } : item));
+  };
   const deleteBlokLahan = (id: string) => {
+    if (rejectDemoMutation()) return;
     setBlokLahan(prev => prev.filter(item => item.id !== id));
     setTanaman(prev => prev.filter(item => item.blokId !== id));
     setLogAktivitas(prev => prev.filter(item => item.blokId !== id));
@@ -481,9 +516,16 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
     setKeuangan(prev => prev.filter(item => item.blokId !== id));
   };
 
-  const addTanaman = (t: Omit<Tanaman, 'id'>) => setTanaman(prev => [...prev, { ...t, id: generateId() }]);
-  const updateTanaman = (id: string, t: Partial<Tanaman>) => setTanaman(prev => prev.map(item => item.id === id ? { ...item, ...t } : item));
+  const addTanaman = (t: Omit<Tanaman, 'id'>) => {
+    if (rejectDemoMutation()) return;
+    setTanaman(prev => [...prev, { ...t, id: generateId() }]);
+  };
+  const updateTanaman = (id: string, t: Partial<Tanaman>) => {
+    if (rejectDemoMutation()) return;
+    setTanaman(prev => prev.map(item => item.id === id ? { ...item, ...t } : item));
+  };
   const deleteTanaman = (id: string) => {
+    if (rejectDemoMutation()) return;
     setTanaman(prev => prev.filter(item => item.id !== id));
     // Financial history is retained, but the deleted crop must not leave a
     // dangling relation that looks like a valid active season.
@@ -492,17 +534,44 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
     ));
   };
 
-  const addLogAktivitas = (l: Omit<LogAktivitas, 'id'>) => setLogAktivitas(prev => [...prev, { ...l, id: generateId() }]);
-  const updateLogAktivitas = (id: string, l: Partial<LogAktivitas>) => setLogAktivitas(prev => prev.map(item => item.id === id ? { ...item, ...l } : item));
-  const deleteLogAktivitas = (id: string) => setLogAktivitas(prev => prev.filter(item => item.id !== id));
+  const addLogAktivitas = (l: Omit<LogAktivitas, 'id'>) => {
+    if (rejectDemoMutation()) return;
+    setLogAktivitas(prev => [...prev, { ...l, id: generateId() }]);
+  };
+  const updateLogAktivitas = (id: string, l: Partial<LogAktivitas>) => {
+    if (rejectDemoMutation()) return;
+    setLogAktivitas(prev => prev.map(item => item.id === id ? { ...item, ...l } : item));
+  };
+  const deleteLogAktivitas = (id: string) => {
+    if (rejectDemoMutation()) return;
+    setLogAktivitas(prev => prev.filter(item => item.id !== id));
+  };
 
-  const addPemupukan = (p: Omit<Pemupukan, 'id'>) => setPemupukan(prev => [...prev, { ...p, id: generateId() }]);
-  const updatePemupukan = (id: string, p: Partial<Pemupukan>) => setPemupukan(prev => prev.map(item => item.id === id ? { ...item, ...p } : item));
-  const deletePemupukan = (id: string) => setPemupukan(prev => prev.filter(item => item.id !== id));
+  const addPemupukan = (p: Omit<Pemupukan, 'id'>) => {
+    if (rejectDemoMutation()) return;
+    setPemupukan(prev => [...prev, { ...p, id: generateId() }]);
+  };
+  const updatePemupukan = (id: string, p: Partial<Pemupukan>) => {
+    if (rejectDemoMutation()) return;
+    setPemupukan(prev => prev.map(item => item.id === id ? { ...item, ...p } : item));
+  };
+  const deletePemupukan = (id: string) => {
+    if (rejectDemoMutation()) return;
+    setPemupukan(prev => prev.filter(item => item.id !== id));
+  };
 
-  const addKeuangan = (k: Omit<Keuangan, 'id'>) => setKeuangan(prev => [...prev, { ...k, id: generateId() }]);
-  const updateKeuangan = (id: string, k: Partial<Keuangan>) => setKeuangan(prev => prev.map(item => item.id === id ? { ...item, ...k } : item));
-  const deleteKeuangan = (id: string) => setKeuangan(prev => prev.filter(item => item.id !== id));
+  const addKeuangan = (k: Omit<Keuangan, 'id'>) => {
+    if (rejectDemoMutation()) return;
+    setKeuangan(prev => [...prev, { ...k, id: generateId() }]);
+  };
+  const updateKeuangan = (id: string, k: Partial<Keuangan>) => {
+    if (rejectDemoMutation()) return;
+    setKeuangan(prev => prev.map(item => item.id === id ? { ...item, ...k } : item));
+  };
+  const deleteKeuangan = (id: string) => {
+    if (rejectDemoMutation()) return;
+    setKeuangan(prev => prev.filter(item => item.id !== id));
+  };
 
   const createBackup = (): string => {
     const preferences: Record<string, string> = {};
@@ -524,6 +593,12 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   };
 
   const restoreBackup = (payload: string): RestoreResult => {
+    if (IS_DEMO_MODE) {
+      return {
+        success: false,
+        message: 'Mode demo hanya dapat dilihat. Cadangan tidak dapat dipulihkan.',
+      };
+    }
     try {
       const parsed: unknown = JSON.parse(payload);
       if (!isRecord(parsed) || parsed.app !== 'TANITA' || !isRecord(parsed.data)) {
@@ -655,6 +730,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
 
   return (
     <TaniOpsContext.Provider value={{
+      isReadOnly: IS_DEMO_MODE,
       blokLahan, tanaman, logAktivitas, pemupukan, keuangan,
       addBlokLahan, updateBlokLahan, deleteBlokLahan,
       addTanaman, updateTanaman, deleteTanaman,
