@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { IS_DEMO_MODE } from '../config/runtime';
 
 const UPDATE_READY_KEY = 'tanita_pwa_update_ready';
 
@@ -32,7 +33,9 @@ export function PwaUpdatePrompt() {
         <div className="min-w-0 flex-1">
           <h2 className="text-sm font-bold">Pembaruan TANITA tersedia</h2>
           <p className="mt-1 text-xs font-medium leading-relaxed text-[#69716B]">
-            Simpan formulir yang sedang dikerjakan sebelum memuat versi baru.
+            {IS_DEMO_MODE
+              ? 'Muat ulang untuk menggunakan versi terbaru ruang demo.'
+              : 'Simpan formulir yang sedang dikerjakan sebelum memuat versi baru.'}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
