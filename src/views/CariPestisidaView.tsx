@@ -15,7 +15,6 @@ import {
   getPestisidaMarketMetadata,
 } from '../data/pestisidaData';
 import { MarketPriceCard } from '../components/MarketPriceCard';
-import { marketAvailabilityRank } from '../data/marketMetadata';
 import { searchPesticides } from '../utils/pesticideSearch';
 import {
   CatalogHistoryEntry,
@@ -82,11 +81,9 @@ export function CariPestisidaView() {
   }, []);
 
   const performSearch = (hamaVal: string, tanamanVal: string) => {
-    const matches = searchPesticides(PESTISIDA_CATALOG, hamaVal, tanamanVal)
-      .sort((a, b) =>
-        marketAvailabilityRank(getPestisidaMarketMetadata(b).availability) -
-        marketAvailabilityRank(getPestisidaMarketMetadata(a).availability),
-      );
+    // Relevance and exact target matches must remain ahead of convenience.
+    // Market availability is displayed as purchasing context, not a safety rank.
+    const matches = searchPesticides(PESTISIDA_CATALOG, hamaVal, tanamanVal);
     setResults(matches);
     return matches.length;
   };
@@ -178,44 +175,16 @@ export function CariPestisidaView() {
 
   // Helper untuk menyesuaikan petunjuk penggunaan produk dengan target pencarian.
   const getRumus5Tepat = (hama: string, tanaman: string, item: PestisidaItem) => {
-    const h = hama.toLowerCase();
-    let sasaranLabel = hama || 'Hama / Penyakit Target';
-    if (tanaman) {
-      sasaranLabel += ` pada Tanaman ${tanaman}`;
-    }
-
-    let tepatSasaran = sasaranLabel;
-    let tepatWaktu = 'Awal muncul gejala / populasi ambang batas';
-    let tepatCara = tanaman ? `Semprot kabut merata di permukaan daun & bagian tanaman ${tanaman}` : 'Semprot kabut merata di permukaan daun';
-
-    if (h.includes('ulat grayak') || h.includes('spodoptera')) {
-      tepatSasaran = `Ulat Grayak (${hama || 'Spodoptera'}) pada tanaman ${tanaman || 'Pertanian'}`;
-      tepatWaktu = 'Sore jam 16.00 - 18.00 / Malam hari saat ulat keluar makan';
-      tepatCara = tanaman ? `Semprot kabut tekanan tinggi fokus ke pucuk dan lipatan daun ${tanaman}` : 'Semprot kabut tekanan tinggi fokus ke pucuk dan lipatan daun';
-    } else if (h.includes('kutu kebul') || h.includes('thrips') || h.includes('kutu daun')) {
-      tepatSasaran = `${hama || 'Kutu/Thrips'} (Hama penusuk-penghisap) pada tanaman ${tanaman || 'Pertanian'}`;
-      tepatWaktu = 'Pagi jam 06.00 - 09.00 sebelum serangga aktif terbang tinggi';
-      tepatCara = tanaman ? `Semprot merata di permukaan BAWAH daun ${tanaman} (tempat serangga bersarang)` : 'Semprot merata di permukaan BAWAH daun (tempat bersarang)';
-    } else if (h.includes('patek') || h.includes('antraknosa') || h.includes('busuk') || h.includes('bercak')) {
-      tepatSasaran = `Jamur Patogen (${hama || 'Antraknosa/Patek'}) pada tanaman ${tanaman || 'Pertanian'}`;
-      tepatWaktu = 'Pencegahan sebelum hujan / saat kelembaban udara tinggi';
-      tepatCara = `Semprot merata ke seluruh kanopi ${tanaman || 'tanaman'}, campurkan perekat di musim hujan`;
-    } else if (h.includes('layu bakteri') || h.includes('bakteri')) {
-      tepatSasaran = `Bakteri Tanaman (${hama || 'Layu Bakteri'}) pada tanaman ${tanaman || 'Pertanian'}`;
-      tepatWaktu = 'Pencegahan dini saat persiapan lahan & awal tanam';
-      tepatCara = `Kocor larutan ke perakaran ${tanaman || 'tanaman'} dan semprot pangkal batang`;
-    } else if (h.includes('tungau')) {
-      tepatSasaran = `Tungau Merah/Kuning (Akarisida) pada tanaman ${tanaman || 'Pertanian'}`;
-      tepatWaktu = 'Saat terlihat gejala daun melengkung ke bawah seperti mangkok';
-      tepatCara = `Semprot dari arah bawah daun ${tanaman || ''} dengan nozzle halus`;
-    }
+    const cropContext = tanaman
+      ? ` Konteks tanaman "${tanaman}" belum membuktikan izin penggunaan.`
+      : '';
 
     return {
-      tepatSasaran,
+      tepatSasaran: `Target katalog "${hama || 'belum dipilih'}".${cropContext}`,
       tepatJenis: `${item.jenis} dengan bahan aktif ${item.bahanAktif}. Cocokkan kembali sasaran dan izin penggunaan pada label produk.`,
-      tepatDosis: item.dosis,
-      tepatWaktu,
-      tepatCara
+      tepatDosis: `${item.dosis} sebagai referensi katalog; label kemasan yang sah tetap menjadi acuan.`,
+      tepatWaktu: 'Tentukan dari hasil monitoring, ambang tindakan, prakiraan cuaca, interval, dan masa tunggu pada label.',
+      tepatCara: 'Ikuti metode aplikasi, alat pelindung, pencampuran, dan larangan penggunaan yang tercantum pada label produk.',
     };
   };
 
@@ -329,7 +298,7 @@ export function CariPestisidaView() {
             fields={[
               { key: 'active', label: 'Bahan aktif' },
               { key: 'target', label: 'Sasaran katalog' },
-              { key: 'dose', label: 'Dosis label' },
+              { key: 'dose', label: 'Referensi dosis katalog' },
               { key: 'price', label: 'Kisaran harga' },
               { key: 'note', label: 'Catatan' },
             ]}
@@ -395,7 +364,7 @@ export function CariPestisidaView() {
 
                       <div className="grid grid-cols-1 gap-2 my-1">
                         <div className="bg-[#FEFEFA] p-2 border border-[#0A0A0A] rounded flex flex-col gap-0.5">
-                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#5C5C5C]">Dosis Aplikasi Rekomendasi</span>
+                          <span className="text-[9px] font-bold uppercase tracking-wider text-[#5C5C5C]">Referensi dosis katalog — verifikasi label</span>
                           <span className="text-xs font-bold font-mono text-[#0A0A0A]">{item.dosis}</span>
                         </div>
                         
