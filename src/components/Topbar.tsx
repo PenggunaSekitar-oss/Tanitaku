@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useToast } from '../context/ToastContext';
 import { BrandLockup } from './BrandLockup';
 import { SyncStatus } from './SyncStatus';
+import { IS_DEMO_MODE } from '../config/runtime';
 
 interface TopbarProps {
   onOpenSidebar: () => void;
@@ -77,9 +78,16 @@ export function Topbar({ onOpenSidebar, currentView, onNavigate }: TopbarProps) 
       </div>
 
       <div className="flex items-center gap-2.5">
-        <SyncStatus />
+        {IS_DEMO_MODE ? (
+          <span className="hidden min-h-8 items-center gap-1.5 rounded-full border border-[#C8A86B] bg-[#FFF8E8] px-3 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[#715020] sm:inline-flex">
+            <span className="material-symbols-outlined text-[15px]" aria-hidden="true">lock</span>
+            Hanya baca
+          </span>
+        ) : (
+          <SyncStatus />
+        )}
         {/* Notification Bell Button & Drawer Container */}
-        <div className="relative">
+        <div className={`relative ${IS_DEMO_MODE ? 'hidden' : ''}`}>
           <button
             type="button"
             onClick={() => setIsNotifOpen(!isNotifOpen)}
