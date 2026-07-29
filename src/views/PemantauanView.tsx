@@ -18,7 +18,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { GrowthChart } from '../components/GrowthChart';
 
 export function PemantauanView() {
-  const { blokLahan, tanaman, addBlokLahan, updateBlokLahan, deleteBlokLahan, addTanaman, updateTanaman, deleteTanaman } = useTaniOps();
+  const { isReadOnly, blokLahan, tanaman, addBlokLahan, updateBlokLahan, deleteBlokLahan, addTanaman, updateTanaman, deleteTanaman } = useTaniOps();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'blok' | 'tanaman'>('blok');
   
@@ -423,7 +423,7 @@ export function PemantauanView() {
 
       {activeTab === 'blok' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="col-span-1 neo-card p-4">
+          <div className="demo-mutation col-span-1 neo-card p-4">
             <h2 className="font-brutal uppercase tracking-wider mb-4 text-white font-extrabold bg-[#154734] px-3 py-1 rounded neo-border-thin shadow-[2px_2px_0px_0px_#0A0A0A] inline-block">{editingBlokId ? 'Edit Blok Lahan' : 'Tambah Blok Baru'}</h2>
             <form onSubmit={handleAddBlok} className="flex flex-col gap-4">
               <div>
@@ -750,7 +750,7 @@ export function PemantauanView() {
               )}
             </form>
           </div>
-          <div className="col-span-1 lg:col-span-2">
+          <div className={isReadOnly ? 'col-span-1 lg:col-span-3' : 'col-span-1 lg:col-span-2'}>
             {blokLahan.length === 0 ? (
               <EmptyState icon="grid_view" title="Belum Ada Blok Lahan" message="Tambahkan data blok lahan di panel kiri untuk mulai memantau area budidaya." />
             ) : (
@@ -779,7 +779,7 @@ export function PemantauanView() {
 
                   return (
                     <div key={blok.id} className="neo-card p-4 flex flex-col gap-3 relative group">
-                      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-100 transition-opacity">
+                      <div className="demo-mutation absolute top-2 right-2 flex items-center gap-1 opacity-100 transition-opacity">
                         <button onClick={() => handleEditBlok(blok)} className="p-1 bg-background border border-outline rounded-sm text-on-surface-muted hover:text-action hover:border-action transition cursor-pointer">
                           <span className="material-symbols-outlined text-[16px]">edit</span>
                         </button>
@@ -851,7 +851,7 @@ export function PemantauanView() {
 
       {activeTab === 'tanaman' && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="col-span-1 neo-card p-4">
+          <div className="demo-mutation col-span-1 neo-card p-4">
             <h2 className="font-brutal uppercase tracking-wider mb-4 text-white font-extrabold bg-[#154734] px-3 py-1 rounded neo-border-thin shadow-[2px_2px_0px_0px_#0A0A0A] inline-block">{editingTanamanId ? 'Edit Data Tanam' : 'Input Data Tanam'}</h2>
             <form onSubmit={handleAddTanaman} className="flex flex-col gap-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -921,7 +921,7 @@ export function PemantauanView() {
               )}
             </form>
           </div>
-          <div className="col-span-1 lg:col-span-2">
+          <div className={isReadOnly ? 'col-span-1 lg:col-span-3' : 'col-span-1 lg:col-span-2'}>
             {tanaman.length === 0 ? (
               <EmptyState icon="psychiatry" title="Belum Ada Tanaman" message="Tambahkan data tanam untuk mulai memantau umur dan status operasional." />
             ) : (
@@ -941,7 +941,7 @@ export function PemantauanView() {
                         </div>
                       )}
                       <div className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="absolute top-2 right-2 flex items-center gap-1 opacity-100 transition-opacity z-20">
+                        <div className="demo-mutation absolute top-2 right-2 flex items-center gap-1 opacity-100 transition-opacity z-20">
                           {t.status === 'Panen' ? (
                             <>
                               <span className="bg-success text-white font-bold text-xs uppercase px-2 py-0.5 rounded-[4px_2px_4px_2px] neo-border-thin shadow-[2px_2px_0px_0px_#000]">Sudah Panen</span>
