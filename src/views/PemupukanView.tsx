@@ -12,7 +12,7 @@ import { GardenCalendar } from '../components/GardenCalendar';
 import { HelpTip } from '../components/HelpTip';
 
 export function PemupukanView() {
-  const { blokLahan, pemupukan, addPemupukan, updatePemupukan, deletePemupukan } = useTaniOps();
+  const { isReadOnly, blokLahan, pemupukan, addPemupukan, updatePemupukan, deletePemupukan } = useTaniOps();
   const { showToast } = useToast();
   
   const initialForm = { 
@@ -167,13 +167,14 @@ export function PemupukanView() {
         schedules={pemupukan}
         blocks={blokLahan}
         onEdit={handleEdit}
+        readOnly={isReadOnly}
       />
 
       {/* Main Content Grid: Form (Left) vs Schedule List (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* FORM PANEL (Left - 5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-4">
+        <div className="demo-mutation lg:col-span-5 flex flex-col gap-4">
           <div id="form-rencana-perawatan" className="neo-card scroll-mt-24 p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-2 border-black pb-3 mb-4">
               <h2 className="font-brutal font-black text-base uppercase tracking-wider text-on-surface flex items-center gap-2">
@@ -388,7 +389,7 @@ export function PemupukanView() {
         </div>
 
         {/* SCHEDULE LIST PANEL (Right - 7 Cols) */}
-        <div className="lg:col-span-7 flex flex-col gap-4">
+        <div className={`${isReadOnly ? 'lg:col-span-12' : 'lg:col-span-7'} flex flex-col gap-4`}>
           <div className="neo-card p-4 sm:p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] flex flex-col gap-4">
             
             {/* Header & Filter Tabs */}
@@ -439,7 +440,7 @@ export function PemupukanView() {
                         <th className="p-3">Metode &amp; Tujuan</th>
                         <th className="p-3">Dosis Target (/Ha)</th>
                         <th className="p-3 text-right">Dosis Riil (Blok)</th>
-                        <th className="p-3 text-center">Aksi</th>
+                        <th className="demo-mutation p-3 text-center">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y border-outline font-medium">
@@ -536,7 +537,7 @@ export function PemupukanView() {
                             </td>
 
                             {/* Actions */}
-                            <td className="p-3 align-top text-center">
+                            <td className="demo-mutation p-3 align-top text-center">
                               <div className="flex items-center justify-center gap-1">
                                 {['due', 'overdue'].includes(reminder.status) && (
                                   <button
@@ -597,7 +598,7 @@ export function PemupukanView() {
                         className="p-3.5 bg-surface-high rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] flex flex-col gap-2.5 text-xs"
                       >
                         <div className="flex items-center justify-between gap-2 border-b border-outline pb-2">
-                          <div className="flex items-center gap-2">
+                          <div className="demo-mutation flex items-center gap-2">
                             <span className="font-mono font-bold text-on-surface">
                               {occurrenceLabel}
                             </span>
