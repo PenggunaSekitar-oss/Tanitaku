@@ -41,7 +41,7 @@ function AccessBackdrop() {
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-0 h-full w-full text-[#24533F] opacity-[0.065]"
+      className="pointer-events-none absolute inset-0 h-full w-full text-[#24533F] opacity-[0.11] sm:opacity-[0.065]"
       viewBox="0 0 1440 900"
       preserveAspectRatio="xMidYMid slice"
       fill="none"
@@ -163,32 +163,39 @@ export function AccessGate({ children }: AccessGateProps) {
         <div className="absolute -left-16 top-16 h-36 w-36 rounded-full border border-[#24533F]/10" aria-hidden="true" />
         <div className="absolute -right-20 bottom-12 h-48 w-48 rounded-full border border-[#24533F]/10" aria-hidden="true" />
 
-        <main className="relative z-10 flex min-h-[100dvh] items-center justify-center px-4 py-6 sm:px-6 sm:py-10">
+        <main className="relative z-10 flex min-h-[100dvh] items-center justify-center px-6 py-5 sm:px-6 sm:py-10">
           <section
             aria-labelledby="activation-title"
-            className="relative w-full max-w-[470px] overflow-hidden rounded-[22px] border border-[#D2D0C7] bg-[#FBFAF6] shadow-[0_22px_64px_rgba(28,39,33,0.10)]"
+            className="relative w-full max-w-[420px] overflow-hidden rounded-[20px] border border-[#D2D0C7] bg-[#FBFAF6] shadow-[0_18px_48px_rgba(28,39,33,0.09)] sm:max-w-[470px] sm:rounded-[22px] sm:shadow-[0_22px_64px_rgba(28,39,33,0.10)]"
           >
             <div className="h-1 w-full bg-[#24533F]" aria-hidden="true" />
-            <div className="flex flex-col gap-5 p-5 sm:gap-6 sm:p-8">
-              <header className="flex flex-col items-center gap-3 text-center">
-                <BrandLockup />
+            <div className="flex flex-col gap-4 p-4 sm:gap-6 sm:p-8">
+              <header className="flex flex-col items-center gap-2 text-center sm:gap-3">
+                <BrandLockup compact />
 
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#CCD8D0] bg-[#EEF3EF] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#24533F]">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#CCD8D0] bg-[#EEF3EF] px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-[#24533F] sm:px-3 sm:py-1 sm:text-[10px]">
                   <span className="material-symbols-outlined text-[15px]">verified_user</span>
                   Aktivasi perangkat
                 </div>
 
-                <div className="mt-0.5 space-y-1.5">
-                  <h1 id="activation-title" className="font-display text-2xl font-semibold tracking-[-0.035em] text-[#19251F] sm:text-[28px]">
+                <div className="space-y-1 sm:mt-0.5 sm:space-y-1.5">
+                  <h1 id="activation-title" className="font-display text-[22px] font-semibold tracking-[-0.035em] text-[#19251F] sm:text-[28px]">
                     Aktifkan TANITA
                   </h1>
-                  <p className="mx-auto max-w-sm text-xs font-medium leading-relaxed text-[#68726C] sm:text-sm">
+                  <p className="mx-auto max-w-[310px] text-[11px] font-medium leading-relaxed text-[#68726C] sm:max-w-sm sm:text-sm">
                     Masukkan kode aktivasi untuk membuka ruang kerja kebun di perangkat ini.
                   </p>
                 </div>
               </header>
 
-              <div className="grid grid-cols-2 gap-2.5" aria-label="Informasi aktivasi">
+              <div className="flex items-center justify-center gap-2 rounded-xl border border-[#D9E0DA] bg-[#F3F6F3] px-3 py-2 text-[10px] font-semibold text-[#526159] sm:hidden">
+                <span className="material-symbols-outlined text-[16px] text-[#24533F]">devices</span>
+                <span>{getDeviceLabel()}</span>
+                <span className="h-1 w-1 rounded-full bg-[#9AA49D]" aria-hidden="true" />
+                <span>Diperiksa lokal</span>
+              </div>
+
+              <div className="hidden grid-cols-2 gap-2.5 sm:grid" aria-label="Informasi aktivasi">
                 <div className="flex min-w-0 items-center gap-2.5 rounded-xl border border-[#DEDDD5] bg-[#F5F4EF] p-3">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-[#24533F] shadow-[0_1px_2px_rgba(28,39,33,0.06)]">
                     <span className="material-symbols-outlined text-[18px]">devices</span>
@@ -214,7 +221,7 @@ export function AccessGate({ children }: AccessGateProps) {
                   event.preventDefault();
                   void handleVerifyCode();
                 }}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-3 sm:gap-4"
               >
                 <div className="flex flex-col gap-2">
                   <div className="flex items-end justify-between gap-3">
@@ -247,7 +254,7 @@ export function AccessGate({ children }: AccessGateProps) {
                         setErrorMsg('');
                       }}
                       placeholder="TANI XXXX XXXX"
-                      className="h-[54px] w-full rounded-xl border border-[#C8C7BE] bg-white py-3 pl-11 pr-12 font-display text-[15px] font-semibold uppercase tracking-[0.16em] text-[#18231D] shadow-[0_1px_2px_rgba(28,39,33,0.04)] outline-none transition placeholder:font-sans placeholder:text-xs placeholder:font-medium placeholder:tracking-[0.08em] placeholder:text-[#A0A69F] focus:border-[#24533F] focus:ring-4 focus:ring-[#24533F]/10"
+                      className="h-[50px] w-full rounded-xl border border-[#C8C7BE] bg-white py-3 pl-11 pr-12 font-display text-[14px] font-semibold uppercase tracking-[0.16em] text-[#18231D] shadow-[0_1px_2px_rgba(28,39,33,0.04)] outline-none transition placeholder:font-sans placeholder:text-xs placeholder:font-medium placeholder:tracking-[0.08em] placeholder:text-[#A0A69F] focus:border-[#24533F] focus:ring-4 focus:ring-[#24533F]/10 sm:h-[54px] sm:text-[15px]"
                       aria-describedby="activation-code-status activation-code-security"
                       aria-invalid={Boolean(errorMsg)}
                       autoComplete="one-time-code"
@@ -304,7 +311,7 @@ export function AccessGate({ children }: AccessGateProps) {
                 <button
                   type="submit"
                   disabled={isVerifying || isActivating}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#173E30] bg-[#1E4938] px-4 text-sm font-bold text-white shadow-[0_2px_4px_rgba(24,54,42,0.16)] hover:bg-[#183D2F] hover:shadow-[0_5px_14px_rgba(24,54,42,0.18)]"
+                  className="flex h-[46px] w-full items-center justify-center gap-2 rounded-xl border border-[#173E30] bg-[#1E4938] px-4 text-sm font-bold text-white shadow-[0_2px_4px_rgba(24,54,42,0.16)] hover:bg-[#183D2F] hover:shadow-[0_5px_14px_rgba(24,54,42,0.18)] sm:h-12"
                 >
                   {isVerifying ? (
                     <>
@@ -325,12 +332,12 @@ export function AccessGate({ children }: AccessGateProps) {
                 </button>
               </form>
 
-              <p id="activation-code-security" className="flex items-center justify-center gap-1.5 text-center text-[10px] font-medium leading-relaxed text-[#747D77]">
+              <p id="activation-code-security" className="hidden items-center justify-center gap-1.5 text-center text-[10px] font-medium leading-relaxed text-[#747D77] sm:flex">
                 <span className="material-symbols-outlined text-[15px] text-[#4F685A]">shield_lock</span>
                 Kode diperiksa secara lokal dan tidak dikirim ke pihak lain.
               </p>
 
-              <div className="border-t border-[#E2E0D8] pt-4">
+              <div className="border-t border-[#E2E0D8] pt-3 sm:pt-4">
                 <button
                   type="button"
                   onClick={() => setIsHelpOpen((open) => !open)}
@@ -365,7 +372,7 @@ export function AccessGate({ children }: AccessGateProps) {
                 )}
               </div>
 
-              <footer className="text-center text-[10px] font-semibold text-[#90968F]">
+              <footer className="hidden text-center text-[10px] font-semibold text-[#90968F] sm:block">
                 © 2026 TANITA · Aktivasi lokal perangkat
               </footer>
             </div>
