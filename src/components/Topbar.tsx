@@ -6,6 +6,7 @@ import { SyncStatus } from './SyncStatus';
 interface TopbarProps {
   onOpenSidebar: () => void;
   currentView: string;
+  onNavigate: (view: string) => void;
 }
 
 const VIEW_LABELS: Record<string, string> = {
@@ -47,7 +48,7 @@ const formatNotificationTimestamp = (value: string): string => {
   }).format(parsed);
 };
 
-export function Topbar({ onOpenSidebar, currentView }: TopbarProps) {
+export function Topbar({ onOpenSidebar, currentView, onNavigate }: TopbarProps) {
   const [isNotifOpen, setIsNotifOpen] = useState<boolean>(false);
 
   const {
@@ -219,13 +220,15 @@ export function Topbar({ onOpenSidebar, currentView }: TopbarProps) {
                           <div className="flex items-center justify-between gap-2 pt-1 text-[10px] text-slate-500">
                             <span>{formatNotificationTimestamp(item.timestamp)}</span>
 
-                            {item.actionLabel && item.onAction && (
+                            {item.actionLabel && (item.onAction || item.actionView) && (
                               <button
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  item.onAction!();
+                                  if (item.onAction) item.onAction();
+                                  else if (item.actionView) onNavigate(item.actionView);
                                   markAsRead(item.id);
+                                  setIsNotifOpen(false);
                                 }}
                                 className="px-2.5 py-1 rounded-lg font-semibold text-[10px] bg-[#154734] text-white hover:bg-[#154734] transition cursor-pointer min-h-[30px]"
                               >
