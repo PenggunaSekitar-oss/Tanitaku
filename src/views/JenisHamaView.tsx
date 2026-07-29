@@ -566,6 +566,14 @@ function getCommonsSource(hama: Hama) {
   }
 }
 
+function getChemicalGuidance(hama: Hama) {
+  if (hama.saranPestisida.trim() === '-') {
+    return 'Tidak ada referensi kimia pada katalog. Utamakan identifikasi dan pengendalian non-kimia yang sesuai kondisi lahan.';
+  }
+
+  return `Jika pengendalian kimia memang diperlukan, cari produk berdasarkan target “${hama.nama}”, lalu pastikan tanaman, sasaran, dosis, metode aplikasi, interval, masa tunggu, dan status pendaftaran sesuai label kemasan.`;
+}
+
 const ImageWithFallback = ({ src, alt, className, fallbackClassName = "w-full h-full" }: { src: string, alt: string, className: string, fallbackClassName?: string }) => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(Boolean(src));
@@ -829,14 +837,14 @@ export function JenisHamaView() {
                           </p>
                         </div>
                         
-                        {/* Saran Pestisida */}
+                        {/* Panduan Pestisida */}
                         <div className="bg-[#154734]/10 p-3 rounded border-2 border-[#0A0A0A] flex flex-col gap-1">
                           <span className="text-[11px] font-extrabold text-[#0A0A0A] uppercase tracking-wider flex items-center gap-1.5">
                             <span className="material-symbols-outlined text-[15px] text-[#154734]">pest_control</span>
-                            Saran Pestisida (Kimiawi)
+                            Verifikasi Pengendalian Kimia
                           </span>
                           <p className="text-xs sm:text-sm font-sans text-[#0A0A0A] leading-relaxed font-medium">
-                            {hama.saranPestisida}
+                            {getChemicalGuidance(hama)}
                           </p>
                         </div>
 
