@@ -23,16 +23,27 @@ export function MobileBottomNav({ currentView, onNavigate }: MobileBottomNavProp
             key={item.id}
             whileTap={{ scale: 0.94 }}
             onClick={() => onNavigate(item.id)}
-            className={`flex min-h-[48px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-1 py-1.5 transition ${
+            className={`relative flex min-h-[48px] flex-1 cursor-pointer flex-col items-center justify-center rounded-lg px-1 py-1.5 transition ${
               isActive
-                ? 'bg-[#E2EBE4] font-bold text-[#173F35]'
+                ? 'font-bold text-[#173F35]'
                 : 'text-[#69736D] hover:bg-[#F0EEE8] hover:text-[#27332C]'
             }`}
           >
-            <span className={`material-symbols-outlined text-[20px] ${isActive ? 'text-[#24533F]' : 'text-[#69736D]'}`}>
+            {isActive && (
+              <motion.span
+                layoutId="mobile-nav-active"
+                className="absolute inset-0 rounded-lg bg-[#E2EBE4]"
+                transition={{ type: 'spring', stiffness: 430, damping: 34 }}
+              />
+            )}
+            <motion.span
+              animate={{ y: isActive ? -1 : 0, scale: isActive ? 1.06 : 1 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+              className={`material-symbols-outlined relative z-10 text-[20px] ${isActive ? 'text-[#24533F]' : 'text-[#69736D]'}`}
+            >
               {item.icon}
-            </span>
-            <span className="mt-0.5 text-[11px] font-semibold leading-none">
+            </motion.span>
+            <span className="relative z-10 mt-0.5 text-[11px] font-semibold leading-none">
               {item.label}
             </span>
           </motion.button>
