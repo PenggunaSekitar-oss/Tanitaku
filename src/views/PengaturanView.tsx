@@ -3,6 +3,7 @@ import { ConfirmModal } from '../components/ConfirmModal';
 import { PageHeader } from '../components/PageHeader';
 import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
+import { ReadOnlyNotice } from '../components/ReadOnlyNotice';
 
 const PROFILE_KEYS = {
   farmName: 'tanita_farm_name',
@@ -108,6 +109,7 @@ function ToggleRow({
 export function PengaturanView() {
   const { showToast } = useToast();
   const {
+    isReadOnly,
     blokLahan,
     tanaman,
     logAktivitas,
@@ -135,6 +137,12 @@ export function PengaturanView() {
   });
 
   useEffect(() => {
+    if (isReadOnly) {
+      setFarmName('Kebun Demo TANITA');
+      setManagerName('Tim Operasional Demo');
+      setSavedSignature(JSON.stringify(['Kebun Demo TANITA', 'Tim Operasional Demo', true, true]));
+      return;
+    }
     try {
       const savedFarm = localStorage.getItem(PROFILE_KEYS.farmName) ?? '';
       const savedManager = localStorage.getItem(PROFILE_KEYS.managerName) ?? '';
@@ -153,7 +161,7 @@ export function PengaturanView() {
       setSavedSignature(JSON.stringify(['', '', true, true]));
       showToast('Penyimpanan browser tidak tersedia pada perangkat ini.', 'error');
     }
-  }, []);
+  }, [isReadOnly]);
 
   const currentSignature = JSON.stringify([
     farmName,
@@ -317,6 +325,74 @@ export function PengaturanView() {
       showToast('File cadangan tidak dapat dibaca.', 'error');
     }
   };
+
+  if (isReadOnly) {
+    return (
+      <div className="flex w-full flex-col gap-6 pb-12">
+        <PageHeader
+          title="Pengaturan"
+          subtitle="Ringkasan konfigurasi ruang demo TANITA."
+        />
+        <ReadOnlyNotice message="Pengaturan, preferensi, cadangan, akses, dan data operasional dikunci pada ruang demo." />
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <SettingsCard
+            title="Profil ruang demo"
+            eyebrow="Identitas"
+            icon="potted_plant"
+          >
+            <dl className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7A837D]">
+                  Nama kebun
+                </dt>
+                <dd className="mt-1 text-sm font-semibold text-[#223029]">Kebun Demo TANITA</dd>
+              </div>
+              <div>
+                <dt className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#7A837D]">
+                  Pengelola
+                </dt>
+                <dd className="mt-1 text-sm font-semibold text-[#223029]">Tim Operasional Demo</dd>
+              </div>
+            </dl>
+          </SettingsCard>
+          <SettingsCard
+            title="Data yang dapat dijelajahi"
+            eyebrow="Dataset demo"
+            icon="database"
+          >
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5 lg:grid-cols-3">
+              {dataSummary.map((item) => (
+                <div key={item.label}>
+                  <p className="font-display text-2xl font-semibold tracking-[-0.04em] text-[#1E3228]">
+                    {item.value}
+                  </p>
+                  <p className="mt-1 text-[11px] font-semibold leading-tight text-[#737B75]">
+                    {item.label}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </SettingsCard>
+        </div>
+        <section className="rounded-[18px] border border-[#D8D5CC] bg-[#FBFAF6] p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-[21px] text-[#24533F]" aria-hidden="true">
+              restart_alt
+            </span>
+            <div>
+              <h2 className="font-display text-base font-semibold text-[#19231E]">
+                Data kembali seperti semula
+              </h2>
+              <p className="mt-1 text-xs font-medium leading-relaxed text-[#69716B]">
+                Dataset demo dimuat ulang dari sumber aplikasi setiap kali halaman dibuka.
+                Tidak ada perubahan operasional yang ditulis ke penyimpanan browser.
+              </p>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col gap-6 pb-12">
