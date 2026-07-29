@@ -3,13 +3,29 @@ import React, { useState } from 'react';
 import { useTaniOps } from '../context/TaniOpsContext';
 import { useToast } from '../context/ToastContext';
 import { EmptyState } from '../components/EmptyState';
-import { calculateActualFertilizerDose, calculateEffectiveLuasLahan } from '../utils/calculations';
+import {
+  calculateActualFertilizerDose,
+  calculateApplicationAmountSummary,
+  calculateEffectiveLuasLahan,
+  calculatePerHectareRate,
+  type ApplicationInputBasis,
+} from '../utils/calculations';
 import { Select } from '../components/Select';
 import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { formatLocalDate, getScheduleReminderState } from '../utils/localDate';
 import { GardenCalendar } from '../components/GardenCalendar';
 import { HelpTip } from '../components/HelpTip';
+
+const getDoseUnitLabel = (unit: string) => {
+  if (unit === 'Kilogram') return 'kg';
+  if (unit === 'Mililiter') return 'mL';
+  if (unit === 'Liter') return 'L';
+  return unit.toLowerCase();
+};
+
+const formatAmount = (value: number, maximumFractionDigits = 2) =>
+  value.toLocaleString('id-ID', { maximumFractionDigits });
 
 export function PemupukanView() {
   const { isReadOnly, blokLahan, pemupukan, addPemupukan, updatePemupukan, deletePemupukan } = useTaniOps();
@@ -24,6 +40,9 @@ export function PemupukanView() {
     tujuan: '', 
     dosisPerHektar: 0, 
     literAirPerHektar: 0, 
+    inputBasis: 'blok' as ApplicationInputBasis,
+    dosisInput: 0,
+    airInput: 0,
     tanggalAplikasi: formatLocalDate(),
     intervalHari: 0,
     catatan: '',
@@ -38,7 +57,47 @@ export function PemupukanView() {
 
   const handleAddPemupukan = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.blokId || !form.jenisPupuk || form.dosisPerHektar <= 0) return;
+    const targetBlock = blokLahan.find((item) => item.id === form.blokId);
+    const effectiveAreaM2 = targetBlock
+      ? calculateEffectiveLuasLahan(
+          targetBlock.jumlahBedengan,
+          targetBlock.panjangBedengan,
+          targetBlock.lebarBedengan,
+          targetBlock.jarakAntarBedengan,
+          targetBlock.luasManualM2,
+          targetBlock.efisiensiLahan,
+        )
+      : 0;
+    const inputBasis = (form.inputBasis ?? 'blok') as ApplicationInputBasis;
+    const verifiedBedCount =
+      targetBlock?.tipeInput === 'bedengan' || !targetBlock?.tipeInput
+        ? targetBlock?.jumlahBedengan ?? 0
+        : 0;
+    const dosisPerHektar = calculatePerHectareRate(
+      form.dosisInput,
+      inputBasis,
+      effectiveAreaM2,
+      verifiedBedCount,
+    );
+    const literAirPerHektar = calculatePerHectareRate(
+      form.airInput,
+      inputBasis,
+      effectiveAreaM2,
+      verifiedBedCount,
+    );
+
+    if (!form.blokId || !form.jenisPupuk.trim() || form.dosisInput <= 0) return;
+    if (effectiveAreaM2 <= 0 || dosisPerHektar <= 0) {
+      showToast('Luas efektif blok belum valid. Periksa data pada menu Lahan & Tanaman.', 'warning');
+      return;
+    }
+
+    const payload = {
+      ...form,
+      inputBasis,
+      dosisPerHektar,
+      literAirPerHektar,
+    };
     
     if (editingId) {
       const existing = pemupukan.find((item) => item.id === editingId);
@@ -46,12 +105,12 @@ export function PemupukanView() {
         (existing.tanggalAplikasi !== form.tanggalAplikasi ||
           existing.intervalHari !== form.intervalHari);
       updatePemupukan(editingId, {
-        ...form,
+        ...payload,
         completedDates: scheduleChanged ? [] : form.completedDates,
       });
       showToast('Data Rencana Perawatan berhasil diupdate', 'success');
     } else {
-      addPemupukan(form);
+      addPemupukan(payload);
       showToast('Data Rencana Perawatan berhasil ditambahkan', 'success');
     }
     setForm(initialForm);
@@ -59,7 +118,12 @@ export function PemupukanView() {
   };
 
   const handleEdit = (p: any) => {
-    setForm(p);
+    setForm({
+      ...p,
+      inputBasis: p.inputBasis ?? 'hektar',
+      dosisInput: p.dosisInput ?? p.dosisPerHektar,
+      airInput: p.airInput ?? p.literAirPerHektar ?? 0,
+    });
     setEditingId(p.id);
     window.setTimeout(() => {
       document.getElementById('form-rencana-perawatan')?.scrollIntoView({
@@ -111,12 +175,51 @@ export function PemupukanView() {
 
   const totalPupuk = pemupukan.filter(p => p.kategori === 'Pupuk').length;
   const totalPestisida = pemupukan.filter(p => p.kategori === 'Pestisida').length;
+  const selectedBlock = blokLahan.find((item) => item.id === form.blokId);
+  const selectedAreaM2 = selectedBlock
+    ? calculateEffectiveLuasLahan(
+        selectedBlock.jumlahBedengan,
+        selectedBlock.panjangBedengan,
+        selectedBlock.lebarBedengan,
+        selectedBlock.jarakAntarBedengan,
+        selectedBlock.luasManualM2,
+        selectedBlock.efisiensiLahan,
+      )
+    : 0;
+  const selectedBedCount =
+    selectedBlock?.tipeInput === 'bedengan' || !selectedBlock?.tipeInput
+      ? selectedBlock?.jumlahBedengan ?? 0
+      : 0;
+  const selectedBasis = (form.inputBasis ?? 'blok') as ApplicationInputBasis;
+  const previewDosePerHectare = calculatePerHectareRate(
+    form.dosisInput,
+    selectedBasis,
+    selectedAreaM2,
+    selectedBedCount,
+  );
+  const previewWaterPerHectare = calculatePerHectareRate(
+    form.airInput,
+    selectedBasis,
+    selectedAreaM2,
+    selectedBedCount,
+  );
+  const dosePreview = calculateApplicationAmountSummary(
+    previewDosePerHectare,
+    selectedAreaM2,
+    selectedBedCount,
+  );
+  const waterPreview = calculateApplicationAmountSummary(
+    previewWaterPerHectare,
+    selectedAreaM2,
+    selectedBedCount,
+  );
+  const doseUnitLabel = getDoseUnitLabel(form.satuanDosis);
 
   return (
     <div className="flex min-h-full flex-col gap-6 pb-16 font-sans text-[#1B2721]">
       <PageHeader
         title="Jadwal Perawatan"
-        subtitle="Kelola rencana pupuk atau pestisida dan hitung kebutuhan dari dosis per hektare terhadap luas tanam efektif."
+        subtitle="Rencanakan pupuk atau pestisida memakai takaran yang biasa digunakan: untuk seluruh blok, per bedengan, atau per hektare dari label produk."
       />
 
       {/* Surface Content */}
@@ -173,8 +276,8 @@ export function PemupukanView() {
       {/* Main Content Grid: Form (Left) vs Schedule List (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
-        {/* FORM PANEL (Left - 5 Cols) */}
-        <div className="demo-mutation lg:col-span-5 flex flex-col gap-4">
+        {/* Form is full-width so calculations stay readable on desktop. */}
+        <div className="demo-mutation flex flex-col gap-4 lg:col-span-12">
           <div id="form-rencana-perawatan" className="neo-card scroll-mt-24 p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-2 border-black pb-3 mb-4">
               <h2 className="font-brutal font-black text-base uppercase tracking-wider text-on-surface flex items-center gap-2">
@@ -202,7 +305,20 @@ export function PemupukanView() {
                   <Select 
                     value={form.blokId} 
                     onChange={val => setForm({...form, blokId: val})} 
-                    options={blokLahan.map(b => ({ value: b.id, label: `${b.nama} (${b.jumlahBedengan} Bedengan)` }))}
+                    options={blokLahan.map((block) => {
+                      const area = calculateEffectiveLuasLahan(
+                        block.jumlahBedengan,
+                        block.panjangBedengan,
+                        block.lebarBedengan,
+                        block.jarakAntarBedengan,
+                        block.luasManualM2,
+                        block.efisiensiLahan,
+                      );
+                      return {
+                        value: block.id,
+                        label: `${block.nama} · ${formatAmount(area, 1)} m² efektif`,
+                      };
+                    })}
                     placeholder="-- Pilih Blok Lahan --"
                     required
                   />
@@ -274,59 +390,194 @@ export function PemupukanView() {
                 </div>
               </div>
 
-              {/* Section 3: Takaran Dosis & Kebutuhan Air */}
-              <div className="flex flex-col gap-3 pt-2 border-t border-outline">
-                <span className="font-bold text-[11px] text-on-surface-muted uppercase tracking-wider">
-                  📐 Kalkulasi Dosis Standar (Per Hektar)
-                </span>
+              {/* Section 3: input using field-friendly units, normalized on save. */}
+              <div className="flex flex-col gap-4 border-t border-outline pt-3">
+                <div>
+                  <p className="text-sm font-semibold text-on-surface">
+                    Takaran ini berlaku untuk apa?
+                  </p>
+                  <p className="mt-1 text-[11px] font-medium leading-relaxed text-on-surface-muted">
+                    Pilih cara pencatatan yang paling sesuai dengan kebiasaan di kebun.
+                  </p>
+                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {([
+                    {
+                      value: 'blok',
+                      icon: 'crop_free',
+                      label: 'Seluruh blok',
+                      description: 'Masukkan total bahan yang akan disiapkan.',
+                    },
+                    {
+                      value: 'bedengan',
+                      icon: 'view_stream',
+                      label: 'Per bedengan',
+                      description: 'TANITA mengalikan dengan jumlah bedengan.',
+                    },
+                    {
+                      value: 'hektar',
+                      icon: 'straighten',
+                      label: 'Per hektare',
+                      description: 'Gunakan angka acuan yang tertulis pada label.',
+                    },
+                  ] as const).map((basis) => {
+                    const disabled = basis.value === 'bedengan' && selectedBedCount <= 0;
+                    const active = selectedBasis === basis.value;
+                    return (
+                      <button
+                        key={basis.value}
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => setForm({ ...form, inputBasis: basis.value })}
+                        className={`flex min-h-[84px] items-start gap-3 rounded-xl border p-3 text-left transition ${
+                          active
+                            ? 'border-[#24533F] bg-[#E7EEE9] text-[#173F35]'
+                            : 'border-[#D8D5CC] bg-[#FBFAF6] text-[#4F5B54] hover:border-[#9FAEA5]'
+                        }`}
+                      >
+                        <span className="material-symbols-outlined mt-0.5 text-[20px]" aria-hidden="true">
+                          {basis.icon}
+                        </span>
+                        <span>
+                          <strong className="block text-xs font-semibold">{basis.label}</strong>
+                          <span className="mt-1 block text-[10px] font-medium leading-relaxed opacity-75">
+                            {disabled ? 'Isi jumlah bedengan pada data blok terlebih dahulu.' : basis.description}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="block text-xs font-bold text-on-surface mb-1 uppercase tracking-wider">
-                      Air (/Hektar)
+                    <label className="mb-1 block text-xs font-semibold text-on-surface">
+                      Takaran produk <span className="text-danger">*</span>
                     </label>
-                    <div className="relative flex items-center">
-                      <NumberInput 
-                        value={form.literAirPerHektar || 0} 
-                        onNumberChange={v => setForm({...form, literAirPerHektar: v})} 
-                        className="w-full bg-surface-high border-2 border-black px-3 py-2.5 min-h-[44px] text-xs font-bold text-on-surface rounded-lg focus:outline-none focus:ring-1 focus:ring-black shadow-[2px_2px_0px_0px_#000] pr-12" 
-                        placeholder="400" 
+                    <div className="flex gap-2">
+                      <NumberInput
+                        value={form.dosisInput}
+                        onNumberChange={(value) => setForm({ ...form, dosisInput: value })}
+                        className="min-h-[46px] min-w-0 flex-1 rounded-xl border border-[#BFC4BE] bg-white px-3 py-2.5 text-sm font-semibold text-on-surface"
+                        placeholder={selectedBasis === 'hektar' ? 'Contoh: 200' : 'Contoh: 2,5'}
+                        required
                       />
-                      <span className="absolute right-3 text-[11px] font-bold text-on-surface-muted pointer-events-none">Liter</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-on-surface mb-1 uppercase tracking-wider">
-                      Dosis Produk (/Hektar) <span className="text-danger">*</span>
-                      <HelpTip label="Dosis per hektare" text="Masukkan dosis acuan dari label produk. TANITA mengalikannya dengan luas efektif blok, bukan menggantikan petunjuk label." />
-                    </label>
-                    <div className="flex gap-1.5">
-                      <div className="flex-1">
-                        <NumberInput 
-                          value={form.dosisPerHektar} 
-                          onNumberChange={v => setForm({...form, dosisPerHektar: v})} 
-                          className="w-full bg-surface-high border-2 border-black px-3 py-2.5 min-h-[44px] text-xs font-bold text-on-surface rounded-lg focus:outline-none focus:ring-1 focus:ring-black shadow-[2px_2px_0px_0px_#000]" 
-                          placeholder="200" 
-                          required 
-                        />
-                      </div>
-                      <div className="w-[110px] shrink-0">
-                        <Select 
-                          value={form.satuanDosis} 
-                          onChange={val => setForm({...form, satuanDosis: val})} 
+                      <div className="w-[112px] shrink-0">
+                        <Select
+                          value={form.satuanDosis}
+                          onChange={(value) => setForm({ ...form, satuanDosis: value })}
                           options={[
-                            { value: 'Kilogram', label: 'Kg' },
-                            { value: 'Gram', label: 'Gram' },
-                            { value: 'Liter', label: 'Liter' },
-                            { value: 'Mililiter', label: 'mL' }
+                            { value: 'Kilogram', label: 'kg' },
+                            { value: 'Gram', label: 'gram' },
+                            { value: 'Liter', label: 'liter' },
+                            { value: 'Mililiter', label: 'mL' },
                           ]}
                           placeholder="Satuan"
                           required
                         />
                       </div>
                     </div>
+                    <p className="mt-1.5 text-[10px] font-medium text-on-surface-muted">
+                      {selectedBasis === 'blok'
+                        ? 'Total produk untuk satu kali aplikasi pada blok terpilih.'
+                        : selectedBasis === 'bedengan'
+                          ? 'Takaran produk untuk satu bedengan.'
+                          : 'Takaran produk per 10.000 m² sesuai label atau rekomendasi yang tervalidasi.'}
+                    </p>
                   </div>
+
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold text-on-surface">
+                      Volume air <span className="font-medium text-on-surface-muted">(opsional)</span>
+                      <HelpTip
+                        label="Volume air"
+                        text="Isi volume larutan yang benar-benar akan digunakan. Untuk penyemprotan, tetap lakukan kalibrasi alat dan ikuti volume semprot pada label."
+                      />
+                    </label>
+                    <div className="relative">
+                      <NumberInput
+                        value={form.airInput}
+                        onNumberChange={(value) => setForm({ ...form, airInput: value })}
+                        className="min-h-[46px] w-full rounded-xl border border-[#BFC4BE] bg-white px-3 py-2.5 pr-14 text-sm font-semibold text-on-surface"
+                        placeholder={selectedBasis === 'hektar' ? 'Contoh: 400' : 'Contoh: 20'}
+                      />
+                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-on-surface-muted">
+                        liter
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-[10px] font-medium text-on-surface-muted">
+                      {selectedBasis === 'blok'
+                        ? 'Total air untuk seluruh blok.'
+                        : selectedBasis === 'bedengan'
+                          ? 'Volume air untuk satu bedengan.'
+                          : 'Volume air per 10.000 m².'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-[#AFC0B6] bg-[#F0F4F1] p-4" aria-live="polite">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#63736A]">
+                        Ringkasan satu kali aplikasi
+                      </p>
+                      <h3 className="mt-1 font-display text-base font-semibold text-[#1D3328]">
+                        {selectedBlock?.nama ?? 'Pilih blok untuk melihat hasil'}
+                      </h3>
+                    </div>
+                    {selectedBlock && (
+                      <span className="rounded-lg border border-[#C6D1CA] bg-white px-2.5 py-1 text-[10px] font-semibold text-[#536159]">
+                        {formatAmount(selectedAreaM2, 1)} m² efektif
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedBlock ? (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
+                        <span className="text-[10px] font-medium text-[#6A756E]">Produk seluruh blok</span>
+                        <strong className="mt-1 block font-display text-lg text-[#173F35]">
+                          {formatAmount(dosePreview.totalForBlock)} {doseUnitLabel}
+                        </strong>
+                      </div>
+                      <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
+                        <span className="text-[10px] font-medium text-[#6A756E]">Air seluruh blok</span>
+                        <strong className="mt-1 block font-display text-lg text-[#173F35]">
+                          {form.airInput > 0 ? `${formatAmount(waterPreview.totalForBlock, 1)} L` : 'Tidak diisi'}
+                        </strong>
+                      </div>
+                      <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
+                        <span className="text-[10px] font-medium text-[#6A756E]">Produk per bedengan</span>
+                        <strong className="mt-1 block font-display text-lg text-[#173F35]">
+                          {selectedBedCount > 0
+                            ? `${formatAmount(dosePreview.perBed)} ${doseUnitLabel}`
+                            : 'Tidak tersedia'}
+                        </strong>
+                      </div>
+                      <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
+                        <span className="text-[10px] font-medium text-[#6A756E]">Air per bedengan</span>
+                        <strong className="mt-1 block font-display text-lg text-[#173F35]">
+                          {selectedBedCount > 0 && form.airInput > 0
+                            ? `${formatAmount(waterPreview.perBed, 1)} L`
+                            : 'Tidak diisi'}
+                        </strong>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-xs font-medium text-[#66736C]">
+                      Setelah blok dipilih, TANITA langsung menghitung total produk dan air yang perlu disiapkan.
+                    </p>
+                  )}
+
+                  {selectedBlock && previewDosePerHectare > 0 && (
+                    <p className="mt-3 text-[10px] font-medium leading-relaxed text-[#657068]">
+                      Nilai normalisasi internal: {formatAmount(previewDosePerHectare)} {doseUnitLabel}/ha
+                      {previewWaterPerHectare > 0
+                        ? ` dan ${formatAmount(previewWaterPerHectare, 1)} L air/ha`
+                        : ''}. Angka ini disimpan agar perhitungan tetap konsisten jika luas blok berubah.
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -364,7 +615,7 @@ export function PemupukanView() {
               <div className="flex flex-col gap-2 pt-3">
                 <button 
                   type="submit" 
-                  disabled={!form.blokId || !form.jenisPupuk || !form.dosisPerHektar} 
+                  disabled={!form.blokId || !form.jenisPupuk.trim() || !form.dosisInput || selectedAreaM2 <= 0}
                   className="w-full bg-action text-on-action font-brutal font-black text-xs uppercase tracking-wider py-3.5 px-4 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-[18px]">
@@ -388,8 +639,8 @@ export function PemupukanView() {
           </div>
         </div>
 
-        {/* SCHEDULE LIST PANEL (Right - 7 Cols) */}
-        <div className={`${isReadOnly ? 'lg:col-span-12' : 'lg:col-span-7'} flex flex-col gap-4`}>
+        {/* Schedule list stays below the form to avoid a cramped desktop layout. */}
+        <div className="flex flex-col gap-4 lg:col-span-12">
           <div className="neo-card p-4 sm:p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000] flex flex-col gap-4">
             
             {/* Header & Filter Tabs */}
@@ -438,8 +689,8 @@ export function PemupukanView() {
                         <th className="p-3">Jadwal &amp; Lahan</th>
                         <th className="p-3">Bahan &amp; Kategori</th>
                         <th className="p-3">Metode &amp; Tujuan</th>
-                        <th className="p-3">Dosis Target (/Ha)</th>
-                        <th className="p-3 text-right">Dosis Riil (Blok)</th>
+                        <th className="p-3">Acuan tersimpan</th>
+                        <th className="p-3 text-right">Siapkan untuk blok</th>
                         <th className="demo-mutation p-3 text-center">Aksi</th>
                       </tr>
                     </thead>
@@ -512,28 +763,35 @@ export function PemupukanView() {
                               </span>
                             </td>
 
-                            {/* Dosis Target per Ha */}
+                            {/* Normalized reference */}
                             <td className="p-3 align-top text-on-surface-muted">
                               <span className="font-bold text-on-surface block">
-                                {p.dosisPerHektar} {p.satuanDosis}/Ha
+                                {formatAmount(p.dosisPerHektar)} {getDoseUnitLabel(p.satuanDosis)}/ha
                               </span>
                               {p.literAirPerHektar ? (
                                 <span className="text-[10px] text-on-surface-muted block">
-                                  {p.literAirPerHektar} L Air/Ha
+                                  {formatAmount(p.literAirPerHektar, 1)} L air/ha
                                 </span>
                               ) : null}
                             </td>
 
-                            {/* Dosis Aktual Blok */}
+                            {/* What the field team actually prepares */}
                             <td className="p-3 align-top text-right">
-                              <div className="font-brutal font-black text-sm text-[#0288D1] bg-[#E1F5FE] px-2 py-1 rounded-lg border border-[#0288D1] inline-block shadow-[1px_1px_0px_0px_#0288D1]">
-                                {dosisAktual.toFixed(2)} {p.satuanDosis}
+                              <div className="inline-block rounded-lg border border-[#8DA698] bg-[#EDF4EF] px-2 py-1 text-sm font-semibold text-[#173F35]">
+                                {formatAmount(dosisAktual)} {getDoseUnitLabel(p.satuanDosis)}
                               </div>
                               {p.literAirPerHektar ? (
                                 <span className="text-[10px] text-on-surface-muted block mt-1 font-bold">
-                                  {airAktual.toFixed(1)} Liter Air
+                                  {formatAmount(airAktual, 1)} L air
                                 </span>
                               ) : null}
+                              {blok &&
+                                (blok.tipeInput === 'bedengan' || !blok.tipeInput) &&
+                                blok.jumlahBedengan > 0 && (
+                                <span className="mt-1 block text-[10px] font-medium text-on-surface-muted">
+                                  ≈ {formatAmount(dosisAktual / blok.jumlahBedengan)} {getDoseUnitLabel(p.satuanDosis)}/bedengan
+                                </span>
+                              )}
                             </td>
 
                             {/* Actions */}
@@ -628,18 +886,28 @@ export function PemupukanView() {
 
                           <div className="text-right shrink-0">
                             <span className="text-[10px] font-bold text-on-surface-muted block uppercase">
-                              Dosis Riil Blok
+                              Siapkan untuk blok
                             </span>
-                            <span className="font-brutal font-black text-sm text-[#0288D1] bg-[#E1F5FE] px-2 py-0.5 rounded border border-[#0288D1] inline-block">
-                              {dosisAktual.toFixed(2)} {p.satuanDosis}
+                            <span className="inline-block rounded border border-[#8DA698] bg-[#EDF4EF] px-2 py-0.5 text-sm font-semibold text-[#173F35]">
+                              {formatAmount(dosisAktual)} {getDoseUnitLabel(p.satuanDosis)}
                             </span>
+                            {p.literAirPerHektar ? (
+                              <span className="mt-1 block text-[10px] font-semibold text-on-surface-muted">
+                                {formatAmount(airAktual, 1)} L air
+                              </span>
+                            ) : null}
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between gap-2 pt-2 border-t border-outline/60 text-[11px]">
                           <div>
                             <span className="block text-on-surface-muted">
-                              Target: {p.dosisPerHektar} {p.satuanDosis}/Ha {p.literAirPerHektar ? `(${airAktual.toFixed(1)}L Air)` : ''}
+                              Acuan: {formatAmount(p.dosisPerHektar)} {getDoseUnitLabel(p.satuanDosis)}/ha
+                              {blok &&
+                              (blok.tipeInput === 'bedengan' || !blok.tipeInput) &&
+                              blok.jumlahBedengan > 0
+                                ? ` · ≈ ${formatAmount(dosisAktual / blok.jumlahBedengan)} ${getDoseUnitLabel(p.satuanDosis)}/bedengan`
+                                : ''}
                             </span>
                             <span className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-black uppercase ${
                               reminder.status === 'overdue'
