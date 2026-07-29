@@ -29,6 +29,10 @@ export function calculateActualFertilizerDose(dosisPerHa: number, luasM2: number
 
 export type ApplicationInputBasis = 'blok' | 'bedengan' | 'hektar';
 
+export function applicationMethodUsesWater(method: string): boolean {
+  return method === 'Kocor' || method === 'Semprot';
+}
+
 export function calculatePerHectareRate(
   amount: number,
   basis: ApplicationInputBasis,
