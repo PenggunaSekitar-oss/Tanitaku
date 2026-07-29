@@ -48,11 +48,13 @@ function TanamanCardDropdown({
   item,
   blokLahan,
   updateTanaman,
+  isReadOnly,
   navigate,
 }: {
   item: Tanaman;
   blokLahan: BlokLahan[];
   updateTanaman: (id: string, data: Partial<Tanaman>) => void;
+  isReadOnly: boolean;
   navigate: (v: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -157,7 +159,7 @@ function TanamanCardDropdown({
                   <span className="text-[11px] text-slate-900 font-bold leading-tight block">Status panen tersimpan pada catatan tanaman.</span>
                 </div>
               </div>
-              <button
+              {!isReadOnly && <button
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -166,7 +168,7 @@ function TanamanCardDropdown({
                 className="px-3.5 py-1.5 text-xs font-bold bg-[#154734] text-white border border-[#0A0A0A] rounded-full shadow-2xs hover:bg-[#0e3023] transition shrink-0 cursor-pointer"
               >
                 Aktifkan Kembali
-              </button>
+              </button>}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -254,7 +256,7 @@ function TanamanCardDropdown({
               "{item.catatan || 'Tanpa catatan khusus'}"
             </span>
             <div className="flex items-center gap-2.5 shrink-0 justify-end">
-              {!isPanen && (
+              {!isPanen && !isReadOnly && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -290,7 +292,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
   const [activeTabBlock, setActiveTabBlock] = useState<string>("semua");
   const [isStatusBlokOpen, setIsStatusBlokOpen] = useState<boolean>(false);
 
-  const { blokLahan, tanaman, updateTanaman, pemupukan, keuangan, logAktivitas } = useTaniOps();
+  const { isReadOnly, blokLahan, tanaman, updateTanaman, pemupukan, keuangan, logAktivitas } = useTaniOps();
 
   // Computations
   const tanamanAktif = tanaman.filter(t => t.status !== 'Panen');
@@ -696,6 +698,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                           item={item}
                           blokLahan={blokLahan}
                           updateTanaman={updateTanaman}
+                          isReadOnly={isReadOnly}
                           navigate={navigate}
                         />
                       ))}
