@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Keuangan, LogAktivitas, BlokLahan, Tanaman } from '../context/TaniOpsContext';
 import { getKeuanganRecordDate, matchesReportPeriod } from './reportPeriod';
+import { calculateIncludedLogCost } from './finance';
 
 const formatRp = (num: number) => {
   return 'Rp ' + (num || 0).toLocaleString('id-ID');
@@ -81,7 +82,7 @@ export function generateOperationalPdfReport(options: PdfReportOptions) {
     totalEstimasiOmzet += omzetPlot;
   });
 
-  const totalLogCost = filteredLog.reduce((acc, curr) => acc + (curr.biaya || 0), 0);
+  const totalLogCost = calculateIncludedLogCost(filteredLog);
   totalBiayaOperasional += totalLogCost;
   const netProfit = totalEstimasiOmzet - totalBiayaOperasional;
   const roi = totalBiayaOperasional > 0 ? ((netProfit / totalBiayaOperasional) * 100).toFixed(1) : '0';
