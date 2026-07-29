@@ -9,6 +9,7 @@ export interface AgriToastOptions {
   icon?: string;
   badgeText?: string;
   actionLabel?: string;
+  actionView?: string;
   onAction?: () => void;
   duration?: number;
 }
@@ -22,6 +23,7 @@ export interface AgriNotificationItem {
   icon?: string;
   badgeText?: string;
   actionLabel?: string;
+  actionView?: string;
   onAction?: () => void;
   timestamp: string;
   read: boolean;
@@ -187,6 +189,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       icon: options.icon,
       badgeText: options.badgeText,
       actionLabel: options.actionLabel,
+      actionView: options.actionView,
       onAction: options.onAction,
       timestamp: new Date().toISOString(),
       read: false
