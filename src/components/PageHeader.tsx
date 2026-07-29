@@ -1,4 +1,5 @@
 import React from 'react';
+import { motion } from 'motion/react';
 
 interface PageHeaderProps {
   title: string;
@@ -8,7 +9,12 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
   return (
-    <header className="w-full border-b border-[#D9D8D1] pb-5">
+    <motion.header
+      initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      transition={{ duration: 0.5, delay: 0.04, ease: [0.16, 1, 0.3, 1] }}
+      className="w-full border-b border-[#D9D8D1] pb-5"
+    >
       <div className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div className="max-w-3xl">
           <h1 className="font-display text-2xl font-semibold leading-tight tracking-[-0.035em] text-[#18231D] sm:text-[28px]">
@@ -24,6 +30,6 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
           </div>
         )}
       </div>
-    </header>
+    </motion.header>
   );
 }
