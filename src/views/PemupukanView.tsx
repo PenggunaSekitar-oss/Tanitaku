@@ -219,7 +219,7 @@ export function PemupukanView() {
   const doseUnitLabel = getDoseUnitLabel(form.satuanDosis);
 
   return (
-    <div className="flex min-h-full flex-col gap-6 pb-16 font-sans text-[#1B2721]">
+    <div className="flex min-h-full min-w-0 max-w-full flex-col gap-6 pb-16 font-sans text-[#1B2721]">
       <PageHeader
         title="Jadwal Perawatan"
         subtitle="Rencanakan pupuk atau pestisida memakai takaran yang biasa digunakan: untuk seluruh blok, per bedengan, atau per hektare dari label produk."
@@ -281,7 +281,7 @@ export function PemupukanView() {
         
         {/* Form is full-width so calculations stay readable on desktop. */}
         <div className="demo-mutation flex flex-col gap-4 lg:col-span-12">
-          <div id="form-rencana-perawatan" className="neo-card scroll-mt-24 p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000]">
+          <div id="form-rencana-perawatan" className="neo-card min-w-0 max-w-full scroll-mt-24 p-4 sm:p-5 bg-surface border-2 border-black rounded-xl shadow-[4px_4px_0px_0px_#000]">
             <div className="flex items-center justify-between border-b-2 border-black pb-3 mb-4">
               <h2 className="font-brutal font-black text-base uppercase tracking-wider text-on-surface flex items-center gap-2">
                 <span className="material-symbols-outlined text-action text-[20px]">
@@ -466,7 +466,7 @@ export function PemupukanView() {
                     <label className="mb-1 block text-xs font-semibold text-on-surface">
                       Takaran produk <span className="text-danger">*</span>
                     </label>
-                    <div className="flex gap-2">
+                    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_5.75rem] gap-2 sm:grid-cols-[minmax(0,1fr)_7rem]">
                       <NumberInput
                         value={form.dosisInput}
                         onNumberChange={(value) => setForm({ ...form, dosisInput: value })}
@@ -474,7 +474,7 @@ export function PemupukanView() {
                         placeholder={selectedBasis === 'hektar' ? 'Contoh: 200' : 'Contoh: 2,5'}
                         required
                       />
-                      <div className="w-[112px] shrink-0">
+                      <div className="min-w-0">
                         <Select
                           value={form.satuanDosis}
                           onChange={(value) => setForm({ ...form, satuanDosis: value })}
