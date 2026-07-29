@@ -8,6 +8,7 @@ import { NumberInput } from '../components/NumberInput';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ReportPdfModal } from '../components/ReportPdfModal';
 import { formatLocalDate } from '../utils/localDate';
+import { calculateIncludedLogCost } from '../utils/finance';
 
 export function KeuanganView() {
   const { keuangan, logAktivitas, addKeuangan, updateKeuangan, deleteKeuangan, blokLahan, tanaman } = useTaniOps();
@@ -156,7 +157,7 @@ export function KeuanganView() {
   const totalBiayaKeuangan = keuangan.reduce((acc, k) =>
     acc + (k.biayaTetap || 0) + (k.biayaBenih || 0) + (k.biayaPupuk || 0) + (k.biayaPestisida || 0) + (k.biayaLain || 0), 0
   );
-  const totalBiayaLog = logAktivitas.reduce((acc, log) => acc + (log.biaya || 0), 0);
+  const totalBiayaLog = calculateIncludedLogCost(logAktivitas);
   const totalSemuaBiaya = totalBiayaKeuangan + totalBiayaLog;
   const totalSemuaPendapatan = keuangan.reduce((acc, k) => acc + (k.targetHasil || 0) * (k.hargaJual || 0), 0);
   const totalLabaBersih = totalSemuaPendapatan - totalSemuaBiaya;
