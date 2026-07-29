@@ -11,7 +11,8 @@ import {
   calculateLuasLahan,
   getRecommendations,
 } from "../utils/calculations";
-import { formatLocalDate, getNextScheduledDate } from "../utils/localDate";
+import { formatLocalDate, getScheduleReminderState } from "../utils/localDate";
+import { calculateIncludedLogCost } from "../utils/finance";
 
 // Helper for currency formatting
 const formatRp = (num: number) => {
@@ -320,7 +321,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
         (k.biayaLain || 0)),
     0
   );
-  const totalBiayaLog = logAktivitas.reduce((acc, log) => acc + (log.biaya || 0), 0);
+  const totalBiayaLog = calculateIncludedLogCost(logAktivitas);
   const totalBiaya = totalBiayaKeuangan + totalBiayaLog;
 
   const totalPendapatan = keuangan.reduce(
@@ -391,10 +392,19 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
   const { score: healthScore, label: healthScoreLabel } = calculateDataCompletenessScore();
 
   const upcomingPemupukan = [...pemupukan]
-    .map((item) => ({
-      item,
-      nextDate: getNextScheduledDate(item.tanggalAplikasi, item.intervalHari),
-    }))
+    .map((item) => {
+      const reminder = getScheduleReminderState(
+        item.tanggalAplikasi,
+        item.intervalHari,
+        item.completedDates,
+      );
+      return {
+        item,
+        nextDate: reminder.occurrenceDate,
+        reminder,
+      };
+    })
+    .filter(({ reminder }) => reminder.status !== 'completed' && reminder.status !== 'none')
     .sort((a, b) => (a.nextDate?.getTime() ?? Number.MAX_SAFE_INTEGER) - (b.nextDate?.getTime() ?? Number.MAX_SAFE_INTEGER));
   const latestLogs = [...logAktivitas].sort((a, b) =>
     b.tanggal.localeCompare(a.tanggal) || b.id.localeCompare(a.id)
@@ -731,7 +741,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-3.5">
-                      {upcomingPemupukan.slice(0, 4).map(({ item: p, nextDate }) => {
+                      {upcomingPemupukan.slice(0, 4).map(({ item: p, nextDate, reminder }) => {
                         const blok = blokLahan.find((b) => b.id === p.blokId);
                         const isPestisida = p.kategori === "Pestisida";
 
@@ -766,7 +776,13 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                                 {nextDate ? formatLocalDate(nextDate) : 'Tanggal tidak valid'}
                               </span>
                               <span className="text-[10px] text-slate-500 block font-medium whitespace-nowrap sm:mt-1">
-                                {p.intervalHari > 0 ? `Setiap ${p.intervalHari} Hari` : 'Satu Kali'}
+                                {reminder.status === 'overdue'
+                                  ? `Terlewat ${Math.abs(reminder.diffDays ?? 0)} hari`
+                                  : reminder.status === 'due'
+                                    ? 'Jadwal hari ini'
+                                    : p.intervalHari > 0
+                                      ? `Setiap ${p.intervalHari} hari`
+                                      : 'Satu kali'}
                               </span>
                             </div>
                           </div>
