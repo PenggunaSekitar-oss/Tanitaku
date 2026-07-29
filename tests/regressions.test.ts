@@ -7,6 +7,7 @@ import { parseLocalizedNumberInput } from '../src/utils/numberInput';
 import {
   formatLocalDate,
   getNextScheduledDate,
+  getScheduleReminderState,
 } from '../src/utils/localDate';
 import { searchPesticides } from '../src/utils/pesticideSearch';
 import { PESTISIDA_CATALOG } from '../src/data/pestisidaData';
@@ -26,7 +27,9 @@ import {
   calculateEffectiveLuasLahan,
   calculateHST,
   calculateLuasLahan,
+  calculatePlantPopulation,
 } from '../src/utils/calculations';
+import { calculateIncludedLogCost } from '../src/utils/finance';
 import { getScheduleOccurrences } from '../src/utils/schedule';
 import { upsertCatalogHistory } from '../src/utils/catalogHistory';
 import {
@@ -81,6 +84,23 @@ test('jadwal berulang menghitung occurrence berikutnya', () => {
 
   const oneTime = getNextScheduledDate('2026-07-01', 0, new Date(2026, 6, 16));
   assert.equal(oneTime && formatLocalDate(oneTime), '2026-07-01');
+});
+
+test('jadwal berulang mempertahankan occurrence terlewat sampai ditandai selesai', () => {
+  const referenceDate = new Date(2026, 6, 30);
+  const overdue = getScheduleReminderState('2026-07-29', 7, [], referenceDate);
+  assert.equal(overdue.status, 'overdue');
+  assert.equal(overdue.occurrenceDate && formatLocalDate(overdue.occurrenceDate), '2026-07-29');
+  assert.equal(overdue.diffDays, -1);
+
+  const completed = getScheduleReminderState(
+    '2026-07-29',
+    7,
+    ['2026-07-29'],
+    referenceDate,
+  );
+  assert.equal(completed.status, 'upcoming');
+  assert.equal(completed.occurrenceDate && formatLocalDate(completed.occurrenceDate), '2026-08-05');
 });
 
 test('kalender membatasi occurrence jadwal ke rentang yang tampil', () => {
@@ -275,7 +295,7 @@ test('BMKG menandai data lama dan advisori memakai beberapa slot', () => {
     {
       forecastAt: '2026-07-28T13:00:00.000Z',
       localDatetime: '',
-      analysisAt: null,
+      analysisAt: '2026-07-28T10:00:00.000Z',
       description: 'Hujan Ringan',
       temperature: 29,
       humidity: 88,
@@ -291,6 +311,37 @@ test('BMKG menandai data lama dan advisori memakai beberapa slot', () => {
   assert.match(advisories[0]?.message ?? '', /Tunda aplikasi daun/);
 });
 
+test('BMKG menolak sinyal aman dari prakiraan lama atau di luar jendela enam jam', () => {
+  const now = new Date('2026-07-28T12:00:00Z');
+  const baseForecast = {
+    forecastAt: '2026-07-28T13:00:00.000Z',
+    localDatetime: '',
+    analysisAt: '2026-07-27T00:00:00.000Z',
+    description: 'Cerah',
+    temperature: 29,
+    humidity: 70,
+    windSpeed: 5,
+    windDirection: 'E',
+    windDirectionDegrees: 90,
+    cloudCover: 10,
+    precipitation: 0,
+    visibilityText: 'Baik',
+  };
+  const stale = getWeatherAdvisories([baseForecast], now);
+  assert.equal(stale[0]?.title, 'Data belum layak untuk keputusan');
+  assert.notEqual(stale[0]?.level, 'low');
+
+  const outsideWindow = getWeatherAdvisories([
+    {
+      ...baseForecast,
+      forecastAt: '2026-07-29T12:00:00.000Z',
+      analysisAt: '2026-07-28T10:00:00.000Z',
+    },
+  ], now);
+  assert.equal(outsideWindow[0]?.title, 'Slot enam jam belum tersedia');
+  assert.notEqual(outsideWindow[0]?.level, 'low');
+});
+
 test('BMKG tidak memberi sinyal cuaca aman ketika data kosong', () => {
   const advisories = getWeatherAdvisories([]);
   assert.equal(advisories[0]?.title, 'Prakiraan belum tersedia');
@@ -303,9 +354,37 @@ test('perhitungan budidaya menolak tanggal dan besaran tidak valid', () => {
   assert.equal(calculateActualFertilizerDose(-20, 1_000), 0);
   assert.equal(calculateActualFertilizerDose(100, 1_000), 10);
   assert.equal(calculateLuasLahan(10, 20, 1, -0.5), 200);
+  assert.equal(calculateLuasLahan(10, 20, 1, 0.5), 290);
   assert.equal(calculateLuasLahan(10, 20, 1, 0.5, 125), 125);
   assert.equal(calculateEffectiveLuasLahan(10, 20, 1, 0.5, 1_000, 80), 800);
   assert.equal(calculateEffectiveLuasLahan(10, 20, 1, 0.5, 1_000, 120), 1_000);
+  assert.equal(calculatePlantPopulation(1_000, 50, 60), 3_333);
+});
+
+test('biaya jurnal yang sudah dicatat di Keuangan tidak dihitung dua kali', () => {
+  const logs = [
+    {
+      id: '1',
+      tanggal: '2026-07-28',
+      blokId: 'blok-1',
+      kategori: 'Pemupukan',
+      deskripsi: 'Pupuk susulan',
+      biaya: 100_000,
+      petugas: 'A',
+      biayaSudahDiKeuangan: false,
+    },
+    {
+      id: '2',
+      tanggal: '2026-07-28',
+      blokId: 'blok-1',
+      kategori: 'Pemupukan',
+      deskripsi: 'Pembelian yang sama',
+      biaya: 100_000,
+      petugas: 'A',
+      biayaSudahDiKeuangan: true,
+    },
+  ];
+  assert.equal(calculateIncludedLogCost(logs), 100_000);
 });
 
 test('ikon PWA memiliki signature PNG valid', () => {
@@ -356,6 +435,37 @@ test('timeline cuaca ringkas dan PWA memakai background terang', () => {
   assert.doesNotMatch(html, /black-translucent/);
 });
 
+test('PWA meminta konfirmasi sebelum memuat ulang formulir pengguna', () => {
+  const viteConfig = readFileSync(resolve('vite.config.ts'), 'utf8');
+  const prompt = readFileSync(resolve('src/components/PwaUpdatePrompt.tsx'), 'utf8');
+  assert.match(viteConfig, /registerType: 'prompt'/);
+  assert.doesNotMatch(viteConfig, /registerType: 'autoUpdate'/);
+  assert.match(prompt, /Simpan formulir yang sedang dikerjakan/);
+  assert.match(viteConfig, /tanita-font-files/);
+});
+
+test('cadangan lengkap tersedia dan perubahan tab lain diselaraskan', () => {
+  const context = readFileSync(resolve('src/context/TaniOpsContext.tsx'), 'utf8');
+  const settings = readFileSync(resolve('src/views/PengaturanView.tsx'), 'utf8');
+  assert.match(context, /createBackup/);
+  assert.match(context, /restoreBackup/);
+  assert.match(context, /addEventListener\('storage'/);
+  assert.match(context, /tanita_market_price_overrides_v1/);
+  assert.match(context, /previousValues/);
+  assert.match(context, /Versi cadangan belum didukung/);
+  assert.match(settings, /Unduh cadangan/);
+  assert.match(settings, /Pulihkan cadangan/);
+});
+
+test('petunjuk pestisida tidak mengarang metode aplikasi dari kata kunci', () => {
+  const view = readFileSync(resolve('src/views/CariPestisidaView.tsx'), 'utf8');
+  assert.doesNotMatch(view, /Semprot kabut tekanan tinggi/);
+  assert.doesNotMatch(view, /campurkan perekat/);
+  assert.doesNotMatch(view, /Kocor larutan ke perakaran/);
+  assert.doesNotMatch(view, /marketAvailabilityRank/);
+  assert.match(view, /label produk/);
+});
+
 test('ikon konteks pupuk tetap terikat pada bidang input di desktop', () => {
   const view = readFileSync(resolve('src/views/CariPupukView.tsx'), 'utf8');
   assert.match(
@@ -391,6 +501,8 @@ test('katalog hama tidak memakai lagi foto spesies yang salah dan menampilkan au
   assert.match(view, /Maize Weevil - Sitophilus zeamais\.jpg/);
   assert.match(view, /Foto tervalidasi belum tersedia/);
   assert.match(view, /Sumber gambar/);
+  assert.match(view, /getChemicalGuidance\(hama\)/);
+  assert.doesNotMatch(view, /\{hama\.saranPestisida\}/);
   assert.match(view, /aria-label=\{`Memuat gambar \$\{alt\}`\}/);
   assert.doesNotMatch(view, /Special:FilePath/);
 });
