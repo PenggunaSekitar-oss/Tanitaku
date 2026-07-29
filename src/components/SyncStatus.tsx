@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-type SyncState = 'saved' | 'saving' | 'offline' | 'error';
+type SyncState = 'saved' | 'saving' | 'synced' | 'offline' | 'error';
 
 const getInitialState = (): { state: SyncState; savedAt: string | null } => {
   const online = typeof navigator === 'undefined' ? true : navigator.onLine;
@@ -41,12 +41,17 @@ export function SyncStatus() {
       setState(navigator.onLine ? 'saved' : 'offline');
     };
     const onError = () => setState('error');
+    const onSynced = () => {
+      setSavedAt(new Date().toISOString());
+      setState(navigator.onLine ? 'synced' : 'offline');
+    };
 
     window.addEventListener('online', onOnline);
     window.addEventListener('offline', onOffline);
     window.addEventListener('taniops-storage-saving', onSaving);
     window.addEventListener('taniops-storage-saved', onSaved);
     window.addEventListener('taniops-storage-error', onError);
+    window.addEventListener('taniops-storage-synced', onSynced);
     const timer = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => {
       window.removeEventListener('online', onOnline);
@@ -54,6 +59,7 @@ export function SyncStatus() {
       window.removeEventListener('taniops-storage-saving', onSaving);
       window.removeEventListener('taniops-storage-saved', onSaved);
       window.removeEventListener('taniops-storage-error', onError);
+      window.removeEventListener('taniops-storage-synced', onSynced);
       window.clearInterval(timer);
     };
   }, []);
@@ -61,6 +67,7 @@ export function SyncStatus() {
   const copy = {
     saved: formatRelativeTime(savedAt, now),
     saving: 'Menyimpan…',
+    synced: 'Diselaraskan dari tab lain',
     offline: 'Offline · tersimpan di perangkat',
     error: 'Perubahan belum tersimpan',
   }[state];
@@ -68,6 +75,7 @@ export function SyncStatus() {
   const dotClass = {
     saved: 'bg-[#3D7457]',
     saving: 'bg-[#C28A37]',
+    synced: 'bg-[#3D7457]',
     offline: 'bg-[#7A837D]',
     error: 'bg-[#B84A3A]',
   }[state];
