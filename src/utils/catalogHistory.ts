@@ -11,6 +11,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 export function readCatalogHistory<TFilters extends Record<string, string>>(
   key: string,
 ): CatalogHistoryEntry<TFilters>[] {
+  if (IS_DEMO_MODE) return [];
   try {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
@@ -32,6 +33,7 @@ export function writeCatalogHistory<TFilters extends Record<string, string>>(
   key: string,
   entries: CatalogHistoryEntry<TFilters>[],
 ): void {
+  if (IS_DEMO_MODE) return;
   try {
     localStorage.setItem(key, JSON.stringify(entries.slice(0, 8)));
   } catch {
@@ -55,3 +57,4 @@ export function upsertCatalogHistory<TFilters extends Record<string, string>>(
   });
   return next.slice(0, 8);
 }
+import { IS_DEMO_MODE } from '../config/runtime';
