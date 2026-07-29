@@ -51,6 +51,9 @@ export type Pemupukan = {
   tujuan: string;
   dosisPerHektar: number;
   literAirPerHektar?: number;
+  inputBasis?: 'blok' | 'bedengan' | 'hektar';
+  dosisInput?: number;
+  airInput?: number;
   tanggalAplikasi: string;
   intervalHari: number;
   catatan: string;
@@ -278,6 +281,14 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       dosisPerHektar: asNumber(value.dosisPerHektar),
       literAirPerHektar:
         value.literAirPerHektar == null ? undefined : asNumber(value.literAirPerHektar),
+      inputBasis:
+        value.inputBasis === 'blok' ||
+        value.inputBasis === 'bedengan' ||
+        value.inputBasis === 'hektar'
+          ? value.inputBasis
+          : undefined,
+      dosisInput: value.dosisInput == null ? undefined : asNumber(value.dosisInput),
+      airInput: value.airInput == null ? undefined : asNumber(value.airInput),
       tanggalAplikasi: asText(value.tanggalAplikasi),
       intervalHari: asNumber(value.intervalHari),
       catatan: asText(value.catatan),
