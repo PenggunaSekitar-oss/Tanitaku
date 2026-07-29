@@ -297,7 +297,7 @@ export function CariBibitView() {
                       <div className="bg-[#E6E6DC]/40 p-3 border border-[#0A0A0A] rounded text-xs space-y-2">
                         <div className="font-extrabold text-[#154734] uppercase text-[11px] pb-1.5 border-b border-[#0A0A0A] flex items-center gap-1.5">
                           <span className="material-symbols-outlined text-[16px]">verified</span>
-                          Penerapan Rumus Rekomendasi
+                          Ringkasan filter adaptasi
                         </div>
                         <div className="leading-relaxed">
                           <span className="font-bold text-[#0A0A0A]">🏔️ Ketinggian (H): </span>
@@ -310,9 +310,11 @@ export function CariBibitView() {
                         <div className="leading-relaxed">
                           <span className="font-bold text-[#0A0A0A]">🌤️ Musim (M): </span>
                           <span className="text-[#5C5C5C] font-medium">
-                            {cuaca === 'Hujan' ? 'Musim Hujan — Tahan genangan, akar kuat & resisten penyakit jamur/bakteri' :
-                             cuaca === 'Kemarau' ? 'Musim Kemarau — Berumur genjah (cepat panen) & efisien penggunaan air' :
-                             'Adaptif Sepanjang Musim (Hujan & Kemarau)'}
+                            {cuaca === 'Hujan'
+                              ? 'Musim hujan dipakai untuk menaikkan urutan varietas yang deskripsinya memuat sinyal toleransi terkait; bukan jaminan tahan penyakit atau genangan.'
+                              : cuaca === 'Kemarau'
+                                ? 'Musim kemarau dipakai untuk menaikkan urutan varietas dengan sinyal genjah atau toleransi kering; verifikasi label varietas.'
+                                : 'Musim tidak membatasi hasil. Cocokkan varietas dengan rekomendasi produsen dan kondisi lahan.'}
                           </span>
                         </div>
                       </div>
