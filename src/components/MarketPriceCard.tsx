@@ -81,7 +81,7 @@ export function MarketPriceCard({
           <p className="mt-1 text-sm font-extrabold leading-snug">{current.price}</p>
         </div>
         <span className="rounded-full border border-[#A9B4AC] bg-white px-2 py-1 text-[10px] font-bold text-[#365444]">
-          {current.availability}
+          Indikasi: {current.availability}
         </span>
       </div>
 
@@ -91,6 +91,11 @@ export function MarketPriceCard({
         <span>Diperbarui: <b className="text-[#35453C]">{current.observedAt}</b></span>
         <span>Kanal: <b className="text-[#35453C]">{current.channels.join(' · ')}</b></span>
       </div>
+      {current.source === 'Estimasi katalog' && (
+        <p className="mt-2 rounded-lg border border-[#D8D5CC] bg-white p-2 text-[10px] leading-relaxed text-[#69716B]">
+          Ketersediaan dan harga adalah referensi statis, bukan stok marketplace real-time. Periksa toko atau marketplace sebelum membeli.
+        </p>
+      )}
 
       {subsidizedPrice && (
         <p className="mt-2 border-t border-[#D8D5CC] pt-2 text-[11px] text-[#59635D]">
