@@ -8,6 +8,7 @@ import {
   calculateApplicationAmountSummary,
   calculateEffectiveLuasLahan,
   calculatePerHectareRate,
+  applicationMethodUsesWater,
   type ApplicationInputBasis,
 } from '../utils/calculations';
 import { Select } from '../components/Select';
@@ -69,6 +70,7 @@ export function PemupukanView() {
         )
       : 0;
     const inputBasis = (form.inputBasis ?? 'blok') as ApplicationInputBasis;
+    const usesWater = applicationMethodUsesWater(form.metodeAplikasi);
     const verifiedBedCount =
       targetBlock?.tipeInput === 'bedengan' || !targetBlock?.tipeInput
         ? targetBlock?.jumlahBedengan ?? 0
@@ -80,7 +82,7 @@ export function PemupukanView() {
       verifiedBedCount,
     );
     const literAirPerHektar = calculatePerHectareRate(
-      form.airInput,
+      usesWater ? form.airInput : 0,
       inputBasis,
       effectiveAreaM2,
       verifiedBedCount,
@@ -191,6 +193,7 @@ export function PemupukanView() {
       ? selectedBlock?.jumlahBedengan ?? 0
       : 0;
   const selectedBasis = (form.inputBasis ?? 'blok') as ApplicationInputBasis;
+  const usesWater = applicationMethodUsesWater(form.metodeAplikasi);
   const previewDosePerHectare = calculatePerHectareRate(
     form.dosisInput,
     selectedBasis,
@@ -198,7 +201,7 @@ export function PemupukanView() {
     selectedBedCount,
   );
   const previewWaterPerHectare = calculatePerHectareRate(
-    form.airInput,
+    usesWater ? form.airInput : 0,
     selectedBasis,
     selectedAreaM2,
     selectedBedCount,
@@ -347,7 +350,15 @@ export function PemupukanView() {
                     </label>
                     <Select 
                       value={form.metodeAplikasi} 
-                      onChange={val => setForm({...form, metodeAplikasi: val})} 
+                      onChange={(value) =>
+                        setForm({
+                          ...form,
+                          metodeAplikasi: value,
+                          ...(applicationMethodUsesWater(value)
+                            ? {}
+                            : { airInput: 0, literAirPerHektar: 0 }),
+                        })
+                      }
                       options={[
                         { value: 'Tabur', label: 'Tabur' },
                         { value: 'Kocor', label: 'Kocor' },
@@ -451,7 +462,7 @@ export function PemupukanView() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div>
+                  <div className={usesWater ? '' : 'sm:col-span-2'}>
                     <label className="mb-1 block text-xs font-semibold text-on-surface">
                       Takaran produk <span className="text-danger">*</span>
                     </label>
@@ -487,33 +498,35 @@ export function PemupukanView() {
                     </p>
                   </div>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-on-surface">
-                      Volume air <span className="font-medium text-on-surface-muted">(opsional)</span>
-                      <HelpTip
-                        label="Volume air"
-                        text="Isi volume larutan yang benar-benar akan digunakan. Untuk penyemprotan, tetap lakukan kalibrasi alat dan ikuti volume semprot pada label."
-                      />
-                    </label>
-                    <div className="relative">
-                      <NumberInput
-                        value={form.airInput}
-                        onNumberChange={(value) => setForm({ ...form, airInput: value })}
-                        className="min-h-[46px] w-full rounded-xl border border-[#BFC4BE] bg-white px-3 py-2.5 pr-14 text-sm font-semibold text-on-surface"
-                        placeholder={selectedBasis === 'hektar' ? 'Contoh: 400' : 'Contoh: 20'}
-                      />
-                      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-on-surface-muted">
-                        liter
-                      </span>
+                  {usesWater && (
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-on-surface">
+                        Volume air <span className="font-medium text-on-surface-muted">(opsional)</span>
+                        <HelpTip
+                          label="Volume air"
+                          text="Isi volume larutan yang benar-benar akan digunakan. Untuk penyemprotan, tetap lakukan kalibrasi alat dan ikuti volume semprot pada label."
+                        />
+                      </label>
+                      <div className="relative">
+                        <NumberInput
+                          value={form.airInput}
+                          onNumberChange={(value) => setForm({ ...form, airInput: value })}
+                          className="min-h-[46px] w-full rounded-xl border border-[#BFC4BE] bg-white px-3 py-2.5 pr-14 text-sm font-semibold text-on-surface"
+                          placeholder={selectedBasis === 'hektar' ? 'Contoh: 400' : 'Contoh: 20'}
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-on-surface-muted">
+                          liter
+                        </span>
+                      </div>
+                      <p className="mt-1.5 text-[10px] font-medium text-on-surface-muted">
+                        {selectedBasis === 'blok'
+                          ? 'Total air untuk seluruh blok.'
+                          : selectedBasis === 'bedengan'
+                            ? 'Volume air untuk satu bedengan.'
+                            : 'Volume air per 10.000 m².'}
+                      </p>
                     </div>
-                    <p className="mt-1.5 text-[10px] font-medium text-on-surface-muted">
-                      {selectedBasis === 'blok'
-                        ? 'Total air untuk seluruh blok.'
-                        : selectedBasis === 'bedengan'
-                          ? 'Volume air untuk satu bedengan.'
-                          : 'Volume air per 10.000 m².'}
-                    </p>
-                  </div>
+                  )}
                 </div>
 
                 <div className="rounded-2xl border border-[#AFC0B6] bg-[#F0F4F1] p-4" aria-live="polite">
@@ -534,19 +547,21 @@ export function PemupukanView() {
                   </div>
 
                   {selectedBlock ? (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className={`mt-4 grid gap-3 sm:grid-cols-2 ${usesWater ? 'lg:grid-cols-4' : 'lg:grid-cols-2'}`}>
                       <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
                         <span className="text-[10px] font-medium text-[#6A756E]">Produk seluruh blok</span>
                         <strong className="mt-1 block font-display text-lg text-[#173F35]">
                           {formatAmount(dosePreview.totalForBlock)} {doseUnitLabel}
                         </strong>
                       </div>
-                      <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
-                        <span className="text-[10px] font-medium text-[#6A756E]">Air seluruh blok</span>
-                        <strong className="mt-1 block font-display text-lg text-[#173F35]">
-                          {form.airInput > 0 ? `${formatAmount(waterPreview.totalForBlock, 1)} L` : 'Tidak diisi'}
-                        </strong>
-                      </div>
+                      {usesWater && (
+                        <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
+                          <span className="text-[10px] font-medium text-[#6A756E]">Air seluruh blok</span>
+                          <strong className="mt-1 block font-display text-lg text-[#173F35]">
+                            {form.airInput > 0 ? `${formatAmount(waterPreview.totalForBlock, 1)} L` : 'Tidak diisi'}
+                          </strong>
+                        </div>
+                      )}
                       <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
                         <span className="text-[10px] font-medium text-[#6A756E]">Produk per bedengan</span>
                         <strong className="mt-1 block font-display text-lg text-[#173F35]">
@@ -555,14 +570,16 @@ export function PemupukanView() {
                             : 'Tidak tersedia'}
                         </strong>
                       </div>
-                      <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
-                        <span className="text-[10px] font-medium text-[#6A756E]">Air per bedengan</span>
-                        <strong className="mt-1 block font-display text-lg text-[#173F35]">
-                          {selectedBedCount > 0 && form.airInput > 0
-                            ? `${formatAmount(waterPreview.perBed, 1)} L`
-                            : 'Tidak diisi'}
-                        </strong>
-                      </div>
+                      {usesWater && (
+                        <div className="rounded-xl border border-[#D2DBD5] bg-white p-3">
+                          <span className="text-[10px] font-medium text-[#6A756E]">Air per bedengan</span>
+                          <strong className="mt-1 block font-display text-lg text-[#173F35]">
+                            {selectedBedCount > 0 && form.airInput > 0
+                              ? `${formatAmount(waterPreview.perBed, 1)} L`
+                              : 'Tidak diisi'}
+                          </strong>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="mt-3 text-xs font-medium text-[#66736C]">
@@ -699,7 +716,11 @@ export function PemupukanView() {
                         const blok = blokLahan.find(b => b.id === p.blokId);
                         const luas = blok ? calculateEffectiveLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, blok.lebarBedengan, blok.jarakAntarBedengan, blok.luasManualM2, blok.efisiensiLahan) : 0;
                         const dosisAktual = calculateActualFertilizerDose(p.dosisPerHektar, luas);
-                        const airAktual = p.literAirPerHektar ? calculateActualFertilizerDose(p.literAirPerHektar, luas) : 0;
+                        const scheduleUsesWater = applicationMethodUsesWater(p.metodeAplikasi);
+                        const airAktual =
+                          scheduleUsesWater && p.literAirPerHektar
+                            ? calculateActualFertilizerDose(p.literAirPerHektar, luas)
+                            : 0;
                         const isPestisida = p.kategori === 'Pestisida';
                         const reminder = getScheduleReminderState(
                           p.tanggalAplikasi,
@@ -768,7 +789,7 @@ export function PemupukanView() {
                               <span className="font-bold text-on-surface block">
                                 {formatAmount(p.dosisPerHektar)} {getDoseUnitLabel(p.satuanDosis)}/ha
                               </span>
-                              {p.literAirPerHektar ? (
+                              {scheduleUsesWater && p.literAirPerHektar ? (
                                 <span className="text-[10px] text-on-surface-muted block">
                                   {formatAmount(p.literAirPerHektar, 1)} L air/ha
                                 </span>
@@ -780,7 +801,7 @@ export function PemupukanView() {
                               <div className="inline-block rounded-lg border border-[#8DA698] bg-[#EDF4EF] px-2 py-1 text-sm font-semibold text-[#173F35]">
                                 {formatAmount(dosisAktual)} {getDoseUnitLabel(p.satuanDosis)}
                               </div>
-                              {p.literAirPerHektar ? (
+                              {scheduleUsesWater && p.literAirPerHektar ? (
                                 <span className="text-[10px] text-on-surface-muted block mt-1 font-bold">
                                   {formatAmount(airAktual, 1)} L air
                                 </span>
@@ -839,7 +860,11 @@ export function PemupukanView() {
                     const blok = blokLahan.find(b => b.id === p.blokId);
                     const luas = blok ? calculateEffectiveLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, blok.lebarBedengan, blok.jarakAntarBedengan, blok.luasManualM2, blok.efisiensiLahan) : 0;
                     const dosisAktual = calculateActualFertilizerDose(p.dosisPerHektar, luas);
-                    const airAktual = p.literAirPerHektar ? calculateActualFertilizerDose(p.literAirPerHektar, luas) : 0;
+                    const scheduleUsesWater = applicationMethodUsesWater(p.metodeAplikasi);
+                    const airAktual =
+                      scheduleUsesWater && p.literAirPerHektar
+                        ? calculateActualFertilizerDose(p.literAirPerHektar, luas)
+                        : 0;
                     const isPestisida = p.kategori === 'Pestisida';
                     const reminder = getScheduleReminderState(
                       p.tanggalAplikasi,
@@ -891,7 +916,7 @@ export function PemupukanView() {
                             <span className="inline-block rounded border border-[#8DA698] bg-[#EDF4EF] px-2 py-0.5 text-sm font-semibold text-[#173F35]">
                               {formatAmount(dosisAktual)} {getDoseUnitLabel(p.satuanDosis)}
                             </span>
-                            {p.literAirPerHektar ? (
+                            {scheduleUsesWater && p.literAirPerHektar ? (
                               <span className="mt-1 block text-[10px] font-semibold text-on-surface-muted">
                                 {formatAmount(airAktual, 1)} L air
                               </span>
