@@ -10,9 +10,30 @@ export default defineConfig(() => {
       react(),
       tailwindcss(),
       VitePWA({
-        registerType: 'autoUpdate',
+        registerType: 'prompt',
         devOptions: {
           enabled: false
+        },
+        workbox: {
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'StaleWhileRevalidate',
+              options: {
+                cacheName: 'tanita-font-styles',
+                expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'tanita-font-files',
+                cacheableResponse: { statuses: [0, 200] },
+                expiration: { maxEntries: 16, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              },
+            },
+          ],
         },
         manifest: {
           name: 'TANITA - Manajemen Pertanian',
