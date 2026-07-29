@@ -11,7 +11,7 @@ import { formatLocalDate } from '../utils/localDate';
 import { calculateIncludedLogCost } from '../utils/finance';
 
 export function KeuanganView() {
-  const { keuangan, logAktivitas, addKeuangan, updateKeuangan, deleteKeuangan, blokLahan, tanaman } = useTaniOps();
+  const { isReadOnly, keuangan, logAktivitas, addKeuangan, updateKeuangan, deleteKeuangan, blokLahan, tanaman } = useTaniOps();
   const { showToast } = useToast();
 
   // Mobile Tab State ('analisis' | 'input')
@@ -355,7 +355,7 @@ export function KeuanganView() {
         <button
           type="button"
           onClick={() => setActiveTab('input')}
-          className={`flex-1 py-2.5 text-xs rounded transition-all flex items-center justify-center gap-2 font-bold ${
+          className={`demo-mutation flex-1 py-2.5 text-xs rounded transition-all flex items-center justify-center gap-2 font-bold ${
             activeTab === 'input' 
               ? 'bg-[#154734] text-white border border-[#0A0A0A]' 
               : 'text-[#0A0A0A] hover:bg-white/50'
@@ -372,7 +372,7 @@ export function KeuanganView() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
         {/* PANEL FORM INPUT (5 Cols on Desktop) */}
-        <div className={`lg:col-span-5 ${activeTab === 'input' ? 'block' : 'hidden lg:block'}`}>
+        <div className={`demo-mutation lg:col-span-5 ${activeTab === 'input' ? 'block' : 'hidden lg:block'}`}>
           <div className="p-4 sm:p-5 bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col gap-4">
             <div className="flex justify-between items-center pb-3 border-b-2 border-[#0A0A0A]">
               <h2 className="font-display font-black uppercase text-base sm:text-lg text-[#0A0A0A] flex items-center gap-2">
@@ -770,7 +770,7 @@ export function KeuanganView() {
         </div>
 
         {/* PANEL DAFTAR & RINCIAN ANALISIS (7 Cols on Desktop) */}
-        <div className={`lg:col-span-7 ${activeTab === 'analisis' ? 'block' : 'hidden lg:block'}`}>
+        <div className={`${isReadOnly ? 'lg:col-span-12' : 'lg:col-span-7'} ${activeTab === 'analisis' ? 'block' : 'hidden lg:block'}`}>
           {keuangan.length === 0 ? (
             <EmptyState 
               icon="query_stats" 
@@ -800,7 +800,7 @@ export function KeuanganView() {
                       <th className="p-2.5 sm:p-3">Rincian Input (Bibit / Pupuk / Pestisida)</th>
                       <th className="p-2.5 sm:p-3 text-right">Biaya Input</th>
                       <th className="p-2.5 sm:p-3 text-right">Est. Omset &amp; Margin</th>
-                      <th className="p-2.5 sm:p-3 text-center">Aksi</th>
+                      <th className="demo-mutation p-2.5 sm:p-3 text-center">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y border-b border-[#0A0A0A] text-xs">
@@ -885,7 +885,7 @@ export function KeuanganView() {
                           </td>
 
                           {/* Aksi */}
-                          <td className="p-2.5 sm:p-3 align-top text-center">
+                          <td className="demo-mutation p-2.5 sm:p-3 align-top text-center">
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 type="button"
