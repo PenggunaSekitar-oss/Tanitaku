@@ -62,16 +62,16 @@ export function Topbar({ onOpenSidebar, currentView, onNavigate }: TopbarProps) 
   } = useToast();
 
   return (
-    <header className="relative z-30 flex h-[72px] shrink-0 items-center justify-between border-b border-[#D9D8D1] bg-[#FBFAF6] px-4 sm:px-6">
+    <header className="tanita-topbar relative z-30 flex h-[76px] shrink-0 items-center justify-between border-b border-[#D8D4C9] bg-[#F7F5EE]/95 px-4 sm:px-6 lg:px-8">
       <div className="flex min-w-0 items-center gap-3">
         <div className="md:hidden">
           <BrandLockup compact />
         </div>
         <div className="hidden min-w-0 md:block">
-          <p className="text-[11px] font-semibold text-[#7A837D]">
-            Ruang kerja
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7A837D]">
+            Kendali operasional
           </p>
-          <p className="truncate text-sm font-bold text-[#243029]">
+          <p className="mt-0.5 truncate text-[15px] font-semibold tracking-[-0.02em] text-[#243029]">
             {VIEW_LABELS[currentView] ?? 'TANITA'}
           </p>
         </div>
@@ -91,7 +91,9 @@ export function Topbar({ onOpenSidebar, currentView, onNavigate }: TopbarProps) 
           <button
             type="button"
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className="flex min-h-[42px] min-w-[42px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#D8D5CC] bg-white p-2 text-[#59645D] transition hover:border-[#AEB8B1] hover:text-[#1C211D]"
+            aria-label="Buka pusat notifikasi"
+            aria-expanded={isNotifOpen}
+            className="flex min-h-[42px] min-w-[42px] shrink-0 cursor-pointer items-center justify-center rounded-lg border border-[#D6D2C7] bg-[#FCFBF7] p-2 text-[#59645D] transition hover:border-[#9DAA9F] hover:bg-white hover:text-[#183F33]"
             title="Pusat Notifikasi Tani"
           >
             <span className="material-symbols-outlined text-xl">notifications</span>
@@ -254,7 +256,7 @@ export function Topbar({ onOpenSidebar, currentView, onNavigate }: TopbarProps) 
           )}
         </div>
 
-        <button onClick={onOpenSidebar} className="flex min-h-[42px] min-w-[42px] cursor-pointer items-center justify-center rounded-lg border border-[#D8D5CC] bg-white p-2 text-[#59645D] transition hover:bg-[#F2F0EA] md:hidden" title="Menu Navigasi">
+        <button type="button" onClick={onOpenSidebar} aria-label="Buka menu navigasi" className="flex min-h-[42px] min-w-[42px] cursor-pointer items-center justify-center rounded-lg bg-[#173F35] p-2 text-white transition hover:bg-[#0F3027] md:hidden" title="Menu Navigasi">
           <span className="material-symbols-outlined">menu</span>
         </button>
       </div>

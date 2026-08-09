@@ -1,4 +1,3 @@
-import { PageHeader } from '../components/PageHeader';
 import React, { useMemo, useState } from "react";
 import { motion, type Variants } from "motion/react";
 import { BannerCarousel } from "../components/BannerCarousel";
@@ -23,6 +22,7 @@ const formatRp = (num: number) => {
 
 // Section Title Component
 const SectionTitle = ({ 
+  icon,
   title, 
   subtitle, 
   rightElement 
@@ -33,9 +33,16 @@ const SectionTitle = ({
   rightElement?: React.ReactNode; 
 }) => (
   <div className="mb-1 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-end">
-    <div className="max-w-3xl">
-      <h2 className="font-display text-lg font-semibold tracking-[-0.025em] text-[#1B2922] sm:text-xl">{title}</h2>
-      <p className="mt-1.5 text-xs font-medium leading-relaxed text-[#6B756E] sm:text-sm">{subtitle}</p>
+    <div className="flex max-w-3xl items-start gap-3.5">
+      {icon && (
+        <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-[#C9D2CB] bg-[#E7ECE7] text-[#1E513F]">
+          <span className="material-symbols-outlined text-[19px]" aria-hidden="true">{icon}</span>
+        </span>
+      )}
+      <div>
+        <h2 className="font-display text-lg font-semibold tracking-[-0.035em] text-[#18271F] sm:text-xl">{title}</h2>
+        <p className="mt-1.5 text-xs font-medium leading-relaxed text-[#68736C] sm:text-sm">{subtitle}</p>
+      </div>
     </div>
     {rightElement && (
       <div className="shrink-0 self-start sm:self-end">
@@ -513,7 +520,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
       {/* Hero Banner Carousel */}
       {hasOperationalData && (
         <motion.div variants={bentoItem} className="w-full">
-          <BannerCarousel />
+          <BannerCarousel onNavigate={navigate} />
         </motion.div>
       )}
 
@@ -521,34 +528,33 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
       {hasOperationalData && <motion.div variants={bentoItem} className="flex flex-col gap-4">
         <SectionTitle 
           icon="analytics" 
-          title="Kelengkapan Catatan & Ringkasan Operasional"
+          title="Ringkasan operasional"
           subtitle="Kelengkapan menilai blok, tanaman, aktivitas, dan keuangan dengan bobot setara. Estimasi laba memakai target hasil × harga jual dikurangi seluruh biaya tercatat; ROI adalah laba dibandingkan biaya."
         />
         <div 
-          className="flex flex-col items-center gap-6 rounded-2xl border border-[#345749] p-5 sm:p-7 lg:flex-row lg:gap-8"
-          style={{ backgroundColor: '#173F35', color: '#FFFFFF' }}
+          className="metric-overview flex flex-col items-center gap-6 rounded-[18px] border border-[#2B5546] p-5 text-white sm:p-7 lg:flex-row lg:items-stretch lg:gap-8"
         >
 
           {/* Data completeness, not an agronomic performance score */}
-          <div className="flex flex-col items-center justify-center text-center shrink-0 w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-white/15 pb-6 lg:pb-0 lg:pr-8">
+          <div className="flex w-full shrink-0 flex-col items-start justify-center border-b border-white/15 pb-6 text-left lg:w-64 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-8">
             <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/65">
               Kelengkapan catatan
             </span>
-            <strong className="mt-3 font-display text-5xl font-semibold tracking-[-0.06em] text-white">
+            <strong className="editorial-title mt-3 text-6xl font-semibold tracking-[-0.07em] text-white">
               <AnimatedNumber
                 value={Number(healthScore)}
                 formatter={(value) => `${Math.round(value)}%`}
               />
             </strong>
             <span className="mt-2 text-xs font-semibold text-[#DDE9E2]">{healthScoreLabel}</span>
-            <p className="mt-3 max-w-[210px] text-[10px] font-medium leading-relaxed text-white/60">
+            <p className="mt-3 max-w-[220px] text-[10px] font-medium leading-relaxed text-white/55">
               Empat bagian dinilai setara: blok, tanaman, aktivitas, dan catatan keuangan.
             </p>
           </div>
 
           {/* 4 Key Metrics */}
           <div className="motion-stagger grid w-full flex-1 grid-cols-2 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
+            <div className="metric-tile flex min-h-[124px] flex-col justify-between rounded-xl p-4">
               <span className="text-xs font-semibold text-white/75">Populasi aktif</span>
               <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white my-1 font-display">
                 <AnimatedNumber value={totalPopulasiAktif} />
@@ -556,7 +562,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">{tanamanAktif.length} Varietas di Lahan</span>
             </div>
 
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
+            <div className="metric-tile flex min-h-[124px] flex-col justify-between rounded-xl p-4">
               <span className="text-xs font-semibold text-white/75">Estimasi laba (proyeksi)</span>
               <span className="text-lg sm:text-xl lg:text-2xl font-extrabold text-white my-1 font-display">
                 <AnimatedNumber value={laba} formatter={formatRp} />
@@ -564,7 +570,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">ROI Proyeksi {roi}%</span>
             </div>
 
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
+            <div className="metric-tile flex min-h-[124px] flex-col justify-between rounded-xl p-4">
               <span className="text-xs font-semibold text-white/75">Luas bedengan</span>
               <div className="flex flex-col my-1">
                 <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white font-display">
@@ -577,7 +583,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
               <span className="text-[11px] sm:text-xs text-white/80 font-semibold">Kepadatan {kepadatan} tnm/m²</span>
             </div>
 
-            <div className="p-4 bg-white/10 rounded-xl border border-white/15 flex flex-col justify-between min-h-[116px]">
+            <div className="metric-tile flex min-h-[124px] flex-col justify-between rounded-xl p-4">
               <span className="text-xs font-semibold text-white/75">Agenda perawatan</span>
               <span className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-white my-1 font-display">
                 <AnimatedNumber value={pemupukan.length} /> <span className="text-xs font-semibold text-white/80">Jadwal</span>
@@ -604,12 +610,12 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
           <motion.div variants={bentoItem} className="flex flex-col gap-4">
             <SectionTitle 
               icon="grid_view" 
-              title="Pintasan Fitur Operasional" 
+              title="Akses cepat"
               subtitle="Buka katalog bibit, pupuk, pestisida, referensi penyakit, atau kalkulator larutan."
             />
 
-            <div className="p-5 sm:p-6 bg-[#FEFEFA] rounded-2xl border border-slate-200/80 shadow-sm">
-              <div className="motion-stagger grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-5">
+            <div className="rounded-[18px] border border-[#D4D0C5] bg-[#FAF9F4] p-4 sm:p-5">
+              <div className="quick-access-grid motion-stagger grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                 {[
                   { 
                     id: 'cari-bibit', 
@@ -647,13 +653,13 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
                     <button 
                       key={item.id}
                       onClick={() => navigate(item.id)}
-                      className={`group flex min-h-[104px] cursor-pointer items-center justify-center rounded-xl border border-[#D8D5CC] bg-[#F8F7F2] p-3.5 text-center transition hover:border-[#8EA397] hover:bg-white active:scale-[0.99] ${
+                      className={`group flex min-h-[108px] cursor-pointer items-center justify-center rounded-xl border border-[#D8D4C9] bg-[#F3F1E9] p-3.5 text-center transition hover:border-[#8EA397] hover:bg-[#FFFDF8] active:scale-[0.99] ${
                         isKocor 
                           ? 'col-span-2 sm:col-span-2 lg:col-span-1 flex-col sm:flex-row lg:flex-col sm:text-left lg:text-center gap-2.5 sm:gap-3.5 lg:gap-2' 
                           : 'flex-col text-center gap-2'
                       }`}
                     >
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#C9D4CD] bg-[#E9EFEB] text-[#24533F] transition group-hover:bg-[#DCE8E0]">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#C9D4CD] bg-[#E5ECE6] text-[#1E513F] transition group-hover:border-[#9FB1A6] group-hover:bg-[#DCE8E0]">
                         <span className="material-symbols-outlined text-[20px]" aria-hidden="true">{item.icon}</span>
                       </div>
                       <div className="flex flex-col">

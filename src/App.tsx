@@ -76,7 +76,7 @@ export default function App() {
   useEffect(() => {
     document.title = IS_DEMO_MODE
       ? 'TANITA Demo · Ruang Kebun Hanya Baca'
-      : 'TANITA Command Center Pertanian';
+      : 'TANITA · Kendali Operasional Kebun';
     document.documentElement.classList.remove('dark');
     document.documentElement.classList.add('light');
     try {
@@ -136,9 +136,9 @@ export default function App() {
           </a>
           {!IS_DEMO_MODE && <AgriDynamicToastNotifier navigate={navigateTo} />}
           <PwaUpdatePrompt />
-          <div className={`app-shell flex h-[100dvh] min-h-[100svh] w-full min-w-0 max-w-full overflow-hidden bg-[#F2F1EC] text-[#1C211D] font-sans selection:bg-[#24533F] selection:text-white ${IS_DEMO_MODE ? 'demo-readonly' : ''}`}>
+          <div className={`app-shell flex h-[100dvh] min-h-[100svh] w-full min-w-0 max-w-full overflow-hidden bg-[#EFEEE7] text-[#1C211D] font-sans selection:bg-[#24533F] selection:text-white ${IS_DEMO_MODE ? 'demo-readonly' : ''}`}>
             <Sidebar currentView={currentView} onNavigate={navigateTo} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-            <div className="relative flex min-w-0 flex-1 flex-col bg-[#F2F1EC]">
+            <div className="relative flex min-w-0 flex-1 flex-col bg-[#EFEEE7]">
               <Topbar
                 currentView={currentView}
                 onOpenSidebar={() => setSidebarOpen(true)}
@@ -146,12 +146,12 @@ export default function App() {
               />
               {IS_DEMO_MODE && <DemoModeBanner />}
               <div className="flex-1 overflow-y-auto flex flex-col justify-between">
-                <main id="main-content" tabIndex={-1} className="app-content mx-auto w-full min-w-0 max-w-[1440px] flex-1 overflow-x-clip p-4 sm:p-6 lg:p-8 xl:px-10">
+                <main id="main-content" tabIndex={-1} className="app-content mx-auto w-full min-w-0 max-w-[1480px] flex-1 overflow-x-clip p-4 sm:p-6 lg:p-8 xl:px-10 xl:py-9">
                   <Breadcrumbs currentView={currentView} onNavigate={navigateTo} />
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentView}
-                      initial={{ opacity: 0, y: 14, filter: 'blur(5px)' }}
+                      initial={{ opacity: 0, y: 10, filter: 'blur(5px)' }}
                       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                       exit={{
                         opacity: 0,
@@ -175,7 +175,7 @@ export default function App() {
                     </motion.div>
                   </AnimatePresence>
                 </main>
-                <footer className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-[#D9D8D1] bg-[#F7F6F1] px-6 py-5 pb-20 text-center md:flex-row md:pb-5">
+                <footer className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-[#D7D3C8] bg-[#F6F4ED] px-6 py-5 pb-20 text-center md:flex-row md:pb-5">
                   <BrandLockup compact />
                   <span className="text-[10px] font-medium text-[#747D77]">© 2026 TANITA · Operasional kebun</span>
                 </footer>
