@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Poppins:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
 @import "tailwindcss";
 
@@ -16,41 +16,41 @@
   --color-danger: var(--danger-color);
   --color-outline: var(--outline-color);
 
-  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-  --font-display: "Poppins", "Plus Jakarta Sans", sans-serif;
+  --font-sans: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-display: "Manrope", system-ui, -apple-system, sans-serif;
 }
 
 :root {
   color-scheme: light;
-  --bg-color: #F1F0EB;
-  --surface-color: #FBFAF6;
-  --surface-high-color: #EAE9E3;
-  --on-surface-color: #1B2721;
-  --on-surface-muted-color: #69736C;
-  --primary-color: #24533F;
+  --bg-color: #EFEEE7;
+  --surface-color: #FAF9F4;
+  --surface-high-color: #E7E6DF;
+  --on-surface-color: #17241E;
+  --on-surface-muted-color: #667169;
+  --primary-color: #1E513F;
   --secondary-color: #34483D;
-  --action-color: #24533F;
+  --action-color: #1E513F;
   --on-action-color: #FFFFFF;
   --success-color: #2D684E;
   --danger-color: #A34335;
-  --outline-color: #D8D5CC;
+  --outline-color: #D4D0C5;
 
-  --color-bg: #F1F0EB;
-  --color-bg-elevated: #FBFAF6;
-  --color-fg: #1B2721;
-  --color-fg-muted: #69736C;
-  --color-border: #D8D5CC;
-  --color-border-subtle: #E7E4DC;
-  --color-action: #24533F;
+  --color-bg: #EFEEE7;
+  --color-bg-elevated: #FAF9F4;
+  --color-fg: #17241E;
+  --color-fg-muted: #667169;
+  --color-border: #D4D0C5;
+  --color-border-subtle: #E3E0D7;
+  --color-action: #1E513F;
   --color-secondary: #34483D;
   --color-action-ink: #FFFFFF;
   --color-danger: #A34335;
   --color-danger-ink: #FFFFFF;
   --color-warning: #A56E24;
   --color-warning-ink: #FFFFFF;
-  --radius-control: 0.75rem;
-  --radius-card: 1rem;
-  --shadow-card: 0 2px 8px rgba(24, 35, 29, 0.055);
+  --radius-control: 0.625rem;
+  --radius-card: 0.875rem;
+  --shadow-card: 0 8px 24px rgba(20, 39, 31, 0.055);
   --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-duration-fast: 180ms;
   --motion-duration-base: 420ms;
@@ -82,6 +82,7 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
 }
 
 #root {
@@ -112,7 +113,13 @@ h2,
 h3,
 h4 {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.035em;
+}
+
+.editorial-title {
+  font-family: "Newsreader", Georgia, serif;
+  font-optical-sizing: auto;
+  letter-spacing: -0.045em;
 }
 
 ::selection {
@@ -152,7 +159,7 @@ h4 {
 .neo-card,
 .neo-card-small {
   border: 1px solid var(--color-border);
-  border-radius: 1rem;
+  border-radius: var(--radius-card);
   background: var(--surface-color);
   box-shadow: 0 1px 2px rgba(24, 35, 29, 0.035);
   transition:
@@ -163,8 +170,35 @@ h4 {
 
 .neo-card:hover,
 .neo-card-small:hover {
-  border-color: #BCC3BC;
-  box-shadow: 0 4px 12px rgba(24, 35, 29, 0.05);
+  border-color: #AEB9B1;
+  box-shadow: 0 10px 24px rgba(24, 35, 29, 0.065);
+}
+
+.tanita-sidebar {
+  box-shadow: inset -1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.tanita-topbar {
+  box-shadow: 0 1px 0 rgba(24, 40, 32, 0.025);
+}
+
+.dashboard-hero {
+  box-shadow: 0 18px 42px rgba(15, 48, 38, 0.14);
+}
+
+.metric-overview {
+  background: #12382D;
+  box-shadow: 0 16px 38px rgba(18, 56, 45, 0.12);
+}
+
+.metric-tile {
+  min-width: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.065);
+}
+
+.quick-access-grid > button {
+  box-shadow: none !important;
 }
 
 @keyframes tanita-reveal {
@@ -464,11 +498,11 @@ textarea {
 }
 
 .app-shell [class~="bg-[#154734]"] {
-  background-color: #24533F !important;
+  background-color: #1E513F !important;
 }
 
 .app-shell [class~="text-[#154734]"] {
-  color: #24533F !important;
+  color: #1E513F !important;
 }
 
 .app-shell [class~="bg-[#E6E6DC]"] {
@@ -567,7 +601,7 @@ textarea {
 
 @media (display-mode: standalone) {
   body {
-    background: #F1F0EB;
+    background: #EFEEE7;
   }
 
   .app-shell {
