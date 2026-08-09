@@ -69,7 +69,7 @@ export function CariPupukView() {
     setFungsiInput(entry.filters.fungsi);
     setSearchParams({
       tanaman: entry.filters.tanaman,
-      hst: Number.parseInt(entry.filters.hst, 10),
+      hst: Number.parseInt(entry.filters.hst, 10) || 0,
       fungsi: entry.filters.fungsi,
     });
     setHasSearched(true);

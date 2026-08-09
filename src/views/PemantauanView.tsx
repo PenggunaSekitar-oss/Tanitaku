@@ -777,8 +777,8 @@ export function PemantauanView({ initialTab = 'blok' }: { initialTab?: 'blok' | 
                   } else if (blok.tipeInput === 'are' && blok.luasAre) {
                     grossM2 = blok.luasAre * 100;
                   } else {
-                    const lMeter = blok.lebarBedengan > 10 ? blok.lebarBedengan / 100 : blok.lebarBedengan;
-                    const jMeter = blok.jarakAntarBedengan > 10 ? blok.jarakAntarBedengan / 100 : blok.jarakAntarBedengan;
+                    const lMeter = blok.lebarBedengan;
+                    const jMeter = blok.jarakAntarBedengan;
                     grossM2 = calculateLuasLahan(blok.jumlahBedengan, blok.panjangBedengan, lMeter, jMeter, blok.luasManualM2);
                   }
                   const effectiveM2 = grossM2 * (efisiensi / 100);
@@ -925,7 +925,7 @@ export function PemantauanView({ initialTab = 'blok' }: { initialTab?: 'blok' | 
                   <NumberInput value={formTanaman.jumlahTanaman} onNumberChange={() => {}} disabled className="w-full bg-surface-high border border-outline focus:ring-1 focus:ring-action rounded-[12px] px-4 py-2.5 min-h-[48px] text-[15px] text-on-surface opacity-70" placeholder="0" />
                 </div>
               </div>
-              <button type="submit" disabled={!formTanaman.blokId || !formTanaman.komoditas || !formTanaman.tanggalTanam} className="neo-btn neo-btn-action text-on-action w-full min-h-[56px] mt-2 disabled:opacity-50">
+              <button type="submit" disabled={!formTanaman.blokId || !formTanaman.komoditas || !formTanaman.tanggalTanam || formTanaman.jumlahTanaman <= 0} className="neo-btn neo-btn-action text-on-action w-full min-h-[56px] mt-2 disabled:opacity-50">
                 {editingTanamanId ? 'UPDATE TANAMAN' : 'SIMPAN TANAMAN'}
               </button>
               {editingTanamanId && (

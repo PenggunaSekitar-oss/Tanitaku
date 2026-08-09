@@ -77,7 +77,7 @@ export function getScheduleReminderState(
     referenceDate.getMonth(),
     referenceDate.getDate(),
   );
-  const completed = new Set(completedDates.filter((value) => parseLocalDate(value)));
+  const completed = new Set(completedDates.filter((value) => parseLocalDate(value) !== null));
   const interval = Number.isFinite(intervalDays) ? Math.floor(intervalDays) : 0;
   const startDiff = differenceInCalendarDays(startDate, today);
 
@@ -111,20 +111,22 @@ export function getScheduleReminderState(
 
   const elapsedDays = Math.max(0, differenceInCalendarDays(today, startDate));
   const elapsedIntervals = Math.floor(elapsedDays / interval);
-  const latestOccurrence = addLocalDays(startDate, elapsedIntervals * interval);
-  const latestKey = formatLocalDate(latestOccurrence);
 
-  if (!completed.has(latestKey)) {
-    const diffDays = differenceInCalendarDays(latestOccurrence, today);
-    return {
-      occurrenceDate: latestOccurrence,
-      nextDate: addLocalDays(latestOccurrence, interval),
-      diffDays,
-      status: diffDays === 0 ? 'due' : 'overdue',
-    };
+  for (let i = elapsedIntervals; i >= 0; i--) {
+    const occurrence = addLocalDays(startDate, i * interval);
+    const key = formatLocalDate(occurrence);
+    if (!completed.has(key)) {
+      const diffDays = differenceInCalendarDays(occurrence, today);
+      return {
+        occurrenceDate: occurrence,
+        nextDate: addLocalDays(occurrence, interval),
+        diffDays,
+        status: diffDays === 0 ? 'due' : 'overdue',
+      };
+    }
   }
 
-  const nextDate = addLocalDays(latestOccurrence, interval);
+  const nextDate = addLocalDays(startDate, (elapsedIntervals + 1) * interval);
   return {
     occurrenceDate: nextDate,
     nextDate,

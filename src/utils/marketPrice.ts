@@ -45,8 +45,8 @@ export function saveMarketPrice(
   try {
     const next = readAll();
     next[createKey(catalog, itemId)] = {
-      price: value.price.trim(),
-      region: value.region.trim(),
+      price: (value.price ?? '').trim(),
+      region: (value.region ?? '').trim(),
       observedAt: value.observedAt,
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));

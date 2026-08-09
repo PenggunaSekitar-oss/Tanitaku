@@ -47,10 +47,9 @@ export const PINTASAN_FITUR_ALL = [
 ];
 
 export function PintasanModal({ isOpen, onClose, onNavigate, currentView }: PintasanModalProps) {
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
+      {isOpen && (
       <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
         {/* Backdrop */}
         <motion.div
@@ -159,6 +158,7 @@ export function PintasanModal({ isOpen, onClose, onNavigate, currentView }: Pint
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { IS_DEMO_MODE } from '../config/runtime';
 import { BrandLockup } from './BrandLockup';
 
@@ -122,6 +122,9 @@ function ProtectedAccessGate({ children }: AccessGateProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isActivating, setIsActivating] = useState(false);
   const [errorAnimationKey, setErrorAnimationKey] = useState(0);
+  const mountedRef = useRef(true);
+
+  useEffect(() => () => { mountedRef.current = false; }, []);
 
   useEffect(() => {
     try {
@@ -199,6 +202,7 @@ function ProtectedAccessGate({ children }: AccessGateProps) {
     } catch {
       showError('Verifikasi lokal tidak tersedia pada browser ini.');
     } finally {
+      if (!mountedRef.current) return;
       setIsVerifying(false);
       setIsActivating(false);
     }

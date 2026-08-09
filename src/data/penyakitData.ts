@@ -60,6 +60,7 @@ export const TANAMAN_OPTIONS = [
   { value: 'Kacang', label: 'Kacang-kacangan (Panjang/Buncis/Kedelai)' },
   { value: 'Mentimun', label: 'Mentimun & Melon & Semangka' },
   { value: 'Kangkung', label: 'Kangkung & Bayam & Selada' },
+  { value: 'Kentang', label: 'Kentang' },
   { value: 'Jagung', label: 'Jagung & Jagung Manis' },
   { value: 'Padi', label: 'Padi' },
   { value: 'Pepaya', label: 'Pepaya' },
@@ -294,7 +295,7 @@ export const PENYAKIT_DB: Penyakit[] = [
     nama: 'Ulat Grayak Frugiperda / FAW (Spodoptera frugiperda)',
     kategori: 'Hama',
     tanaman: ['Jagung'],
-    gejala: 'Pupus daun jagung hancur مليء kotoran serbuk gergaji.',
+    gejala: 'Pupus daun jagung hancur penuh kotoran serbuk gergaji.',
     penyebab: 'Ulat grayak tentara asal Amerika.',
     kimia: 'Vayego 200SC, Prevathon, Coragen.',
     organik: 'Taburkan abu gosok / pasir halus ke pupus daun.',
@@ -309,7 +310,7 @@ export const PENYAKIT_DB: Penyakit[] = [
   { id: 'h27', nama: 'Penggerek Buah Kopi (PBKo)', kategori: 'Hama', tanaman: ['Perkebunan'], gejala: 'Buah kopi berlubang di bagian ujung.', penyebab: 'Kumbang Hypothenemus.', kimia: 'Curacron.', organik: 'Jamur Beauveria bassiana.', pencegahan: 'Petik bubuk (sanitasi).' },
   { id: 'h28', nama: 'Ulat Api (Setothosea asigna)', kategori: 'Hama', tanaman: ['Perkebunan'], gejala: 'Daun sawit habis dimakan cepat.', penyebab: 'Ulat berbulu gatal.', kimia: 'Decis, Matador.', organik: 'Injeksi batang Bt.', pencegahan: 'Kembangkan predator Eocanthecona.' },
   { id: 'h29', nama: 'Ulat Jengkal (Hyposidra)', kategori: 'Hama', tanaman: ['Kacang', 'Cabai'], gejala: 'Daun habis dikerogoti dari pinggir.', penyebab: 'Ulat melengkung jengkal.', kimia: 'Curacron, Decis.', organik: 'Aplikasi Bt.', pencegahan: 'Olah tanah.' },
-  { id: '30', nama: 'Belalang Kayu (Valanga nigricornis)', kategori: 'Hama', tanaman: ['Jagung', 'Padi', 'Perkebunan'], gejala: 'Daun robek bergerigi kasar.', penyebab: 'Belalang besar.', kimia: 'Fastac, Matador.', organik: 'Tangkap manual.', pencegahan: 'Sanitasi semak.' },
+  { id: 'h30', nama: 'Belalang Kayu (Valanga nigricornis)', kategori: 'Hama', tanaman: ['Jagung', 'Padi', 'Perkebunan'], gejala: 'Daun robek bergerigi kasar.', penyebab: 'Belalang besar.', kimia: 'Fastac, Matador.', organik: 'Tangkap manual.', pencegahan: 'Sanitasi semak.' },
 
   // 31 - 105: PENYAKIT (JAMUR, BAKTERI, VIRUS)
   {
@@ -439,9 +440,9 @@ export const PENYAKIT_DB: Penyakit[] = [
   { id: 'p25', nama: 'Karat Putih Chrysanthemum', kategori: 'Jamur', tanaman: ['Perkebunan'], gejala: 'Bintil-bintil putih mengkilap di bawah daun.', penyebab: 'Puccinia horiana.', kimia: 'Nativo 75WG, Amistar.', organik: 'Baking soda.', pencegahan: 'Rumah lindung teratur.' },
   { id: 'p26', nama: 'Busuk Buah Kakao (Phytophthora palmivora)', kategori: 'Jamur', tanaman: ['Perkebunan'], gejala: 'Buah kakao coklat kehitaman dari pangkal basah.', penyebab: 'Phytophthora.', kimia: 'Nordox 56WP, Ridomil.', organik: 'Penyelubungan buah.', pencegahan: 'Pangkas bentuk rimbun.' },
   { id: 'p27', nama: 'Karat Daun Kopi (Hemileia vastatrix)', kategori: 'Jamur', tanaman: ['Perkebunan'], gejala: 'Bercak oranye bertepung di bawah daun kopi.', penyebab: 'Hemileia.', kimia: 'Anvil 50SC, Amistar.', organik: 'Tembaga cair.', pencegahan: 'Tanam arabika varietas tahan.' },
-  { id: 'p28', nama: 'Embun Jelaga (Capnodium)', kategori: 'Jamur', tanaman: ['Mangga', 'Jeruk'], gejala: 'Lapisan jelaga hitam menutup permukaan daun.', penyebab: 'Jamur yang tumbuh dari kotoran kutu.', kimia: 'Basmi kutu daun & semprot pencuci jelaga.', organik: 'Air sabun hangat.', pencegahan: 'Kendalikan kutu putih.' },
+  { id: 'p28', nama: 'Embun Jelaga (Capnodium)', kategori: 'Jamur', tanaman: ['Mangga'], gejala: 'Lapisan jelaga hitam menutup permukaan daun.', penyebab: 'Jamur yang tumbuh dari kotoran kutu.', kimia: 'Basmi kutu daun & semprot pencuci jelaga.', organik: 'Air sabun hangat.', pencegahan: 'Kendalikan kutu putih.' },
   { id: 'p29', nama: 'Kerdil Pisang (Bunchy Top)', kategori: 'Virus', tanaman: ['Pisang'], gejala: 'Daun pisang kerdil sempit tegak mengelompok di pucuk.', penyebab: 'Banana Bunchy Top Virus (BBTV).', kimia: 'Kendalikan Kutu Daun Pentalonia.', organik: 'Cabut dan musnahkan rumpun.', pencegahan: 'Bibit kultur jaringan.' },
-  { id: 'jamur-30', nama: 'Jamur Upas (Corticium salmonicolor)', kategori: 'Jamur', tanaman: ['Perkebunan', 'Mangga'], gejala: 'Kerak merah jambu (pink) di kulit cabang hingga mengelupas.', penyebab: 'Corticium.', kimia: 'Nordox 56WP oles.', organik: 'Bubur kalifornia.', pencegahan: 'Pangkas cabang bersinggungan.' },
+  { id: 'p30', nama: 'Jamur Upas (Corticium salmonicolor)', kategori: 'Jamur', tanaman: ['Perkebunan', 'Mangga'], gejala: 'Kerak merah jambu (pink) di kulit cabang hingga mengelupas.', penyebab: 'Corticium.', kimia: 'Nordox 56WP oles.', organik: 'Bubur kalifornia.', pencegahan: 'Pangkas cabang bersinggungan.' },
   {
     id: 'fisiologis-1',
     nama: 'Busuk Ujung Buah (Blossom-end Rot)',

@@ -1,5 +1,5 @@
 import { PageHeader } from '../components/PageHeader';
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion, type Variants } from "motion/react";
 import { BannerCarousel } from "../components/BannerCarousel";
 import { BmkgWeatherWidget } from "../components/BmkgWeatherWidget";
@@ -446,7 +446,10 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
     return { score: scoreStr, label };
   };
 
-  const { score: healthScore, label: healthScoreLabel } = calculateDataCompletenessScore();
+  const { score: healthScore, label: healthScoreLabel } = useMemo(
+    () => calculateDataCompletenessScore(),
+    [blokLahan, tanaman, keuangan, logAktivitas, pemupukan]
+  );
 
   const upcomingPemupukan = [...pemupukan]
     .map((item) => {
@@ -461,7 +464,7 @@ export function DashboardView({ navigate }: { navigate: (v: string) => void }) {
         reminder,
       };
     })
-    .filter(({ reminder }) => reminder.status !== 'completed' && reminder.status !== 'none')
+    .filter(({ reminder }) => reminder.status !== 'completed')
     .sort((a, b) => (a.nextDate?.getTime() ?? Number.MAX_SAFE_INTEGER) - (b.nextDate?.getTime() ?? Number.MAX_SAFE_INTEGER));
   const latestLogs = [...logAktivitas].sort((a, b) =>
     b.tanggal.localeCompare(a.tanggal) || b.id.localeCompare(a.id)

@@ -38,7 +38,7 @@ export function Accordion({ title, icon, children, defaultOpen = false, isOpen: 
           expand_more
         </span>
       </button>
-      <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+      <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
         <div className="border-t border-[#DEDCD4] p-4">
           {children}
         </div>

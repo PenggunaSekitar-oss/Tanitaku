@@ -12,6 +12,9 @@ export function calculateHST(tanggalTanam: string, referenceDate = new Date()): 
 /**
  * Tahap ini hanya pengelompokan umur operasional generik. Fase biologis yang
  * sebenarnya tetap perlu disesuaikan dengan komoditas, varietas, dan observasi.
+ *
+ * @param hst - Hari Setelah Tanam (dalam hari). Nilai 0 akan menghasilkan 'Hari Tanam'.
+ * @returns Label fase tanaman berdasarkan nilai HST.
  */
 export function determineFaseTanaman(hst: number): string {
   const safeHst = asNonNegativeNumber(hst);

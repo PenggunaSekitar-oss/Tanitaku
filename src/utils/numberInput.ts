@@ -39,6 +39,21 @@ export function parseLocalizedNumberInput(rawInput: string, allowDecimals: boole
 
   const integerDigits = sanitized.slice(0, separatorIndex).replace(/\D/g, '') || '0';
   const fractionDigits = sanitized.slice(separatorIndex + 1).replace(/\D/g, '');
+
+  const priorSeparators = sanitized.slice(0, separatorIndex).replace(/[^.,]/g, '').length;
+  if (priorSeparators === 0 && fractionDigits.length === 3) {
+    const separatorChar = sanitized[separatorIndex] ?? '';
+    const hasTrailingComma = sanitized.endsWith(separatorChar);
+    if (!hasTrailingComma) {
+      const combined = `${integerDigits}${fractionDigits}`;
+      const value = Number.parseFloat(combined);
+      return {
+        displayValue: new Intl.NumberFormat('id-ID').format(value),
+        value,
+      };
+    }
+  }
+
   const displayValue = `${integerDigits},${fractionDigits}`;
   const numericText = fractionDigits ? `${integerDigits}.${fractionDigits}` : integerDigits;
 

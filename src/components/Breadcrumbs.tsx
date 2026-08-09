@@ -19,8 +19,8 @@ const VIEW_PATHS: Record<string, { section: string; label: string }> = {
 };
 
 export function Breadcrumbs({ currentView, onNavigate }: BreadcrumbsProps) {
-  const path = VIEW_PATHS[currentView] ?? { section: 'Ruang kerja', label: 'Ringkasan kebun' };
   if (currentView === 'dashboard') return null;
+  const path = VIEW_PATHS[currentView] ?? { section: 'Ruang kerja', label: 'Ringkasan kebun' };
 
   return (
     <nav className="mb-4 flex items-center gap-1.5 text-[11px] font-medium text-[#78817B]" aria-label="Breadcrumb">

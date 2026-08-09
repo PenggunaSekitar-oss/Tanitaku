@@ -25,5 +25,7 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "types": ["vite-plugin-pwa/client"]
-  }
+  },
+  "include": ["src", "tests"],
+  "exclude": ["node_modules", "dist"]
 }

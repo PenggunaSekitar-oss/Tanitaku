@@ -668,7 +668,7 @@ export function PemupukanView({ navigate }: { navigate: (view: string) => void }
               <div className="flex flex-col gap-2 pt-3">
                 <button 
                   type="submit" 
-                  disabled={!form.blokId || !form.jenisPupuk.trim() || !form.dosisInput || selectedAreaM2 <= 0}
+                  disabled={!form.blokId || !form.jenisPupuk.trim() || form.dosisInput <= 0 || selectedAreaM2 <= 0}
                   className="w-full bg-action text-on-action font-brutal font-black text-xs uppercase tracking-wider py-3.5 px-4 rounded-xl border-2 border-black shadow-[3px_3px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 transition cursor-pointer flex items-center justify-center gap-2"
                 >
                   <span className="material-symbols-outlined text-[18px]">

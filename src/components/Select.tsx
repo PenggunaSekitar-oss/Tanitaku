@@ -74,7 +74,7 @@ export function Select({ options, value, onChange, placeholder = 'Pilih...', cla
                 type="button"
                 role="option"
                 aria-selected={value === opt.value}
-                key={`${opt.value}-${index}`}
+                key={opt.value}
                 className={`flex w-full min-w-0 cursor-pointer items-center justify-between gap-2 px-3 py-3 text-left transition-colors sm:px-4 ${value === opt.value ? 'bg-[#E4ECE7] font-semibold text-[#214433]' : 'text-on-surface hover:bg-surface-high'}`}
                 onClick={() => { onChange(opt.value); setIsOpen(false); }}
               >

@@ -173,7 +173,7 @@ export const BIBIT_CATALOG: BibitItem[] = [
   },
   {
     nama: 'Shypoon F1',
-    produsen: 'Halbanero',
+produsen: 'Habanero',
     komoditas: 'Cabai Rawit',
     deskripsi: 'Rawit tahan virus mengkriting dengan kulit buah tebal.',
     keunggulan: ['Tahan Gemini Virus', 'Tahan simpan & angkut', 'Pedas membakar'],
@@ -229,7 +229,7 @@ export const BIBIT_CATALOG: BibitItem[] = [
   { nama: 'Genie F1', produsen: 'Cap Panah Merah', komoditas: 'Cabai Rawit', deskripsi: 'Rawit hijau terang.', keunggulan: ['Pedas aromatis', 'Percabangan tajam'], potensiHasil: '14 Ton/Ha', umurPanen: '75 HST', rekomendasiDataran: 'Rendah' },
   { nama: 'Rawit Asmoro', produsen: 'Prabu Seed', komoditas: 'Cabai Rawit', deskripsi: 'Rawit putih menggantung.', keunggulan: ['Toleran virus', 'Buah panjang'], potensiHasil: '16 Ton/Ha', umurPanen: '85 HST', rekomendasiDataran: 'Menengah' },
   { nama: 'Rawit Maruti', produsen: 'Bintang Asia', komoditas: 'Cabai Rawit', deskripsi: 'Rawit genjah.', keunggulan: ['Tahan cuaca kering', 'Mudah dirawat'], potensiHasil: '15 Ton/Ha', umurPanen: '75 HST', rekomendasiDataran: 'Rendah' },
-  { nama: 'Rawit Preman', produsen: 'Halbanero', komoditas: 'Cabai Rawit', deskripsi: 'Rawit putih super pedas.', keunggulan: ['Buah sangat padat', 'Tahan patek'], potensiHasil: '20 Ton/Ha', umurPanen: '90 HST', rekomendasiDataran: 'Rendah-Tinggi' },
+  { nama: 'Rawit Preman', produsen: 'Habanero', komoditas: 'Cabai Rawit', deskripsi: 'Rawit putih super pedas.', keunggulan: ['Buah sangat padat', 'Tahan patek'], potensiHasil: '20 Ton/Ha', umurPanen: '90 HST', rekomendasiDataran: 'Rendah-Tinggi' },
   { nama: 'Rawit Master F1', produsen: 'DGW', komoditas: 'Cabai Rawit', deskripsi: 'Rawit unggul DGW.', keunggulan: ['Pertumbuhan seragam', 'Banyak dompolan'], potensiHasil: '18 Ton/Ha', umurPanen: '85 HST', rekomendasiDataran: 'Rendah-Tinggi' },
 
   // 21 - 40: CABAI MERAH KERITING & CABAI BESAR
@@ -583,7 +583,7 @@ export const BIBIT_CATALOG: BibitItem[] = [
     komoditas: 'Padi',
     deskripsi: 'Padi tahan wereng coklat biotipe 2 dan 3.',
     keunggulan: ['Tahan Wereng Coklat', 'Postur pendek tahan roboh', 'Gabah kuning bersih'],
-    potensiHasil: '8 - 9 Ton / Ha',
+    potensiHasil: '8 - 9 Ton / Ha GKP',
     umurPanen: '115 - 120 HST',
     rekomendasiDataran: 'Rendah'
   },

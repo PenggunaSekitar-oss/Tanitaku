@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react';
 import { IS_DEMO_MODE } from '../config/runtime';
 import { createDemoOperationalData } from '../data/demoOperationalData';
 import { useToast } from './ToastContext';
@@ -106,19 +106,19 @@ export interface RestoreResult {
 interface TaniOpsContextType extends State {
   isReadOnly: boolean;
   addBlokLahan: (b: Omit<BlokLahan, 'id'>) => void;
-  updateBlokLahan: (id: string, b: Partial<BlokLahan>) => void;
+  updateBlokLahan: (id: string, b: Omit<Partial<BlokLahan>, 'id'>) => void;
   deleteBlokLahan: (id: string) => void;
   addTanaman: (t: Omit<Tanaman, 'id'>) => void;
-  updateTanaman: (id: string, t: Partial<Tanaman>) => void;
+  updateTanaman: (id: string, t: Omit<Partial<Tanaman>, 'id'>) => void;
   deleteTanaman: (id: string) => void;
   addLogAktivitas: (l: Omit<LogAktivitas, 'id'>) => void;
-  updateLogAktivitas: (id: string, l: Partial<LogAktivitas>) => void;
+  updateLogAktivitas: (id: string, l: Omit<Partial<LogAktivitas>, 'id'>) => void;
   deleteLogAktivitas: (id: string) => void;
   addPemupukan: (p: Omit<Pemupukan, 'id'>) => void;
-  updatePemupukan: (id: string, p: Partial<Pemupukan>) => void;
+  updatePemupukan: (id: string, p: Omit<Partial<Pemupukan>, 'id'>) => void;
   deletePemupukan: (id: string) => void;
   addKeuangan: (k: Omit<Keuangan, 'id'>) => void;
-  updateKeuangan: (id: string, k: Partial<Keuangan>) => void;
+  updateKeuangan: (id: string, k: Omit<Partial<Keuangan>, 'id'>) => void;
   deleteKeuangan: (id: string) => void;
   clearAllData: () => void;
   loadDemoData: () => void;
@@ -219,7 +219,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
         ? value.tipeInput
         : undefined;
     return {
-      id: value.id as string,
+      id: (value.id as string).trim(),
       nama: asText(value.nama),
       jumlahBedengan: asNumber(value.jumlahBedengan),
       panjangBedengan: asNumber(value.panjangBedengan),
@@ -443,7 +443,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       setKeuangan(DEMO_DATA.keuangan);
       return;
     }
-    clearAllData();
+    showToast('Mode demo tidak tersedia di aplikasi produksi. Data Anda tetap aman.', 'info');
   };
 
   const clearAllData = () => {
@@ -451,7 +451,7 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       showToast('Mode demo hanya dapat dilihat. Data contoh tidak dapat dihapus.', 'info');
       return;
     }
-    safeSetItem('taniops_initialized', true);
+    localStorage.removeItem('taniops_initialized');
     safeSetItem('taniops_blokLahan', []);
     safeSetItem('taniops_tanaman', []);
     safeSetItem('taniops_logAktivitas', []);
@@ -469,11 +469,6 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
     if (IS_DEMO_MODE) return;
     safeSetItem('taniops_initialized', true);
     safeSetItem('taniops_schema_version', 3);
-    safeSetItem('taniops_blokLahan', blokLahan);
-    safeSetItem('taniops_tanaman', tanaman);
-    safeSetItem('taniops_logAktivitas', logAktivitas);
-    safeSetItem('taniops_pemupukan', pemupukan);
-    safeSetItem('taniops_keuangan', keuangan);
   }, []);
 
   React.useEffect(() => {
@@ -504,87 +499,85 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
   const generateId = () =>
     globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
-  const rejectDemoMutation = (): boolean => {
+  const rejectDemoMutation = useCallback((): boolean => {
     if (!IS_DEMO_MODE) return false;
     showToast('Mode demo hanya dapat dilihat. Perubahan tidak disimpan.', 'info');
     return true;
-  };
+  }, [IS_DEMO_MODE, showToast]);
 
-  const addBlokLahan = (b: Omit<BlokLahan, 'id'>) => {
+  const addBlokLahan = useCallback((b: Omit<BlokLahan, 'id'>) => {
     if (rejectDemoMutation()) return;
     setBlokLahan(prev => [...prev, { ...b, id: generateId() }]);
-  };
-  const updateBlokLahan = (id: string, b: Partial<BlokLahan>) => {
+  }, [rejectDemoMutation]);
+  const updateBlokLahan = useCallback((id: string, b: Omit<Partial<BlokLahan>, 'id'>) => {
     if (rejectDemoMutation()) return;
     setBlokLahan(prev => prev.map(item => item.id === id ? { ...item, ...b } : item));
-  };
-  const deleteBlokLahan = (id: string) => {
+  }, [rejectDemoMutation]);
+  const deleteBlokLahan = useCallback((id: string) => {
     if (rejectDemoMutation()) return;
     setBlokLahan(prev => prev.filter(item => item.id !== id));
     setTanaman(prev => prev.filter(item => item.blokId !== id));
     setLogAktivitas(prev => prev.filter(item => item.blokId !== id));
     setPemupukan(prev => prev.filter(item => item.blokId !== id));
     setKeuangan(prev => prev.filter(item => item.blokId !== id));
-  };
+  }, [rejectDemoMutation]);
 
-  const addTanaman = (t: Omit<Tanaman, 'id'>) => {
+  const addTanaman = useCallback((t: Omit<Tanaman, 'id'>) => {
     if (rejectDemoMutation()) return;
     setTanaman(prev => [...prev, { ...t, id: generateId() }]);
-  };
-  const updateTanaman = (id: string, t: Partial<Tanaman>) => {
+  }, [rejectDemoMutation]);
+  const updateTanaman = useCallback((id: string, t: Omit<Partial<Tanaman>, 'id'>) => {
     if (rejectDemoMutation()) return;
     setTanaman(prev => prev.map(item => item.id === id ? { ...item, ...t } : item));
-  };
-  const deleteTanaman = (id: string) => {
+  }, [rejectDemoMutation]);
+  const deleteTanaman = useCallback((id: string) => {
     if (rejectDemoMutation()) return;
     setTanaman(prev => prev.filter(item => item.id !== id));
-    // Financial history is retained, but the deleted crop must not leave a
-    // dangling relation that looks like a valid active season.
     setKeuangan(prev => prev.map(item =>
       item.tanamanId === id ? { ...item, tanamanId: undefined } : item
     ));
-  };
+  }, [rejectDemoMutation]);
 
-  const addLogAktivitas = (l: Omit<LogAktivitas, 'id'>) => {
+  const addLogAktivitas = useCallback((l: Omit<LogAktivitas, 'id'>) => {
     if (rejectDemoMutation()) return;
     setLogAktivitas(prev => [...prev, { ...l, id: generateId() }]);
-  };
-  const updateLogAktivitas = (id: string, l: Partial<LogAktivitas>) => {
+  }, [rejectDemoMutation]);
+  const updateLogAktivitas = useCallback((id: string, l: Omit<Partial<LogAktivitas>, 'id'>) => {
     if (rejectDemoMutation()) return;
     setLogAktivitas(prev => prev.map(item => item.id === id ? { ...item, ...l } : item));
-  };
-  const deleteLogAktivitas = (id: string) => {
+  }, [rejectDemoMutation]);
+  const deleteLogAktivitas = useCallback((id: string) => {
     if (rejectDemoMutation()) return;
     setLogAktivitas(prev => prev.filter(item => item.id !== id));
-  };
+  }, [rejectDemoMutation]);
 
-  const addPemupukan = (p: Omit<Pemupukan, 'id'>) => {
+  const addPemupukan = useCallback((p: Omit<Pemupukan, 'id'>) => {
     if (rejectDemoMutation()) return;
     setPemupukan(prev => [...prev, { ...p, id: generateId() }]);
-  };
-  const updatePemupukan = (id: string, p: Partial<Pemupukan>) => {
+  }, [rejectDemoMutation]);
+  const updatePemupukan = useCallback((id: string, p: Omit<Partial<Pemupukan>, 'id'>) => {
     if (rejectDemoMutation()) return;
     setPemupukan(prev => prev.map(item => item.id === id ? { ...item, ...p } : item));
-  };
-  const deletePemupukan = (id: string) => {
+  }, [rejectDemoMutation]);
+  const deletePemupukan = useCallback((id: string) => {
     if (rejectDemoMutation()) return;
     setPemupukan(prev => prev.filter(item => item.id !== id));
-  };
+  }, [rejectDemoMutation]);
 
-  const addKeuangan = (k: Omit<Keuangan, 'id'>) => {
+  const addKeuangan = useCallback((k: Omit<Keuangan, 'id'>) => {
     if (rejectDemoMutation()) return;
     setKeuangan(prev => [...prev, { ...k, id: generateId() }]);
-  };
-  const updateKeuangan = (id: string, k: Partial<Keuangan>) => {
+  }, [rejectDemoMutation]);
+  const updateKeuangan = useCallback((id: string, k: Omit<Partial<Keuangan>, 'id'>) => {
     if (rejectDemoMutation()) return;
     setKeuangan(prev => prev.map(item => item.id === id ? { ...item, ...k } : item));
-  };
-  const deleteKeuangan = (id: string) => {
+  }, [rejectDemoMutation]);
+  const deleteKeuangan = useCallback((id: string) => {
     if (rejectDemoMutation()) return;
     setKeuangan(prev => prev.filter(item => item.id !== id));
-  };
+  }, [rejectDemoMutation]);
 
-  const createBackup = (): string => {
+  const createBackup = useCallback((): string => {
     const preferences: Record<string, string> = {};
     for (const key of BACKUP_PREFERENCE_KEYS) {
       try {
@@ -601,9 +594,9 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       data: { blokLahan, tanaman, logAktivitas, pemupukan, keuangan },
       preferences,
     }, null, 2);
-  };
+  }, [blokLahan, tanaman, logAktivitas, pemupukan, keuangan]);
 
-  const restoreBackup = (payload: string): RestoreResult => {
+  const restoreBackup = useCallback((payload: string): RestoreResult => {
     if (IS_DEMO_MODE) {
       return {
         success: false,
@@ -672,13 +665,14 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
       if (isRecord(parsed.preferences)) {
         for (const key of BACKUP_PREFERENCE_KEYS) {
           const value = parsed.preferences[key];
-          if (value !== undefined && typeof value !== 'string') {
+          if (value === undefined) continue;
+          if (typeof value !== 'string') {
             return {
               success: false,
               message: `Preferensi “${key}” pada cadangan tidak valid.`,
             };
           }
-          preferences.set(key, typeof value === 'string' ? value : null);
+          preferences.set(key, value);
         }
       }
 
@@ -737,20 +731,40 @@ export function TaniOpsProvider({ children }: { children: ReactNode }) {
     } catch {
       return { success: false, message: 'File cadangan tidak dapat dibaca.' };
     }
-  };
+  }, [IS_DEMO_MODE, showToast]);
+
+  const clearAllDataWrapped = useCallback(() => {
+    clearAllData();
+  }, []);
+
+  const loadDemoDataWrapped = useCallback(() => {
+    loadDemoData();
+  }, []);
+
+  const value = useMemo(() => ({
+    isReadOnly: IS_DEMO_MODE,
+    blokLahan, tanaman, logAktivitas, pemupukan, keuangan,
+    addBlokLahan, updateBlokLahan, deleteBlokLahan,
+    addTanaman, updateTanaman, deleteTanaman,
+    addLogAktivitas, updateLogAktivitas, deleteLogAktivitas,
+    addPemupukan, updatePemupukan, deletePemupukan,
+    addKeuangan, updateKeuangan, deleteKeuangan,
+    clearAllData: clearAllDataWrapped, loadDemoData: loadDemoDataWrapped,
+    createBackup, restoreBackup,
+  }), [
+    IS_DEMO_MODE,
+    blokLahan, tanaman, logAktivitas, pemupukan, keuangan,
+    addBlokLahan, updateBlokLahan, deleteBlokLahan,
+    addTanaman, updateTanaman, deleteTanaman,
+    addLogAktivitas, updateLogAktivitas, deleteLogAktivitas,
+    addPemupukan, updatePemupukan, deletePemupukan,
+    addKeuangan, updateKeuangan, deleteKeuangan,
+    clearAllDataWrapped, loadDemoDataWrapped,
+    createBackup, restoreBackup,
+  ]);
 
   return (
-    <TaniOpsContext.Provider value={{
-      isReadOnly: IS_DEMO_MODE,
-      blokLahan, tanaman, logAktivitas, pemupukan, keuangan,
-      addBlokLahan, updateBlokLahan, deleteBlokLahan,
-      addTanaman, updateTanaman, deleteTanaman,
-      addLogAktivitas, updateLogAktivitas, deleteLogAktivitas,
-      addPemupukan, updatePemupukan, deletePemupukan,
-      addKeuangan, updateKeuangan, deleteKeuangan,
-      clearAllData, loadDemoData,
-      createBackup, restoreBackup,
-    }}>
+    <TaniOpsContext.Provider value={value}>
       {children}
     </TaniOpsContext.Provider>
   );

@@ -312,8 +312,8 @@ export function getWeatherAdvisories(
     ...windowForecasts.map((forecast) => forecast.humidity ?? 0),
   );
   const maximumTemperature = Math.max(
-    -Infinity,
-    ...windowForecasts.map((forecast) => forecast.temperature ?? -Infinity),
+    0,
+    ...windowForecasts.map((forecast) => forecast.temperature ?? 0),
   );
 
   const advisories: WeatherAdvisory[] = [];

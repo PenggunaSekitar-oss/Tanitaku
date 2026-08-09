@@ -1,3 +1,5 @@
+import { IS_DEMO_MODE } from '../config/runtime';
+
 export interface CatalogHistoryEntry<TFilters extends Record<string, string>> {
   id: string;
   summary: string;
@@ -57,4 +59,3 @@ export function upsertCatalogHistory<TFilters extends Record<string, string>>(
   });
   return next.slice(0, 8);
 }
-import { IS_DEMO_MODE } from '../config/runtime';

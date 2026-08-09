@@ -42,6 +42,11 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
   const { showAgriToast } = useToast();
   const [preferencesVersion, setPreferencesVersion] = useState(0);
 
+  const showAgriToastRef = useRef(showAgriToast);
+  showAgriToastRef.current = showAgriToast;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+
   const prevTanamanMapRef = useRef<Record<string, string>>({});
   const isInitialMountRef = useRef(true);
   const notifiedPemupukanKeysRef = useRef<Set<string>>(readShownReminderKeys());
@@ -72,7 +77,7 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
         const namaBlok = blok ? blok.nama : 'Lahan Kebun';
 
         if (currentStatus === 'Panen') {
-          showAgriToast({
+          showAgriToastRef.current({
             title: 'Status Tanaman: PANEN!',
             badgeText: 'PANEN BERHASIL',
             type: 'success',
@@ -82,10 +87,10 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
             duration: 8000,
             actionLabel: 'Buka Keuangan',
             actionView: 'keuangan',
-            onAction: () => navigate && navigate('keuangan'),
+            onAction: () => navigateRef.current && navigateRef.current('keuangan'),
           });
         } else if (currentStatus === 'Aktif') {
-          showAgriToast({
+          showAgriToastRef.current({
             title: 'Status Tanaman Reaktif',
             badgeText: 'AKTIF KEMBALI',
             type: 'info',
@@ -95,7 +100,7 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
             duration: 6000,
             actionLabel: 'Lihat Pemantauan',
             actionView: 'pemantauan',
-            onAction: () => navigate && navigate('pemantauan'),
+            onAction: () => navigateRef.current && navigateRef.current('pemantauan'),
           });
         }
       }
@@ -106,7 +111,7 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
     if (isInitialMountRef.current) {
       isInitialMountRef.current = false;
     }
-  }, [tanaman, blokLahan, showAgriToast, navigate, preferencesVersion]);
+  }, [tanaman, blokLahan, preferencesVersion]);
 
   // Reminder for fertilization schedules approaching their planned date
   useEffect(() => {
@@ -143,7 +148,7 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
       if (diffDays === 0) {
         notifiedPemupukanKeysRef.current.add(notifKey);
         persistShownReminderKey(notifKey);
-        showAgriToast({
+        showAgriToastRef.current({
           id: `pemupukan-${item.id}-${scheduledDate}-0d`,
           title: 'Jadwal Pemupukan Hari Ini!',
           badgeText: 'HARI INI',
@@ -154,14 +159,14 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
           duration: 9000,
             actionLabel: 'Buka Pemupukan',
             actionView: 'pemupukan',
-            onAction: () => navigate && navigate('pemupukan'),
+            onAction: () => navigateRef.current && navigateRef.current('pemupukan'),
         });
       }
       // Approaching deadline (1 to 3 days away)
       else if (diffDays > 0 && diffDays <= 3) {
         notifiedPemupukanKeysRef.current.add(notifKey);
         persistShownReminderKey(notifKey);
-        showAgriToast({
+        showAgriToastRef.current({
           id: `pemupukan-${item.id}-${scheduledDate}-${diffDays}d`,
           title: 'Pengingat Jadwal Pemupukan',
           badgeText: `${diffDays} HARI LAGI`,
@@ -172,14 +177,14 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
           duration: 8000,
             actionLabel: 'Lihat Jadwal',
             actionView: 'pemupukan',
-          onAction: () => navigate && navigate('pemupukan'),
+          onAction: () => navigateRef.current && navigateRef.current('pemupukan'),
         });
       }
       // Overdue (passed deadline within last 7 days)
       else if (diffDays < 0 && Math.abs(diffDays) <= 7) {
         notifiedPemupukanKeysRef.current.add(notifKey);
         persistShownReminderKey(notifKey);
-        showAgriToast({
+        showAgriToastRef.current({
           id: `pemupukan-${item.id}-${scheduledDate}-overdue`,
           title: 'Jadwal Pemupukan Terlewat!',
           badgeText: `TERLEWAT ${Math.abs(diffDays)} HARI`,
@@ -190,11 +195,11 @@ export function AgriDynamicToastNotifier({ navigate }: AgriDynamicToastNotifierP
           duration: 9000,
             actionLabel: 'Kelola Jadwal',
             actionView: 'pemupukan',
-          onAction: () => navigate && navigate('pemupukan'),
+          onAction: () => navigateRef.current && navigateRef.current('pemupukan'),
         });
       }
     });
-  }, [pemupukan, blokLahan, showAgriToast, navigate, preferencesVersion]);
+  }, [pemupukan, blokLahan, preferencesVersion]);
 
   return null;
 }

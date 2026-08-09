@@ -146,6 +146,8 @@ export function CariBibitView() {
     performSearch(entry.filters.komoditas, entry.filters.ketinggian, entry.filters.cuaca);
   };
 
+  const compositeId = (nama: string, produsen: string) => `${nama}:${produsen}`;
+
   const toggleCompare = (id: string) => {
     setCompareIds((current) =>
       current.includes(id)
@@ -157,7 +159,7 @@ export function CariBibitView() {
   };
 
   const comparisonItems: ComparisonItem[] = compareIds
-    .map((id) => CATALOG.find((item) => item.nama === id))
+    .map((id) => CATALOG.find((item) => compositeId(item.nama, item.produsen) === id))
     .filter((item): item is BibitItem => Boolean(item))
     .map((item) => {
       const details = getBibitDetails(item);
@@ -276,9 +278,9 @@ export function CariBibitView() {
                         <p className="text-xs font-mono text-white/80 mt-0.5">{item.komoditas} &middot; {item.produsen}</p>
                       </div>
                       <CompareToggle
-                        selected={compareIds.includes(item.nama)}
+                        selected={compareIds.includes(compositeId(item.nama, item.produsen))}
                         disabled={compareIds.length >= 3}
-                        onClick={() => toggleCompare(item.nama)}
+                        onClick={() => toggleCompare(compositeId(item.nama, item.produsen))}
                       />
                     </div>
 

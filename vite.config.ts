@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
               handler: 'StaleWhileRevalidate',
               options: {
                 cacheName: 'tanita-font-styles',
+                cacheableResponse: { statuses: [0, 200] },
                 expiration: { maxEntries: 8, maxAgeSeconds: 60 * 60 * 24 * 365 },
               },
             },

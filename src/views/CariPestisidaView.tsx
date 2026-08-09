@@ -312,7 +312,7 @@ export function CariPestisidaView() {
                 const rumus = getRumus5Tepat(hamaInput, tanamanInput, item);
 
                 return (
-                  <div key={idx} className="bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col h-full relative overflow-hidden">
+                  <div key={item.nama} className="bg-[#FEFEFA] border-2 border-[#0A0A0A] shadow-[2px_2px_0px_0px_#0A0A0A] rounded flex flex-col h-full relative overflow-hidden">
                     <div className="p-4 border-b-2 border-[#0A0A0A] flex justify-between items-start bg-[#154734] text-white rounded-t gap-2">
                       <div className="flex-1">
                         <h3 className="font-display font-extrabold text-lg text-white uppercase leading-snug">{item.nama}</h3>

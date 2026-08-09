@@ -40,8 +40,6 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
   });
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  if (!isOpen) return null;
-
   const blokOptions = [
     { value: 'semua', label: 'Semua Blok Lahan Kebun' },
     ...blokLahan.map((b) => ({ value: b.id, label: b.nama })),
@@ -96,6 +94,7 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
 
   return (
     <AnimatePresence>
+      {isOpen && (
       <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[#17211C]/55 p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -222,6 +221,7 @@ export function ReportPdfModal({ isOpen, onClose }: ReportPdfModalProps) {
           </div>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 }

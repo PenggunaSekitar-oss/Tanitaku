@@ -23,7 +23,9 @@ window.addEventListener('tanita-apply-pwa-update', () => {
   void updateSW(true);
 });
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Root element #root not found');
+createRoot(rootElement).render(
   <StrictMode>
     <App />
   </StrictMode>,

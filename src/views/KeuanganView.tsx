@@ -212,7 +212,7 @@ export function KeuanganView() {
       deleteKeuangan(deleteId);
       showToast('Data keuangan berhasil dihapus', 'success');
       if (editingId === deleteId) {
-        setForm(initialForm);
+setForm({ ...initialForm, blokId: blokLahan[0]?.id || 'overall' });
         setEditingId(null);
       }
       setDeleteConfirmOpen(false);

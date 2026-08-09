@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, useCallback, Component } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TaniOpsProvider } from './context/TaniOpsContext';
 import { Sidebar } from './components/Sidebar';
@@ -26,6 +26,29 @@ const CariBibitView = lazy(() => import('./views/CariBibitView').then((module) =
 const CariPupukView = lazy(() => import('./views/CariPupukView').then((module) => ({ default: module.CariPupukView })));
 const CariPestisidaView = lazy(() => import('./views/CariPestisidaView').then((module) => ({ default: module.CariPestisidaView })));
 const CariPenyakitView = lazy(() => import('./views/CariPenyakitView').then((module) => ({ default: module.CariPenyakitView })));
+
+class ErrorBoundary extends Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="flex min-h-[50vh] items-center justify-center p-8">
+          <div className="text-center">
+            <span className="material-symbols-outlined text-4xl text-[#C43C2C] mb-3 block">error</span>
+            <h2 className="font-display text-lg font-bold text-[#1B2721]">Terjadi kesalahan</h2>
+            <p className="text-sm text-[#6B756E] mt-2">Muat ulang halaman untuk mencoba kembali.</p>
+            <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-[#154734] text-white rounded-xl border border-black font-bold text-sm cursor-pointer">Muat Ulang</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const VALID_VIEWS = new Set([
   'dashboard',
@@ -72,7 +95,7 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  const navigateTo = (view: string) => {
+  const navigateTo = useCallback((view: string) => {
     const [requestedView = 'dashboard', subview] = view.split(':');
     const nextView = VALID_VIEWS.has(requestedView) ? requestedView : 'dashboard';
     if (nextView === 'pemantauan') {
@@ -81,8 +104,7 @@ export default function App() {
     if (window.location.hash !== `#/${nextView}`) {
       window.location.hash = `/${nextView}`;
     }
-    setCurrentView(nextView);
-  };
+  }, []);
 
   const renderView = () => {
     switch(currentView) {
@@ -143,11 +165,13 @@ export default function App() {
                       }}
                       className="motion-page h-full w-full"
                     >
-                      <Suspense
-                        fallback={<ModuleSkeleton />}
-                      >
-                        {renderView()}
-                      </Suspense>
+                      <ErrorBoundary>
+                        <Suspense
+                          fallback={<ModuleSkeleton />}
+                        >
+                          {renderView()}
+                        </Suspense>
+                      </ErrorBoundary>
                     </motion.div>
                   </AnimatePresence>
                 </main>

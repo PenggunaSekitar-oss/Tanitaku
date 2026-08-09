@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 
 interface ConfirmModalProps {
@@ -24,11 +24,14 @@ export function ConfirmModal({
   confirmVariant = 'danger',
   icon
 }: ConfirmModalProps) {
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') onCancel();
+        if (e.key === 'Escape') onCancelRef.current();
       };
       window.addEventListener('keydown', handleKeyDown);
       return () => {
@@ -38,7 +41,7 @@ export function ConfirmModal({
     } else {
       document.body.style.overflow = '';
     }
-  }, [isOpen, onCancel]);
+  }, [isOpen]);
 
   const getConfirmBtnClass = () => {
     switch (confirmVariant) {

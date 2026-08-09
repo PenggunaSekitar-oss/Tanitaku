@@ -11,7 +11,6 @@ interface TanamanSelectProps {
 export function TanamanSelect({ value, onChange, placeholder = '-- Pilih / Ketik Nama Tanaman --', className = '' }: TanamanSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isCustomMode, setIsCustomMode] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -45,7 +44,6 @@ export function TanamanSelect({ value, onChange, placeholder = '-- Pilih / Ketik
   const handleSelect = (val: string) => {
     onChange(val);
     setSearchTerm('');
-    setIsCustomMode(false);
     setIsOpen(false);
   };
 

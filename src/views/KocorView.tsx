@@ -99,9 +99,10 @@ export function KocorView() {
                     step="0.1"
                     placeholder="Contoh: 2"
                     value={dosis}
-                    onChange={(e) =>
-                      setDosis(e.target.value ? parseFloat(e.target.value) : "")
-                    }
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setDosis(!e.target.value || isNaN(val) ? "" : val);
+                    }}
                     className="neo-input w-full p-2.5 sm:p-3 font-mono text-base sm:text-lg h-[48px]"
                   />
                 </div>
@@ -137,9 +138,10 @@ export function KocorView() {
                     step="1"
                     placeholder="Contoh: 16"
                     value={volumeAir}
-                    onChange={(e) =>
-                      setVolumeAir(e.target.value ? parseFloat(e.target.value) : "")
-                    }
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      setVolumeAir(!e.target.value || isNaN(val) ? "" : val);
+                    }}
                     className="neo-input w-full p-2.5 sm:p-3 font-mono text-base sm:text-lg h-[48px]"
                   />
                 </div>

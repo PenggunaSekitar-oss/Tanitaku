@@ -1,5 +1,5 @@
 export function escapeCsvCell(value: unknown): string {
-  let text = value == null ? '' : String(value);
+  let text = value == null ? '' : (typeof value === 'symbol' ? value.description ?? '' : String(value));
   if (/^[=+\-@]/.test(text)) text = `'${text}`;
   return `"${text.replace(/"/g, '""')}"`;
 }
